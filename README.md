@@ -19,5 +19,5 @@ dedicated to optical retrievals such as determining the aerosol refractive index
 minimization or other statistical methods.
 
 # Invitation:
-Thank you for participating in moving this project forward. Together, lets collectively make significant strides on this
-project to ensure this instrument is the best instrument in Dr. Geoffrey Smith's laboratory! 
+Thank you for participating in moving this project forward. Lets collectively make significant strides on this
+project to ensure that this instrument is the best instrument in Dr. Geoffrey Smith's laboratory! 
