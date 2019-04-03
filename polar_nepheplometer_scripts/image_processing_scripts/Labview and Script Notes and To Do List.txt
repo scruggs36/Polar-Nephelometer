@@ -1,0 +1,12 @@
+Note: need to edit polar nephelometer labview such that the profile numbers output in the text file matches the range of column indices covered in the image ROI, currently the text file profile numbers start from zero, but this is wrong it actually starts around 250
+
+All of the offline analysis scripts (CALLED ALGORITHMS) that evaluate images in python are bad now, ONLY THE LABVIEW SUMMARY FILES ARE VALID this is because LABVIEW CONDUCTS THE FOLLOWING PROCESS
+
+1. Profiles are first taken along vertical transects bounded by a rectangular region of interest to find the brightest part of the laser beam at each profile (column of pixel intensities) valuated, the maximum of these profiles as a function of profile number (marked by the column number of the transect of profiles) are then fit to a quadratic
+
+2. This gives a row, column coordinates of the smoothest quadratic fit through brightest pixels throughout the laser beam, these coordinates are then offset by a constant, σ, in the column coordinate in the positive and negative directions (±σ) to form a new region of interest bounded by two quadratics  (separated from each other by 2σ) where new profiles along new vertical transects are taken
+
+3. The pixels in each profile are then summed together, and indexed by a profile number (which is really the column number from which the profile was taken)
+
+Plotting the summed profile pixel intensities as a function of profile number gives a tentative scattering diagram
+4. This tentative scattering diagram gets transformed to a a true scattering diagram when profile number axis gets  transformed  to scattering angle upon calibration with polystyrene latex spheres!
