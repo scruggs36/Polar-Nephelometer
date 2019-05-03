@@ -21,3 +21,7 @@ minimization or other statistical methods.
 # Invitation:
 Thank you for participating in moving this project forward. Lets collectively make significant strides on this
 project to ensure that this instrument is the best instrument in Dr. Geoffrey Smith's laboratory! 
+
+# Contacts:
+Austen K. Scruggs, scruggs36mobile@gmail.com
+Sun Mingrui, Mingrui.Sun@uga.edu

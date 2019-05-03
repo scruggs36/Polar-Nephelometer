@@ -294,7 +294,7 @@ def riemann(startinterval, stopinterval, y, dx):
     return s*dx
 
 
-def loop_integration( d_cols, y):
+def loop_integration(d_cols, y):
     # data needed to be a column array
     # data needed to be column array, this needs fixing in labview
     # data needed to be column arrays here as well, this needs fixing in labview

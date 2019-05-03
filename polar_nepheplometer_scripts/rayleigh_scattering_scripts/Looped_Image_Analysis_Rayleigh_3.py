@@ -9,6 +9,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.optimize import curve_fit
 from scipy.signal import savgol_filter, argrelmin
 from scipy.interpolate import interp1d, pchip_interpolate
+from scipy.misc import derivative
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -18,10 +19,10 @@ from math import pi
 
 
 # directory navigation i.e. path to image '//fcncfs4.franklin.uga.edu/CHEM/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/02-13-2018/N2/im_summed.png'
-Path_CO2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/03-22-2019/CO2/30s/txt'
-Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/03-22-2019/N2/30s/txt'
-Path_He_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/03-22-2019/He/30s/txt'
-Path_BKG_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/03-22-2019/BKG/30s/txt'
+Path_CO2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
+Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/N2/txt'
+Path_He_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/He/txt'
+Path_BKG_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/BKG/txt'
 #Path_Dark_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/01-23-2019/900/BKG/T1'
 Path_Save = '/home/austen/Documents'
 
@@ -47,41 +48,154 @@ Raw_BKG = Ndarray_Average(Path_BKG_Dir)
 
 
 # sample - n2 - bkg, and n2 - he - bkg
-Corrected_CO2 = np.subtract(np.subtract(Raw_CO2, Raw_He), Raw_BKG)
+Corrected_CO2 = np.subtract(Raw_CO2, Raw_He)
 Corrected_CO2[Corrected_CO2 < 0] = 0
-Corrected_N2 = np.subtract(np.subtract(Raw_N2, Raw_He), Raw_BKG)
+Corrected_N2 = np.subtract(Raw_N2, Raw_He)
 Corrected_N2[Corrected_N2 < 0] = 0
 Corrected_He = np.subtract(Raw_He, Raw_BKG)
 Corrected_He[Corrected_He < 0] = 0
 
 # Initial boundaries on the image , cols can be: [250, 1040], [300, 1040], [405, 887]
 rows = [550, 650]
-cols = [250, 1050]
+cols = [245, 1050]
 cols_array = (np.arange(cols[0], cols[1], 1)).astype(int)
+# these arrays are made trying to do a boostrap beam finding method
+cols_mid_start = np.flip(np.arange(cols_array[0], round(len(cols_array)/2), 1).astype(int))
+cols_mid_end = np.arange(round(len(cols_array)/2), cols_array[-1], 1).astype(int)
 #ROI = im[rows[0]:rows[1], cols[0]:cols[1]]
 
+# functions
 def gaussian(x, a, b, c, d):
     return d + (abs(a) * np.exp((-1 * (x - b) ** 2) / (2 * c ** 2)))
 
 
-def rayleigh_scattering (x, a):
-    return a + (a * np.square(np.cos(x)))
-
-
+def rayleigh_scattering(x, a, b):
+    return a * b * (1 + np.square(np.cos(x)))
+'''
+# create a figure to test the process,
+fd0, axd0 = plt.subplots(1, 2)
 # find coordinates based on sample - N2 scattering averaged image (without corrections)
+row_max_index_array_mid_start = []
+for counter, element in enumerate(cols_mid_start):
+    print(counter)
+    if counter == 0:
+        a = rows[0]
+        b = rows[1]
+        arr = np.array(np.arange(a, b, 1).astype(int))
+        n = len(arr)
+        im_transect = np.array(Corrected_CO2[arr, element])
+        #print(arr)
+        axd0[0].plot(arr, im_transect, ls='-')
+        try:
+            mean = sum(arr * im_transect) / n  # note this correction
+            sig = sum(im_transect * (arr - mean) ** 2) / n
+            popt_coords, pcov_coords = curve_fit(gaussian, arr, im_transect, p0=[1.0, mean, sig, 1.0])
+            gauss = [gaussian(x, *popt_coords) for x in arr]
+            axd0[1].plot(arr, gauss, ls='-')
+            index = arr[np.argmax(gauss)]
+            print('we tried: ', index)
+            row_max_index_array_mid_start.append(index)
+        except RuntimeError:
+            index = arr[np.argmax(im_transect)]
+            print('RuntimeError Exception: ', index)
+            row_max_index_array_mid_start.append(index)
+    if counter > 0:
+        dpix = 10
+        c = rows[0]
+        d = rows[1]
+        arr = np.array(np.arange(c, d, 1).astype(int))
+        n = len(arr)
+        #print(arr)
+        im_transect = np.array(Corrected_CO2[arr, element])
+        axd0[0].plot(arr, im_transect, ls='-')
+        try:
+            mean = sum(arr * im_transect) / n  # note this correction
+            sig = sum(im_transect * (arr - mean) ** 2) / n
+            popt_coords, pcov_coords = curve_fit(gaussian, arr, im_transect, p0=[1.0, mean, sig, 1.0])
+            gauss = [gaussian(x, *popt_coords) for x in arr]
+            axd0[1].plot(arr, gauss, ls='-')
+            index = arr[np.argmax(gauss)]
+            print('we also tried: ', index)
+            row_max_index_array_mid_start.append(index)
+        except RuntimeError:
+            index = arr[np.argmax(im_transect)]
+            print('RuntimeError Exception: ', index)
+            row_max_index_array_mid_start.append(index)
+row_max_index_array_start_mid = np.flip(row_max_index_array_mid_start)
+plt.show()
+row_max_index_array_mid_end = []
+for counter, element in enumerate(cols_mid_end):
+    if counter == 0:
+        a = rows[0]
+        b = rows[1]
+        arr = np.array(np.arange(a, b, 1).astype(int))
+        n = len(arr)
+        im_transect = np.array(Corrected_CO2[arr, element])
+        axd0[1].plot(arr, im_transect, ls='-')
+        try:
+            print('counter: ', counter)
+            mean = sum(arr * im_transect) / n  # note this correction
+            sig = sum(im_transect * (arr - mean) ** 2) / n
+            popt_coords, pcov_coords = curve_fit(gaussian, arr, im_transect, p0=[1.0, mean, sig, 1.0])
+            gauss = [gaussian(x, *popt_coords) for x in arr]
+            axd0[1].plot(arr, gauss, ls='-')
+            index = arr[np.argmax(gauss)]
+            print(index)
+            row_max_index_array_mid_end.append(index)
+        except RuntimeError:
+            index = arr[np.argmax(im_transect)]
+            print('RuntimeError Exception: ', index)
+            row_max_index_array_mid_end.append(index)
+    if counter > 0:
+        dpix = 10
+        c = rows[0]
+        d = rows[1]
+        arr = np.array(np.arange(c, d, 1).astype(int))
+        n = len(arr)
+        im_transect = np.array(Corrected_CO2[arr, element])
+        axd0[1].plot(arr, im_transect, ls='-')
+        try:
+            print('counter: ', counter)
+            mean = sum(arr * im_transect) / n  # note this correction
+            sig = sum(im_transect * (arr - mean) ** 2) / n
+            popt_coords, pcov_coords = curve_fit(gaussian, arr, im_transect,  p0=[1.0, mean, sig, 1.0])
+            gauss = [gaussian(x, *popt_coords) for x in arr]
+            axd0[1].plot(arr, gauss, ls='-')
+            index = arr[np.argmax(gauss)]
+            print(index)
+            row_max_index_array_mid_end.append(index)
+        except RuntimeError:
+            index = arr[np.argmax(im_transect)]
+            print('RuntimeError Exception: ', index)
+            row_max_index_array_mid_end.append(index)
+rmia = np.append(np.concatenate((row_max_index_array_start_mid, row_max_index_array_mid_end)).flatten(), row_max_index_array_mid_end[-1])
+row_max_index_array = rmia
+#plt.show()
+'''
 row_max_index_array = []
-for element in cols_array:
-    arr = np.arange(rows[0], rows[1], 1).astype(int)
+for counter, element in enumerate(cols_array):
+    a = rows[0]
+    b = rows[1]
+    arr = np.arange(a, b, 1).astype(int)
     im_transect = Corrected_CO2[arr, element]
     index_nosub = np.argmax(im_transect)
     row_max_index_array.append(index_nosub + rows[0])
 
+
+'''
 # polynomial fit to find the middle of the beam, the top bound, and bot bound, these give us our coordinates!
+sigma_pixels = 20
+mid = np.array(row_max_index_array)
+top = np.array(row_max_index_array) + sigma_pixels
+bot = np.array(row_max_index_array) - sigma_pixels
+'''
+
 polynomial_fit = np.poly1d(np.polyfit(cols_array, row_max_index_array, deg=2))
 sigma_pixels = 20
 mid = polynomial_fit(cols_array)
 top = polynomial_fit(cols_array) - sigma_pixels
 bot = polynomial_fit(cols_array) + sigma_pixels
+
 
 # pretty picture plots for background signal corrections
 # plots of all averaged images and profile coordinates
@@ -386,10 +500,11 @@ plt.show()
 
 # savitzky-golay smooth gaussian data
 SD_CO2_gfit_SG = savgol_filter(SD_CO2_gfit, window_length=151, polyorder=2, deriv=0)
-SD_CO2_gfit_bkg_corr_SG = savgol_filter(SD_CO2_gfit, window_length=151, polyorder=2, deriv=0)
 SD_N2_gfit_SG = savgol_filter(SD_N2_gfit, window_length=151, polyorder=2, deriv=0)
-SD_N2_gfit_bkg_corr_SG = savgol_filter(SD_N2_gfit, window_length=151, polyorder=2, deriv=0)
 
+# savitzky-golay phase functions from sum method
+SD_CO2_imsub_SG = savgol_filter(SD_CO2_imsub, window_length=151, polyorder=2, deriv=0)
+SD_N2_imsub_SG = savgol_filter(SD_N2_imsub, window_length=151, polyorder=2, deriv=0)
 # plot of the Sample nitrogen subtracted data with bounds
 f4, ax4 = plt.subplots(2, 2, figsize=(12, 6))
 im_f4 = ax4[0, 0].pcolormesh(Raw_CO2, cmap='gray')
@@ -416,15 +531,15 @@ ax4[1, 0].set_title('Profiles Taken Along Vertical \n Bounded Transects')
 ax4[1, 0].grid(True)
 ax4[1, 1].plot(CO2_PN, SD_CO2, linestyle='-', color='red', label='SD: CO2 Raw')
 ax4[1, 1].plot(CO2_PN_imsub, SD_CO2_imsub, linestyle='-', color='blue', label='SD: CO2 - He - BKG')
+ax4[1, 1].plot(CO2_PN_imsub, SD_CO2_imsub_SG, linestyle='-', color='cyan', label='SD: CO2 - He - BKG SG')
 ax4[1, 1].plot(CO2_PN_imsub, SD_CO2_gfit_SG, linestyle='-', color='green', label='SD: CO2 Raw Gaussian Fit SG')
-ax4[1, 1].plot(CO2_PN_imsub, SD_CO2_gfit_bkg_corr_SG, linestyle='-', color='orange', label='SD: CO2 - He - BKG Gaussian Fit SG')
 ax4[1, 1].set_xlabel('Profile Numbers (column numbers)')
 ax4[1, 1].set_ylabel('Summed Profile Intensities (DN)')
 ax4[1, 1].set_title('Scattering Diagram')
 ax4[1, 1].grid(True)
 ax4[1, 1].set_yscale('log')
 ax4[1, 1].legend(loc=1)
-#plt.tight_layout()
+plt.tight_layout()
 f4.savefig(Path_Save + '/F4_CO2.png', format='png')
 plt.show()
 
@@ -455,31 +570,45 @@ ax5[1, 0].set_title('Profiles Taken Along Vertical \n Bounded Transects')
 ax5[1, 0].grid(True)
 ax5[1, 1].plot(N2_PN, SD_N2, linestyle='-', color='red', label='SD: N2 Raw')
 ax5[1, 1].plot(N2_PN_imsub, SD_N2_imsub, linestyle='-', color='blue', label='SD: N2 - He')
+ax5[1, 1].plot(N2_PN_imsub, SD_N2_imsub_SG, linestyle='-', color='cyan', label='SD: N2 - He SG')
 ax5[1, 1].plot(CO2_PN_imsub, SD_N2_gfit_SG, linestyle='-', color='green', label='SD: N2 Raw Gaussian Fit SG')
-ax5[1, 1].plot(CO2_PN_imsub, SD_N2_gfit_bkg_corr_SG, linestyle='-', color='orange', label='SD: N2 - He - BKG Gaussian Fit SG')
 ax5[1, 1].set_xlabel('Profile Numbers (column numbers)')
 ax5[1, 1].set_ylabel('Summed Profile Intensities (DN)')
 ax5[1, 1].set_title('Scattering Diagram')
 ax5[1, 1].grid(True)
 ax5[1, 1].set_yscale('log')
 ax5[1, 1].legend(loc=1)
-#plt.tight_layout()
+plt.tight_layout()
 f5.savefig(Path_Save + '/F5_N2.png', format='png')
 plt.show()
+
+# columns to theta
+slope = 0.2112
+intercept = -47.972
+# columns to theta
+theta_N2 = (np.array(N2_PN) * slope) + intercept
+print('N2 angular range:', [theta_N2[0], theta_N2[-1]])
+rads_N2 = theta_N2 * pi/180.0
+theta_CO2 = (np.array(CO2_PN) * slope) + intercept
+print('CO2 angular range:', [theta_CO2[0], theta_CO2[-1]])
+rads_CO2 = theta_CO2 * pi/180.0
+print('ROI range', [(slope * cols[0]) + intercept, (slope * cols[1]) + intercept])
+
 
 # Save Phase Function, the data saved here has no subtractions/corrections applied to them, each is raw signal
 # note the CCD Noise cannot be backed out, as we would have to cover the lens to do it, if at some point we take
 # covered images we could do it...
-DF_Headers = ['CO2 Columns', 'N2 Columns', 'He Columns', 'BKG Columns', 'CO2 Intensity', 'N2 Intensity', 'He Intensity', 'BKG Intensity']
+DF_Headers = ['CO2 Columns', 'N2 Columns', 'He Columns', 'BKG Columns', 'Theta', 'CO2 Intensity', 'N2 Intensity', 'He Intensity', 'BKG Intensity']
 DF_CO2_C = pd.DataFrame(CO2_PN)
 DF_N2_C = pd.DataFrame(N2_PN)
 DF_He_C = pd.DataFrame(He_PN)
 DF_BKG_C= pd.DataFrame(BKG_PN)
+DF_Theta = pd.DataFrame(theta_CO2)
 DF_SD_CO2 = pd.DataFrame(SD_CO2)
 DF_SD_N2 = pd.DataFrame(SD_N2)
 DF_SD_He = pd.DataFrame(SD_He)
 DF_SD_BKG = pd.DataFrame(SD_BKG)
-PhaseFunctionDF = pd.concat([DF_CO2_C, DF_N2_C, DF_He_C, DF_BKG_C, DF_SD_CO2, DF_SD_N2, DF_SD_He, DF_SD_BKG], ignore_index=False, axis=1)
+PhaseFunctionDF = pd.concat([DF_CO2_C, DF_N2_C, DF_He_C, DF_BKG_C, DF_Theta, DF_SD_CO2, DF_SD_N2, DF_SD_He, DF_SD_BKG], ignore_index=False, axis=1)
 PhaseFunctionDF.columns = DF_Headers
 PhaseFunctionDF.to_csv(Path_Save + '/SD_Rayleigh.txt')
 
@@ -514,21 +643,11 @@ ax6[1, 1].set_ylabel('Summed Profile Intensities (DN)')
 ax6[1, 1].set_title('Profiles Compared')
 ax6[1, 1].grid(True)
 ax6[1, 1].legend(loc=1)
-#plt.tight_layout()
+plt.tight_layout()
 f6.savefig(Path_Save + '/F6_Profiles.png', format='png')
 plt.show()
 
 
-# columns to theta
-slope = 0.2112
-intercept = -47.972
-theta_N2 = (np.array(N2_PN) * slope) + intercept
-print('N2 angular range:', [theta_N2[0], theta_N2[-1]])
-rads_N2 = theta_N2 * pi/180.0
-theta_CO2 = (np.array(CO2_PN) * slope) + intercept
-print('CO2 angular range:', [theta_CO2[0], theta_CO2[-1]])
-rads_CO2 = theta_CO2 * pi/180.0
-print('ROI range', [(slope * cols[0]) + intercept, (slope * cols[1]) + intercept])
 
 # 1 + cos^2(theta) fits
 popt_CO2, pcov_CO2 = curve_fit(rayleigh_scattering, theta_CO2, SD_CO2_imsub)
@@ -545,10 +664,14 @@ ral_CO2 = np.array([rayleigh_scattering(rad, *popt_CO2) for rad in rads_CO2])
 ratio_CO2 = np.array(SD_CO2_imsub) / ral_CO2
 ral_N2 = np.array([rayleigh_scattering(rad, *popt_N2) for rad in rads_N2])
 ratio_N2 = np.array(SD_N2_imsub) / ral_N2
+ratio_CO2_N2 = np.array(SD_CO2_gfit_SG) / np.array(SD_N2_gfit_SG)
+ratio_CO2_N2_normed = (np.array(SD_CO2_gfit_SG)/np.linalg.norm(np.array(SD_CO2_gfit_SG))) / (np.array(SD_N2_gfit_SG)/np.linalg.norm(np.array(SD_N2_gfit_SG)))
+#print(ratio_CO2_N2)
 ratio_CO2_min = ratio_CO2 / np.amin(ratio_CO2)
 ratio_N2_min = ratio_N2 / np.amin(ratio_N2)
 ratio_ideal_CO2 = np.array(SD_CO2_imsub) / rayleigh_ideal_cos
 ratio_ideal_N2 = np.array(SD_N2_imsub) / rayleigh_ideal_cos
+ideal_CO2_N2_ratio = ral_CO2 / ral_N2
 
 
 # filters and pchips
@@ -568,15 +691,17 @@ ax7.set_ylabel('Intensity (DN)')
 ax7.set_xlabel('Profile Number (Column Number)')
 ax7.grid(True)
 ax7.legend(loc=1)
-#plt.tight_layout()
+plt.tight_layout()
 f7.savefig(Path_Save + '/F7_Contributions.png', format='png')
 plt.show()
 
 # we did not do a semilogy plot here, y data cannot have zeros in it! log of zero is not defined!!!
 f8, ax8 = plt.subplots(figsize=(12, 6))
-ax8.plot(theta_CO2, SD_CO2_imsub, linestyle='-', color='black', label='$CO_2$ Scattering - He Scattering - BKG')
+ax8.plot(theta_CO2, SD_CO2_imsub, linestyle='-', color='black', label='$CO_2$ Scattering - He Scattering')
+ax8.plot(theta_CO2, SD_CO2_imsub_SG, linestyle='--', color='purple', label='$CO_2$ Scattering - He Scattering')
 ax8.plot(theta_CO2, rayleigh_cos_CO2, linestyle='--', color='yellow', label='CO2 Scattering fit')
-ax8.plot(theta_N2, SD_N2_imsub, linestyle='-', color='green', label='$N_2$ Scattering - He Scattering - BKG')
+ax8.plot(theta_N2, SD_N2_imsub, linestyle='-', color='green', label='$N_2$ Scattering - He Scattering')
+ax8.plot(theta_N2, SD_N2_imsub_SG, linestyle='--', color='lawngreen', label='$N_2$ Scattering - He Scattering')
 ax8.plot(theta_N2, rayleigh_cos_N2, linestyle='--', color='orange', label='N2 Scattering fit')
 ax8.plot(theta_N2, SD_He_imsub, linestyle='-', color='cyan', label='He Scattering - Background')
 ax8.plot(theta_N2, SD_BKG_imsub, linestyle='-', color='red', label='Background')
@@ -585,7 +710,7 @@ ax8.set_ylabel('Intensity (DN)')
 ax8.set_xlabel('Profile Number (Column Number)')
 ax8.grid(True)
 ax8.legend(loc=1)
-#plt.tight_layout()
+plt.tight_layout()
 f8.savefig(Path_Save + '/F8_Contributions_Corr.png', format='png')
 plt.show()
 
@@ -597,15 +722,20 @@ ax9[0, 0].set_xlabel('\u0398')
 ax9[0, 0].set_ylabel('Ratio')
 ax9[0, 0].set_title('1 + $cos^2(\u0398)$')
 ax9[0, 0].legend(loc=1)
-ax9[0, 1].plot(theta_CO2, ratio_CO2, linestyle='-', color='purple', label='Raw $CO_2$/$(a + a * cos^2(\u0398)$')
-ax9[0, 1].plot(theta_N2, ratio_N2, linestyle='-', color='blue', label='Raw $N_2$/$(a + a * cos^2(\u0398)$')
+ax9[0, 1].plot(theta_CO2, ratio_CO2, linestyle='-', color='red', label='$CO_2$/$(ab(1 + cos^2(\u0398)$ \n a = ' + str(popt_CO2[0]) + ' b = ' + str(popt_CO2[1]))
+ax9[0, 1].plot(theta_N2, ratio_N2, linestyle='-', color='blue', label='$N_2$/$(ab(1 + cos^2(\u0398)$ \n a = ' + str(popt_N2[0]) + ' b = ' + str(popt_N2[1]))
+ax9[0, 1].plot(theta_CO2, ratio_CO2_N2, linestyle='-', color='green', label='$CO_2$/$N_2$')
+ax9[0, 1].plot(theta_CO2, ratio_CO2_N2_normed, linestyle='-', color='purple', label='$CO_2$/$N_2$ normed')
+ax9[0, 1].plot(theta_CO2, ideal_CO2_N2_ratio, linestyle='-', color='orange', label='$CO_2 fit$/$N_2 fit$')
 ax9[0, 1].grid(True)
 ax9[0, 1].set_xlabel('\u0398')
 ax9[0, 1].set_ylabel('Ratio')
-ax9[0, 1].set_title('Ratio Plot \n Rayleigh Scattering : a + a * $cos^2(\u0398)$')
+ax9[0, 1].set_title('Ratio Plot \n Rayleigh Scattering : ab(2 + $cos^2(\u0398)$')
 ax9[0, 1].legend(loc=1)
-ax9[1, 0].plot(theta_CO2, ratio_ideal_CO2, linestyle='-', color='purple', label='Raw $CO_2$/$(1 + cos^2(\u0398)$')
-ax9[1, 0].plot(theta_N2, ratio_ideal_N2, linestyle='-', color='blue', label='Raw $N_2$/$(1 + cos^2(\u0398)$')
+ax9[1, 0].plot(theta_CO2, ratio_ideal_CO2, linestyle='-', color='red', label='$CO_2$/$(1 + cos^2(\u0398)$')
+ax9[1, 0].plot(theta_N2, ratio_ideal_N2, linestyle='-', color='blue', label='$N_2$/$(1 + cos^2(\u0398)$')
+ax9[1, 0].plot(theta_CO2, ratio_CO2_N2, linestyle='-', color='green', label='$CO_2$/$N_2$')
+ax9[1, 0].plot(theta_CO2, ideal_CO2_N2_ratio, linestyle='-', color='orange', label='$CO_2 fit$/$N_2 fit$')
 ax9[1, 0].grid(True)
 ax9[1, 0].set_xlabel('\u0398')
 ax9[1, 0].set_ylabel('Ratio')
@@ -627,7 +757,7 @@ def find_nearest_idx(array, value):
     idx = (np.abs(array - value)).argmin()
     return idx
 
-
+'''
 chi_array = np.abs(np.nan_to_num(SD_CO2_imsub) - ral_CO2)
 chi_array_SG = savgol_filter(chi_array, window_length=151, polyorder=2, deriv=0)
 
@@ -652,4 +782,47 @@ ax10.legend(loc=1)
 plt.tight_layout()
 plt.savefig(Path_Save + '/F10_Chi.png', format='png')
 plt.show()
+'''
+'''
+dy = []
+for counter, element in enumerate(row_max_index_array):
+    if counter == 0:
+        del_y = row_max_index_array[counter + 1] - row_max_index_array[counter]
+        dy.append(del_y)
+        dy.append(del_y)
+    if counter > 0:
+        del_y = row_max_index_array[counter - 1] - row_max_index_array[counter]
+        dy.append(del_y)
+    if counter == len(row_max_index_array)-1:
+        del_y = row_max_index_array[counter - 1] - row_max_index_array[counter]
+        dy.append(del_y)
 
+
+# derivative of the polynomial fit, this should give us nonlinear binning
+dz_dy = [derivative(polynomial_fit, x, dx=1)**-1 for x in cols_array]
+dz = []
+for counter, element in dz_dy:
+    dz.append(element * dy[counter])
+
+nonlin_dz = []
+for counter, element in dz:
+    nonlin_dz.append(cols_array[counter] + element)
+
+
+nonlin_d_angle_bins = [(x * slope) + intercept for x in nonlin_dz]
+print(nonlin_d_angle_bins)
+
+
+f11, ax11 = plt.subplots(figsize=(12, 6))
+ax11.bar(theta_CO2, SD_CO2_imsub, width=nonlin_d_angle_bins, align='center', ls='-', color='red', label='CO2')
+ax11.bar(theta_N2, SD_N2_imsub, width=nonlin_d_angle_bins, align='center', ls='-', color='blue', label='N2')
+ax11.plot(theta_CO2, ral_CO2, color='black', ls='-', label='$CO_2$ a + a * $cos^2(\u0398)$')
+ax11.plot(theta_N2, ral_N2, color='black', ls='--', label='$N_2$ a + a * $cos^2(\u0398)$')
+ax11.set_title('Rayleigh Phase Functions for $N_2$ and $CO_2$ Gases')
+ax11.set_ylabel('Intensity')
+ax11.set_xlabel('\u0398')
+ax11.grid(True)
+ax11.legend(loc=1)
+f11.savefig(Path_Save + '/Nonlinear_Binning.png', format='png')
+plt.show()
+'''

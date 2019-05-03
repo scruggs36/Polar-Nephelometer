@@ -6,51 +6,70 @@ from their corresponding background 2darrays. This is the update that was necess
 '''
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from scipy.optimize import curve_fit
+from math import pi
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
 
 # directory navigation i.e. path to image '//fcncfs4.franklin.uga.edu/CHEM/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/02-13-2018/N2/im_summed.png'
-#Cal_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Lens Calibration/10-24-2018/Calibration Images/bmp images'
-#Path_Samp_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/03-11-2019/PSL/900nm/3s'
-#Path_CO2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/03-11-2019/CO2/3s'
-Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/03-11-2019/N2/3s'
-Path_He_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/03-11-2019/He/3s'
-Path_BKG_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/03-11-2019/BKG/3s'
+Path_Samp_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-16-2019/600nm_PSL/txt/3s'
+Path_CO2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-16-2019/CO2/txt/3s'
+Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-16-2019/N2/txt/3s'
+Path_He_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-16-2019/He/txt/3s'
+Path_BKG_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-16-2019/BKG/txt/3s'
 #Path_Dark_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/01-23-2019/900/BKG/T1'
-Path_Save = '/home/austen/Documents/03-11-2019_Analysis'
+Path_Save = '/home/austen/Documents'
 
+# averaging nd-arrays function
 # averaging nd-arrays function
 def Ndarray_Average(directory):
     nd_array = []
     file_list = os.listdir(directory)
     for file in file_list:
-        nd_arr_element = np.loadtxt(directory + '/' + file, dtype='int', delimiter=',', ndim=2)
+        print(file)
+        nd_arr_element = np.loadtxt(directory + '/' + file, dtype='int', delimiter='\t')
         nd_array.append(nd_arr_element)
-    nd_arr_avg = nd_array.mean(axis=0, dtype='int', keepdims=True)
+    nd_np_array = np.array(nd_array)
+    nd_arr_avg = np.transpose(np.squeeze(nd_np_array.mean(axis=0, dtype='int', keepdims=True), axis=0))
+    print(nd_arr_avg.shape)
     return nd_arr_avg
+
 
 
 # averaging sample, n2, he, bkg
 Raw_Sample = Ndarray_Average(Path_Samp_Dir)
-#Raw_CO2 = Ndarray_Average(Path_CO2_Dir)
+Raw_CO2 = Ndarray_Average(Path_CO2_Dir)
 Raw_N2 = Ndarray_Average(Path_N2_Dir)
 Raw_He = Ndarray_Average(Path_He_Dir)
 Raw_BKG = Ndarray_Average(Path_BKG_Dir)
 
 
+
 # sample - n2 - bkg, and n2 - he - bkg
-Corrected_Sample = Raw_Sample - Raw_N2 - Raw_BKG
-#Corrected_CO2 = Raw_CO2 - Raw_He - Raw_BKG
-Corrected_N2 = Raw_N2 - Raw_He - Raw_BKG
-Corrected_He = Raw_He - Raw_BKG
+Corrected_Sample = np.subtract(Raw_Sample, Raw_N2)
+Corrected_Sample[Corrected_Sample < 0] = 0
+Corrected_CO2 = np.subtract(Raw_CO2, Raw_He)
+Corrected_CO2[Corrected_CO2 < 0] = 0
+Corrected_N2 = np.subtract(Raw_N2, Raw_He)
+Corrected_N2[Corrected_N2 < 0] = 0
+Corrected_He = np.subtract(Raw_He, Raw_BKG)
+Corrected_He[Corrected_He < 0] = 0
+
 
 # Initial boundaries on the image , cols can be: [250, 1040], [300, 1040], [405, 887]
-rows = [200, 600]
-cols = [250, 1050]
+rows = [550, 700]
+cols = [245, 1050]
 cols_array = (np.arange(cols[0], cols[1], 1)).astype(int)
 #ROI = im[rows[0]:rows[1], cols[0]:cols[1]]
+
+def gaussian(x, a, b, c, d):
+    return d + (abs(a) * np.exp((-1 * (x - b) ** 2) / (2 * c ** 2)))
+
+
+def rayleigh_scattering (x, a, b):
+    return b + (a * np.square(np.cos(x)))
 
 # find coordinates based on sample - N2 scattering averaged image (without corrections)
 row_max_index_array = []
@@ -62,7 +81,7 @@ for element in cols_array:
 
 # polynomial fit to find the middle of the beam, the top bound, and bot bound, these give us our coordinates!
 polynomial_fit = np.poly1d(np.polyfit(cols_array, row_max_index_array, deg=2))
-sigma_pixels = 30
+sigma_pixels = 20
 mid = polynomial_fit(cols_array)
 top = polynomial_fit(cols_array) - sigma_pixels
 bot = polynomial_fit(cols_array) + sigma_pixels
@@ -87,7 +106,7 @@ f0.colorbar(im_f0a, cax=cax_a)
 f0.colorbar(im_f0b, cax=cax_b)
 ax0[0].set_title('Background Image')
 ax0[1].set_title('Background Image & \n SD Coordinates')
-plt.savefig(Path_Save + '/BKG.pdf', format='pdf')
+plt.savefig(Path_Save + '/BKG.png', format='png')
 plt.show()
 
 # pretty picture plots for background signal corrections
@@ -109,7 +128,7 @@ f1.colorbar(im_f1a, cax=cax_a)
 f1.colorbar(im_f1b, cax=cax_b)
 ax1[0].set_title('Helium Image')
 ax1[1].set_title('Helium Image Background Corrected')
-plt.savefig(Path_Save + '/He.pdf', format='pdf')
+plt.savefig(Path_Save + '/He.png', format='png')
 plt.show()
 
 # pretty picture plots for background signal corrections
@@ -131,7 +150,7 @@ f2.colorbar(im_f2a, cax=cax_a)
 f2.colorbar(im_f2a, cax=cax_b)
 ax2[0].set_title('Nitrogen Image')
 ax2[1].set_title('Helium Corrected Nitrogen Image')
-plt.savefig(Path_Save + '/N2.pdf', format='pdf')
+plt.savefig(Path_Save + '/N2.png', format='png')
 plt.show()
 
 # pretty picture plots for background signal corrections
@@ -153,8 +172,65 @@ f3.colorbar(im_f3a, cax=cax_a)
 f3.colorbar(im_f3b, cax=cax_b)
 ax3[0].set_title('Particle Image')
 ax3[1].set_title('Nitrogen Corrected Particle Image')
-plt.savefig(Path_Save + '/Sample.pdf', format='pdf')
+plt.savefig(Path_Save + '/Sample.png', format='png')
 plt.show()
+
+# this is important for evaluating profiles along transects between the bounds
+# loop through transects and acquire profiles and scattering diagram intensities vs profile numbers
+CO2_PN = []
+CO2_PN_imsub = []
+SD_CO2 = []
+SD_CO2_imsub = []
+arr_ndarray_CO2 = []
+bound_transect_ndarray_CO2 = []
+bound_transect_ndarray_CO2_imsub = []
+bound_transect_ndarray_gfit_CO2 = []
+bound_transect_ndarray_gfit_CO2_imsub = []
+bound_transect_aoc_array_CO2 = []
+bound_transect_aoc_array_CO2_imsub = []
+background_CO2 = []
+SD_CO2_gfit = []
+SD_CO2_gfit_bkg_corr = []
+for counter, element in enumerate(cols_array):
+    arr = np.arange(top[counter], bot[counter], 1).astype(int)
+    bound_transect = np.array(Raw_CO2[arr, element]).astype('int')
+    if np.amax(bound_transect) < 4095:
+        idx_max = np.argmax(bound_transect)
+        CO2_PN.append(element)
+        CO2_PN_imsub.append(element)
+        # raw data wrangling
+        arr_ndarray_CO2.append(arr)
+        bound_transect_ndarray_CO2.append(bound_transect)
+        transect_summed = np.sum(bound_transect)
+        SD_CO2.append(transect_summed)
+        # raw data wrangling with background subtraction
+        bound_transect_imsub = np.array(Corrected_CO2[arr, element]).astype('int') - int(round(np.mean(np.array(Corrected_CO2[arr, element])[-5:])))
+        bound_transect_ndarray_CO2_imsub.append(bound_transect_imsub)
+        transect_summed_imsub = np.sum(bound_transect_imsub)
+        SD_CO2_imsub.append(transect_summed_imsub)
+        # gaussian fitting of raw data
+        try:
+            popt, pcov = curve_fit(gaussian, arr, bound_transect_imsub, p0=[bound_transect_imsub[idx_max], arr[idx_max], 5.0, 5.0])
+            gfit = [gaussian(x, *popt) for x in arr]
+            #print(popt)
+            bound_transect_ndarray_gfit_CO2.append(gfit)
+            gfit_sum_CO2 = np.sum(gfit)
+            SD_CO2_gfit.append(gfit_sum_CO2)
+            # gaussian fitting of raw data with background correction
+            bound_transect_ndarray_gfit_CO2_imsub.append(gfit - popt[3])
+            gfit_sum_CO2_imsub = np.sum(gfit - popt[3])
+            SD_CO2_gfit_bkg_corr.append(gfit_sum_CO2_imsub)
+        except RuntimeError:
+            gfit = np.empty(len(arr))
+            gfit[:] = np.nan
+            bound_transect_ndarray_gfit_CO2.append(gfit)
+            gfit_sum_CO2 = np.nan
+            SD_CO2_gfit.append(gfit_sum_CO2)
+            # gaussian fitting of raw data with background correction
+            bound_transect_ndarray_gfit_CO2_imsub.append(gfit)
+            gfit_sum_CO2_imsub = np.nan
+            SD_CO2_gfit_bkg_corr.append(gfit_sum_CO2_imsub)
+
 
 # this is important for evaluating profiles along transects between the bounds
 # loop through transects and acquire profiles and scattering diagram intensities vs profile numbers
@@ -165,49 +241,53 @@ SD_N2_imsub = []
 arr_ndarray_N2 = []
 bound_transect_ndarray_N2 = []
 bound_transect_ndarray_N2_imsub = []
+bound_transect_ndarray_gfit_N2 = []
+bound_transect_ndarray_gfit_N2_imsub = []
+bound_transect_aoc_array_N2 = []
+bound_transect_aoc_array_N2_imsub = []
 background_N2 = []
-SD_N2_imsub_corrected = []
+SD_N2_gfit = []
+SD_N2_gfit_bkg_corr = []
 for counter, element in enumerate(cols_array):
     arr = np.arange(top[counter], bot[counter], 1).astype(int)
     bound_transect = np.array(Raw_N2[arr, element]).astype('int')
-    if np.amax(bound_transect) < 65536:
-        arr_ndarray_N2.append(arr)
+    if np.amax(bound_transect) < 4095:
+        idx_max = np.argmax(bound_transect)
+        N2_PN_imsub.append(element)
         N2_PN.append(element)
+        # raw data wrangling
+        arr_ndarray_N2.append(arr)
         bound_transect_ndarray_N2.append(bound_transect)
         transect_summed = np.sum(bound_transect)
         SD_N2.append(transect_summed)
-        bound_transect_imsub = np.array(Corrected_N2[arr, element]).astype('int') - int(round(np.mean(np.array(Corrected_N2[arr, element])[0:10])))
-        N2_PN_imsub.append(element)
+        # raw data wrangling with background subtraction
+        bound_transect_imsub = np.array(Corrected_N2[arr, element]).astype('int') - int(round(np.mean(np.array(Corrected_N2[arr, element])[-5:])))
         bound_transect_ndarray_N2_imsub.append(bound_transect_imsub)
         transect_summed_imsub = np.sum(bound_transect_imsub)
         SD_N2_imsub.append(transect_summed_imsub)
-
+        # gaussian fitting of raw data
+        try:
+            popt, pcov = curve_fit(gaussian, arr, bound_transect_imsub, p0=[bound_transect_imsub[idx_max], arr[idx_max], 5.0, 5.0])
+            gfit = [gaussian(x, *popt) for x in arr]
+            bound_transect_ndarray_gfit_N2.append(gfit)
+            gfit_sum_N2 = np.sum(gfit)
+            SD_N2_gfit.append(gfit_sum_N2)
+            # gaussian fitting of raw data with background correction
+            bound_transect_ndarray_gfit_N2_imsub.append(gfit - popt[3])
+            gfit_sum_N2_imsub = np.sum(gfit - popt[3])
+            SD_N2_gfit_bkg_corr.append(gfit_sum_N2_imsub)
+        except RuntimeError:
+            gfit = np.empty(len(arr))
+            gfit[:] = np.nan
+            bound_transect_ndarray_gfit_N2.append(gfit)
+            gfit_sum_N2 = np.nan
+            SD_N2_gfit.append(gfit_sum_N2)
+            # gaussian fitting of raw data with background correction
+            bound_transect_ndarray_gfit_N2_imsub.append(gfit)
+            gfit_sum_N2_imsub = np.nan
+            SD_N2_gfit_bkg_corr.append(gfit_sum_N2_imsub)
 # this is important for evaluating profiles along transects between the bounds
 # loop through transects and acquire profiles and scattering diagram intensities vs profile numbers
-
-Samp_PN = []
-Samp_PN_imsub = []
-SD_Samp = []
-SD_Samp_imsub = []
-arr_ndarray_Samp = []
-bound_transect_ndarray_Samp = []
-bound_transect_ndarray_Samp_imsub = []
-background_Samp = []
-SD_Samp_imsub_corrected = []
-for counter, element in enumerate(cols_array):
-    arr = np.arange(top[counter], bot[counter], 1).astype(int)
-    bound_transect = np.array(Raw_Sample[arr, element])
-    if np.amax(bound_transect) < 65536:
-        arr_ndarray_Samp.append(arr)
-        Samp_PN.append(element)
-        bound_transect_ndarray_Samp.append(bound_transect)
-        transect_summed = np.sum(bound_transect)
-        SD_Samp.append(transect_summed)
-        bound_transect_imsub = np.array(Corrected_Sample[arr, element]).astype('int') - int(round(np.mean(np.array(Corrected_Sample[arr, element])[0:10])))
-        Samp_PN_imsub.append(element)
-        bound_transect_ndarray_Samp_imsub.append(bound_transect_imsub)
-        transect_summed_imsub = np.sum(bound_transect_imsub)
-        SD_Samp_imsub.append(transect_summed_imsub)
 
 
 # this is important for evaluating profiles along transects between the bounds
@@ -224,7 +304,7 @@ SD_He_imsub_corrected = []
 for counter, element in enumerate(cols_array):
     arr = np.arange(top[counter], bot[counter], 1).astype(int)
     bound_transect = np.array(Raw_He[arr, element])
-    if np.amax(bound_transect) < 65536:
+    if np.amax(bound_transect) < 4095:
         arr_ndarray_He.append(arr)
         He_PN.append(element)
         bound_transect_ndarray_He.append(bound_transect)
@@ -232,8 +312,9 @@ for counter, element in enumerate(cols_array):
         SD_He.append(transect_summed)
         He_PN_imsub.append(element)
         bound_transect_imsub = np.array(Corrected_He[arr, element]).astype('int') - int(round(np.mean(np.array(Corrected_He[arr, element])[0:10])))
-        bound_transect_ndarray_He_imsub.append(bound_transect_imsub)
-        transect_summed_imsub = np.sum(bound_transect_imsub)
+        bound_transect_imsub_z = bound_transect_imsub[bound_transect_imsub < 0] = 0
+        bound_transect_ndarray_He_imsub.append(bound_transect_imsub_z)
+        transect_summed_imsub = np.sum(bound_transect_imsub_z)
         SD_He_imsub.append(transect_summed_imsub)
 
 
@@ -250,7 +331,7 @@ SD_BKG_imsub = []
 for counter, element in enumerate(cols_array):
     arr = np.arange(top[counter], bot[counter], 1).astype(int)
     bound_transect = np.array(Raw_BKG[arr, element])
-    if np.amax(bound_transect) < 65536:
+    if np.amax(bound_transect) < 4095:
         arr_ndarray_BKG.append(arr)
         BKG_PN.append(element)
         bound_transect_ndarray_BKG.append(bound_transect)
@@ -261,6 +342,90 @@ for counter, element in enumerate(cols_array):
         bound_transect_ndarray_BKG_imsub.append(bound_transect_imsub)
         transect_summed_imsub = np.sum(bound_transect_imsub)
         SD_BKG_imsub.append(transect_summed_imsub)
+# this is important for evaluating profiles along transects between the bounds
+# loop through transects and acquire profiles and scattering diagram intensities vs profile numbers
+
+Samp_PN = []
+Samp_PN_imsub = []
+SD_Samp = []
+SD_Samp_imsub = []
+arr_ndarray_Samp = []
+bound_transect_ndarray_Samp = []
+bound_transect_ndarray_Samp_imsub = []
+bound_transect_ndarray_gfit_Samp = []
+bound_transect_ndarray_gfit_Samp_imsub = []
+bound_transect_aoc_array_Samp = []
+bound_transect_aoc_array_Samp_imsub = []
+background_Samp = []
+SD_Samp_gfit = []
+SD_Samp_gfit_bkg_corr = []
+for counter, element in enumerate(cols_array):
+    arr = np.arange(top[counter], bot[counter], 1).astype(int)
+    bound_transect = np.array(Raw_Sample[arr, element]).astype('int')
+    if np.amax(bound_transect) < 4095:
+        idx_max = np.argmax(bound_transect)
+        Samp_PN.append(element)
+        Samp_PN_imsub.append(element)
+        # raw data wrangling
+        arr_ndarray_Samp.append(arr)
+        bound_transect_ndarray_Samp.append(bound_transect)
+        transect_summed = np.sum(bound_transect)
+        SD_Samp.append(transect_summed)
+        # raw data wrangling with background subtraction
+        bound_transect_imsub = np.array(Corrected_Sample[arr, element]).astype('int') - int(round(np.mean(np.array(Corrected_Sample[arr, element])[-5:])))
+        bound_transect_ndarray_Samp_imsub.append(bound_transect_imsub)
+        transect_summed_imsub = np.sum(bound_transect_imsub)
+        SD_Samp_imsub.append(transect_summed_imsub)
+        # gaussian fitting of raw data
+        try:
+            popt, pcov = curve_fit(gaussian, arr, bound_transect_imsub, p0=[bound_transect_imsub[idx_max], arr[idx_max], 5.0, 5.0])
+            gfit = [gaussian(x, *popt) for x in arr]
+            #print(popt)
+            bound_transect_ndarray_gfit_Samp.append(gfit)
+            gfit_sum_Samp = np.sum(gfit)
+            SD_Samp_gfit.append(gfit_sum_Samp)
+            # gaussian fitting of raw data with background correction
+            bound_transect_ndarray_gfit_Samp_imsub.append(gfit - popt[3])
+            gfit_sum_Samp_imsub = np.sum(gfit - popt[3])
+            SD_Samp_gfit_bkg_corr.append(gfit_sum_Samp_imsub)
+        except RuntimeError:
+            gfit = np.empty(len(arr))
+            gfit[:] = np.nan
+            bound_transect_ndarray_gfit_Samp.append(gfit)
+            gfit_sum_Samp = np.nan
+            SD_Samp_gfit.append(gfit_sum_Samp)
+            # gaussian fitting of raw data with background correction
+            bound_transect_ndarray_gfit_Samp_imsub.append(gfit)
+            gfit_sum_Samp_imsub = np.nan
+            SD_Samp_gfit_bkg_corr.append(gfit_sum_Samp_imsub)
+
+'''
+Samp_PN = []
+Samp_PN_imsub = []
+SD_Samp = []
+SD_Samp_imsub = []
+arr_ndarray_Samp = []
+bound_transect_ndarray_Samp = []
+bound_transect_ndarray_Samp_imsub = []
+background_Samp = []
+SD_Samp_imsub_corrected = []
+for counter, element in enumerate(cols_array):
+    arr = np.arange(top[counter], bot[counter], 1).astype(int)
+    bound_transect = np.array(Raw_Sample[arr, element])
+    if np.amax(bound_transect) < 4095:
+        arr_ndarray_Samp.append(arr)
+        Samp_PN.append(element)
+        bound_transect_ndarray_Samp.append(bound_transect)
+        transect_summed = np.sum(bound_transect)
+        SD_Samp.append(transect_summed)
+        bound_transect_imsub = np.array(Corrected_Sample[arr, element]).astype('int') - int(round(np.mean(np.array(Corrected_Sample[arr, element])[0:10])))
+        Samp_PN_imsub.append(element)
+        bound_transect_ndarray_Samp_imsub.append(bound_transect_imsub)
+        transect_summed_imsub = np.sum(bound_transect_imsub)
+        SD_Samp_imsub.append(transect_summed_imsub)
+'''
+
+
 '''
 # this is important for evaluating profiles along transects between the bounds
 # loop through transects and acquire profiles and scattering diagram intensities vs profile numbers
@@ -310,7 +475,7 @@ ax4[1, 1].grid(True)
 ax4[1, 1].set_yscale('log')
 ax4[1, 1].legend(loc=1)
 plt.tight_layout()
-plt.savefig(Path_Save + '/F4_Sample.pdf', format='pdf')
+plt.savefig(Path_Save + '/F4_Sample.png', format='png')
 plt.show()
 
 
@@ -346,24 +511,44 @@ ax5[1, 1].grid(True)
 ax5[1, 1].set_yscale('log')
 ax5[1, 1].legend(loc=1)
 plt.tight_layout()
-plt.savefig(Path_Save + '/F5_N2.pdf', format='pdf')
+plt.savefig(Path_Save + '/F5_N2.png', format='png')
 plt.show()
+
+# columns to theta
+slope = 0.2112
+intercept = -47.972
+# columns to theta
+theta_N2 = (np.array(N2_PN) * slope) + intercept
+print('N2 angular range:', [theta_N2[0], theta_N2[-1]])
+rads_N2 = theta_N2 * pi/180.0
+rads_N2 = rads_N2
+theta_CO2 = (np.array(CO2_PN) * slope) + intercept
+print('CO2 angular range:', [theta_CO2[0], theta_CO2[-1]])
+rads_CO2 = theta_CO2 * pi/180.0
+rads_CO2 = rads_CO2
+print('ROI range', [(slope * cols[0]) + intercept, (slope * cols[1]) + intercept])
 
 # Save Phase Function, the data saved here has no subtractions/corrections applied to them, each is raw signal
 # note the CCD Noise cannot be backed out, as we would have to cover the lens to do it, if at some point we take
 # covered images we could do it...
-DF_Headers = ['Sample Columns', 'Nitrogen Columns', 'Helium Columns', 'Background Columns', 'Background Intensity', 'Helium Intensity', 'Nitrogen Intensity', 'Sample Intensity']
+DF_Headers = ['Sample Columns', 'CO2 Columns', 'N2 Columns', 'He Columns', 'BKG Columns', 'Theta', 'Sample Intensity', 'Sample Intensity Corrected', 'CO2 Intensity', 'CO2 Intensity Corrected', 'N2 Intensity', 'N2 Intensity Corrected', 'He Intensity', 'BKG Intensity']
 DF_S_C = pd.DataFrame(Samp_PN)
+DF_CO2_C = pd.DataFrame(CO2_PN)
 DF_N2_C = pd.DataFrame(N2_PN)
 DF_He_C = pd.DataFrame(He_PN)
-DF_BKG_C= pd.DataFrame(BKG_PN)
+DF_BKG_C = pd.DataFrame(BKG_PN)
+DF_Theta = pd.DataFrame(theta_CO2)
 DF_SD_S = pd.DataFrame(SD_Samp)
+DF_SD_S_C = pd.DataFrame(SD_Samp_imsub)
+DF_SD_CO2 = pd.DataFrame(SD_CO2)
+DF_SD_CO2_C = pd.DataFrame(SD_CO2_imsub)
 DF_SD_N2 = pd.DataFrame(SD_N2)
+DF_SD_N2_C = pd.DataFrame(SD_N2_imsub)
 DF_SD_He = pd.DataFrame(SD_He)
 DF_SD_BKG = pd.DataFrame(SD_BKG)
-PhaseFunctionDF = pd.concat([DF_S_C, DF_N2_C, DF_He_C, DF_BKG_C, DF_SD_S, DF_SD_N2, DF_SD_He, DF_SD_BKG], ignore_index=False, axis=1)
+PhaseFunctionDF = pd.concat([DF_S_C, DF_CO2_C, DF_N2_C, DF_He_C, DF_BKG_C, DF_Theta, DF_SD_S, DF_SD_S_C, DF_SD_CO2, DF_SD_CO2_C, DF_SD_N2, DF_SD_N2_C, DF_SD_He, DF_SD_BKG], ignore_index=False, axis=1)
 PhaseFunctionDF.columns = DF_Headers
-PhaseFunctionDF.to_csv(Path_Save + '/SD_Offline.txt')
+PhaseFunctionDF.to_csv(Path_Save + '/SD_Particle.txt')
 
 
 
@@ -397,44 +582,47 @@ ax6[1, 1].set_title('Profiles Compared')
 ax6[1, 1].grid(True)
 ax6[1, 1].legend(loc=1)
 plt.tight_layout()
-plt.savefig(Path_Save + '/F6_Profiles.pdf', format='pdf')
+plt.savefig(Path_Save + '/F6_Profiles.png', format='png')
 plt.show()
 
 
 f7, ax7 = plt.subplots(1, 2, figsize=(12, 7))
 ax7[0].plot(Samp_PN, SD_Samp, linestyle='-', color='black', label='Raw 900nm PSL Scattering')
-ax7[0].plot(N2_PN, SD_N2, linestyle='-', color='green', label='N2 Scattering')
+ax7[0].plot(CO2_PN, SD_CO2, linestyle='-', color='red', label='CO2 Scattering')
+ax7[0].plot(N2_PN, SD_N2, linestyle='-', color='blue', label='N2 Scattering')
 ax7[0].plot(He_PN, SD_He, linestyle='-', color='cyan', label='He Scattering')
-ax7[0].plot(BKG_PN, SD_BKG, linestyle='-', color='red', label='Background Scattering')
-ax7[1].semilogy(Samp_PN, SD_Samp, linestyle='-', color='black', label='Raw 900nm PSL Scattering')
-ax7[1].semilogy(N2_PN, SD_N2, linestyle='-', color='green', label='N2 Scattering')
-ax7[1].semilogy(He_PN, SD_He, linestyle='-', color='cyan', label='He Scattering')
-ax7[1].semilogy(BKG_PN, SD_BKG, linestyle='-', color='red', label='Background Scattering')
+ax7[0].plot(BKG_PN, SD_BKG, linestyle='-', color='green', label='Background Scattering')
 ax7[0].set_title('Scattering Contributions to Raw Sample Scattering Diagram')
 ax7[0].set_ylabel('Intensity (DN)')
 ax7[0].set_xlabel('Profile Number (Column Number)')
 ax7[0].grid(True)
 ax7[0].legend(loc=1)
+ax7[1].semilogy(Samp_PN, SD_Samp, linestyle='-', color='black', label='Raw 900nm PSL Scattering')
+ax7[1].semilogy(CO2_PN, SD_CO2, linestyle='-', color='red', label='CO2 Scattering')
+ax7[1].semilogy(N2_PN, SD_N2, linestyle='-', color='blue', label='N2 Scattering')
+ax7[1].semilogy(He_PN, SD_He, linestyle='-', color='cyan', label='He Scattering')
+ax7[1].semilogy(BKG_PN, SD_BKG, linestyle='-', color='green', label='Background Scattering')
 ax7[1].set_title('Scattering Contributions to Raw Sample Scattering Diagram')
 ax7[1].set_ylabel('Intensity (DN)')
 ax7[1].set_xlabel('Profile Number (Column Number)')
 ax7[1].grid(True)
 ax7[1].legend(loc=1)
 plt.tight_layout()
-plt.savefig(Path_Save + '/F7_Contributions.pdf', format='pdf')
+plt.savefig(Path_Save + '/F7_Contributions.png', format='png')
 plt.show()
 
 # we did not do a semilogy plot here, y data cannot have zeros in it! log of zero is not defined!!!
 f8, ax8 = plt.subplots(figsize=(20, 7))
 ax8.plot(Samp_PN_imsub, SD_Samp_imsub, linestyle='-', color='black', label='PSL Scattering - N2 Scattering')
-ax8.plot(N2_PN_imsub, SD_N2_imsub, linestyle='-', color='green', label='$N_2$ Scattering - He Scattering')
+ax8.plot(CO2_PN_imsub, SD_CO2_imsub, linestyle='-', color='red', label='$N_2$ Scattering - He Scattering')
+ax8.plot(N2_PN_imsub, SD_N2_imsub, linestyle='-', color='blue', label='$N_2$ Scattering - He Scattering')
 ax8.plot(He_PN_imsub, SD_He_imsub, linestyle='-', color='cyan', label='He Scattering - Background')
-ax8.plot(BKG_PN_imsub, SD_BKG_imsub, linestyle='-', color='red', label='Background')
+ax8.plot(BKG_PN_imsub, SD_BKG_imsub, linestyle='-', color='green', label='Background')
 ax8.set_title('Corrected Scattering Diagram')
 ax8.set_ylabel('Intensity (DN)')
 ax8.set_xlabel('Profile Number (Column Number)')
 ax8.grid(True)
 ax8.legend(loc=1)
 plt.tight_layout()
-plt.savefig(Path_Save + '/F8_Contributions_Corr.pdf', format='pdf')
+plt.savefig(Path_Save + '/F8_Contributions_Corr.png', format='png')
 plt.show()

@@ -26,7 +26,7 @@ def LogNormal(diam, mu, gsd):
 def Gaussian(x, mu, sigma):
    return 1/(sigma * np.sqrt(2 * np.pi)) * np.exp(- (x - mu) ** 2 / (2 * sigma ** 2))
 # plot
-size_axis = np.arange(d-d, d*3, 1)
+size_axis = np.arange(d-d + 1, d*3, 1)
 print(sp.integrate.simps(Gaussian(size_axis, mu=d, sigma=sigma_g), size_axis, dx=1))
 f, ax = plt.subplots(figsize=(6, 6))
 #ax.plot(size_axis, [LogNormal(element, mu=d, gsd=sigma_g) for element in size_axis])

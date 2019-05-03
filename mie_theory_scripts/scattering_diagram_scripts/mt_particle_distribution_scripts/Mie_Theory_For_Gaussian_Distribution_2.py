@@ -20,15 +20,15 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import pchip_interpolate
 from scipy.signal import savgol_filter
 
-Save_Directory = '/home/austen/Documents/'
-Data_Directory = '/home/austen/Documents/1-23-2019_Analysis/SD_Offline_600.txt'
+Save_Directory = '/home/austen/Documents/04-16-2019 Analysis'
+Data_Directory = '/home/austen/Documents/04-16-2019 Analysis/SD_Particle_600nmPSL.txt'
 
 # import experimental data
 #Data = pd.read_csv(Data_Directory, sep=',', header=0)
 # Particle diameter, geometric mean of the particle diameter
-d = 800
+d = 600
 # particle size standard deviation
-sigma_s = 5.6
+sigma_s = 10.0
 # define Gaussian function
 def Gaussian(x, mu, sigma):
    return 1/(sigma * np.sqrt(2 * np.pi)) * np.exp(- (x - mu) ** 2 / (2 * sigma ** 2))
@@ -549,4 +549,4 @@ Mie_Data['SU Gienger 2017'] = SU9
 
 
 
-Mie_Data.to_csv(Save_Directory + '/PSL800nm_MieTheory.txt')
+Mie_Data.to_csv(Save_Directory + '/PSL600nm_MieTheory.txt')

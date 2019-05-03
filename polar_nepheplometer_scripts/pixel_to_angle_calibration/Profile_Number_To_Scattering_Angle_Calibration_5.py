@@ -53,29 +53,36 @@ Mie_900_Angles_Ma = np.asarray(Mie_900_SD_Data['Theta Matheson 1957'])
 Mie_900_Angles_Greenslade = np.asarray(Mie_900_SD_Data['Theta Greenslade 2017'])
 
 # import experiment data for 600nm PSL
-Exp_600_SD_Directory = '/home/austen/Documents/01-23-2019_Analysis/SD_Offline_600.txt'
+Exp_600_SD_Directory = '/home/austen/Documents/04-16-2019 Analysis/Phase Functions 2/SD_Particle_600nmPSL.txt'
 Exp_600_SD_Data = pd.read_csv(Exp_600_SD_Directory, delimiter=',', header=0)
-Ray_600_Int = Exp_600_SD_Data['Nitrogen Intensity']
-Ray_600_PN = np.asarray(Exp_600_SD_Data['Columns'])
-PSL_600_Intensity = np.asarray(Exp_600_SD_Data['Sample Intensity'] - Exp_600_SD_Data['Nitrogen Intensity'])
-PSL_600_PN = np.asarray(Exp_600_SD_Data['Columns']) # the actual profile number needs to be added into the labview code, it is in the Python Offline Analysis!
-
+Ray_600_Int = Exp_600_SD_Data['N2 Intensity']
+Ray_600_PN = np.asarray(Exp_600_SD_Data['N2 Columns'])
+#PSL_600_Intensity = np.asarray(Exp_600_SD_Data['Sample Intensity'] - Exp_600_SD_Data['N2 Intensity'])
+PSL_600_Intensity = np.asarray(Exp_600_SD_Data['Sample Intensity Corrected'])
+PSL_600_Intensity = PSL_600_Intensity[~np.isnan(PSL_600_Intensity)]
+PSL_600_PN = np.asarray(Exp_600_SD_Data['Sample Columns']) # the actual profile number needs to be added into the labview code, it is in the Python Offline Analysis!
+PSL_600_PN = PSL_600_PN[~np.isnan(PSL_600_PN)]
+print(PSL_600_Intensity)
 # import experiment data for 800nm PSL
-Exp_800_SD_Directory = '/home/austen/Documents/01-23-2019_Analysis/SD_Offline_800.txt'
+Exp_800_SD_Directory = '/home/austen/Documents/04-16-2019 Analysis/Phase Functions 2/SD_Particle_800nmPSL.txt'
 Exp_800_SD_Data = pd.read_csv(Exp_800_SD_Directory, delimiter=',', header=0)
-Ray_800_Int = Exp_800_SD_Data['Nitrogen Intensity']
-Ray_800_PN = np.asarray(Exp_800_SD_Data['Columns'])
-PSL_800_Intensity = np.asarray(Exp_800_SD_Data['Sample Intensity'] - Exp_800_SD_Data['Nitrogen Intensity'])
-PSL_800_PN = np.asarray(Exp_800_SD_Data['Columns']) # the actual profile number needs to be added into the labview code, it is in the Python Offline Analysis!
-
+Ray_800_Int = Exp_800_SD_Data['N2 Intensity']
+Ray_800_PN = np.asarray(Exp_800_SD_Data['N2 Columns'])
+#PSL_800_Intensity = np.asarray(Exp_800_SD_Data['Sample Intensity'] - Exp_800_SD_Data['N2 Intensity'])
+PSL_800_Intensity = np.asarray(Exp_800_SD_Data['Sample Intensity Corrected'])
+PSL_800_Intensity = PSL_800_Intensity[~np.isnan(PSL_800_Intensity)]
+PSL_800_PN = np.asarray(Exp_800_SD_Data['Sample Columns']) # the actual profile number needs to be added into the labview code, it is in the Python Offline Analysis!
+PSL_800_PN = PSL_800_PN[~np.isnan(PSL_800_PN)]
 # import experiment data for 900nm PSL
-Exp_900_SD_Directory = '/home/austen/Documents/01-23-2019_Analysis/SD_Offline_900.txt'
+Exp_900_SD_Directory = '/home/austen/Documents/04-16-2019 Analysis/Phase Functions 2/SD_Particle_900nmPSL.txt'
 Exp_900_SD_Data = pd.read_csv(Exp_900_SD_Directory, delimiter=',', header=0)
-Ray_900_Int = Exp_900_SD_Data['Nitrogen Intensity']
-Ray_900_PN = np.asarray(Exp_900_SD_Data['Columns'])
-PSL_900_Intensity = np.asarray(Exp_900_SD_Data['Sample Intensity'] - Exp_900_SD_Data['Nitrogen Intensity'])
-PSL_900_PN = Exp_900_SD_Data['Columns'] # the actual profile number needs to be added into the labview code, it is in the Python Offline Analysis!
-
+Ray_900_Int = Exp_900_SD_Data['N2 Intensity']
+Ray_900_PN = np.asarray(Exp_900_SD_Data['N2 Columns'])
+#PSL_900_Intensity = np.asarray(Exp_900_SD_Data['Sample Intensity'] - Exp_900_SD_Data['N2 Intensity'])
+PSL_900_Intensity = np.asarray(Exp_900_SD_Data['Sample Intensity Corrected'])
+PSL_900_Intensity = PSL_900_Intensity[~np.isnan(PSL_900_Intensity)]
+PSL_900_PN = Exp_900_SD_Data['Sample Columns'] # the actual profile number needs to be added into the labview code, it is in the Python Offline Analysis!
+PSL_900_PN = PSL_900_PN[~np.isnan(PSL_900_PN)]
 # This is setting all the angle data to come from a specific group
 Mie_600_Angles = Mie_600_Angles_Greenslade
 Mie_800_Angles = Mie_800_Angles_Greenslade
@@ -290,6 +297,9 @@ drop = [0]
 for index in sorted(drop, reverse=True):
     del Exp_900_Local_Features[index]
 Exp_900_Local_Features = sorted(Exp_900_Local_Features)
+# had to add these in when the last local minima is too shallow
+Exp_900_Local_Features.append(636)
+Exp_900_Local_Features.append(696)
 Exp_900_Local_PN = [PSL_900_PN[x] for x in Exp_900_Local_Features]
 print('All exp local features pn: \n', Exp_900_Local_PN)
 print('Kept local features: ', Exp_900_Local_Features)
@@ -299,7 +309,6 @@ for element in Exp_900_Local_Features:
     Features_900_PN.append(PSL_900_PN[element])
 # note Features PN corresponds to the actual index of the CCD, (200 ~ 1000)
 print('Profile Numbers @ exp local features: ', Features_900_PN)
-
 # pull Mie 900nm PSL intensities from local max and minima, create arrays
 Mie_900_Intensities_at_Features = [Mie_900_Intensity_Var[element] for element in Mie_900_Local_Features]
 # element in Exp_Local_Features or Features_PN
@@ -503,7 +512,7 @@ All_Data.to_csv(Save_Directory + '/Calibrated_Data_PSL900nm.txt')
 # plot calibrated PSL 600nm data against theory
 f6, ax6 = plt.subplots(figsize=(12, 6))
 pt0, = ax6.plot(Mie_600_Spline_Angles, Mie_600_Spline_Intensity, color='red', linestyle='-', label='Mie 600nm PSL Spline vs. Theta')
-pt1, = ax6.plot(PSL_600_Profiles_to_Angles, PSL_600_Savgol * Ratio_900_Avg * 0.06, color='purple', linestyle='-', label='Exp 600nm PSL Savgol Scaled vs. Theta')
+pt1, = ax6.plot(PSL_600_Profiles_to_Angles, PSL_600_Savgol * Ratio_900_Avg * 0.30, color='purple', linestyle='-', label='Exp 600nm PSL Savgol Scaled vs. Theta')
 pt2, = ax6.plot(PSL_600_Profiles_to_Angles, PSL_600_Savgol, color='green', linestyle='-', label='Exp 600nm PSL Savgol vs. Theta')
 ax6.set_xlabel('Angles (\u00B0)', color='red')
 ax6.set_ylabel('Intensity')
@@ -531,7 +540,7 @@ plt.show()
 # plot calibrated PSL 800nm data against theory
 f7, ax7 = plt.subplots(figsize=(12, 6))
 pt0, = ax7.plot(Mie_800_Spline_Angles, Mie_800_Spline_Intensity, color='red', linestyle='-', label='Mie 800nm PSL Spline vs. Theta')
-pt1, = ax7.plot(PSL_800_Profiles_to_Angles, PSL_800_Savgol * Ratio_900_Avg * 0.16, color='purple', linestyle='-', label='Exp 800nm PSL Savgol Scaled vs. Theta')
+pt1, = ax7.plot(PSL_800_Profiles_to_Angles, PSL_800_Savgol * Ratio_900_Avg * 0.36, color='purple', linestyle='-', label='Exp 800nm PSL Savgol Scaled vs. Theta')
 pt2, = ax7.plot(PSL_800_Profiles_to_Angles, PSL_800_Savgol, color='green', linestyle='-', label='Exp 800nm PSL Savgol vs. Theta')
 ax7.set_xlabel('Angles (\u00B0)', color='red')
 ax7.set_ylabel('Intensity')
