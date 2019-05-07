@@ -39,25 +39,42 @@ arr_pn = []
 arr_pf = []
 for counter, element in enumerate(Bright_CO2_PF):
     if element <= np.amax(Bright_CO2_PF_UND):
-        print(element)
+        #print(element)
         arr_pn.append(Bright_CO2_PN[counter])
         arr_pf.append(element)
 
 
-def rayleigh_scattering(a, b):
-    return a * b * (1 + np.square(np.cos(np.linspace(0.0, 180.0, 1.0) * (180.0/pi))))
+def rayleigh_scattering(l, xi, xf, a, b):
+    return a * b * (1 + np.square(np.cos(np.linspace(xi * (pi / 180.0), xf * (pi / 180.0), l))))
 
+print(Bright_CO2_PN_Corr.shape)
+Bright_CO2_PF = Bright_CO2_PF[100:700]
+Bright_CO2_PF_UND = Bright_CO2_PF_UND[300:1000]
+
+popt_dist, pcov_dist = curve_fit(rayleigh_scattering, len(Bright_CO2_PF), np.array(Bright_CO2_PF), p0=[50, 150, 60, 60])
+popt_und, pcov_und = curve_fit(rayleigh_scattering, len(Bright_CO2_PF_UND), np.array(Bright_CO2_PF_UND), p0=[50, 150, 60, 60])
+print(popt_dist)
+
+x_dist = np.linspace(popt_dist[0], popt_dist[1], len(Bright_CO2_PF)) * (pi / 180.0)
+x_und = np.linspace(popt_und[0], popt_und[1], len(Bright_CO2_PF_UND)) * (pi / 180.0)
+print(x_dist)
+
+y_dist = np.array(rayleigh_scattering(len(Bright_CO2_PF), *popt_dist))
+y_und = np.array(rayleigh_scattering(len(Bright_CO2_PF_UND), *popt_und))
+print(y_dist)
 
 f0, ax0 = plt.subplots(figsize=(12, 6))
-ax0.plot(Bright_CO2_PN_Corr, Bright_CO2_PF, linestyle='-', color='red', label='CO2 Scattering Distorted')
-ax0.plot(Bright_CO2_PN_UND, Bright_CO2_PF_UND, linestyle='-', color='blue', label='CO2 Scattering Undistorted')
+ax0.plot(x_dist * (180.0/pi), Bright_CO2_PF, linestyle='-', color='red', label='CO2 Scattering Distorted')
+ax0.plot(x_dist * (180.0/pi), y_dist, linestyle='--', color='orange', label='CO2 Scattering Distorted \n Fit Params: a= ' + str(popt_und[0]) + ' b= ' + str(popt_dist[1]) + ' c= ' + str(popt_dist[2]) + ' d= ' + str(popt_dist[3]))
+ax0.plot(x_und * (180.0/pi), Bright_CO2_PF_UND, linestyle='-', color='blue', label='CO2 Scattering Undistorted')
+ax0.plot(x_und * (180.0/pi), y_und, linestyle='--', color='cyan', label='CO2 Scattering Distorted \n Fit Params: a= ' + str(popt_und[0]) + ' b= ' + str(popt_und[1]) + ' c= ' + str(popt_und[2]) + ' d= ' + str(popt_und[3]))
 ax0.set_title('CO2 Rayleigh Scattering')
 ax0.set_ylabel('Intensity (DN)')
-ax0.set_xlabel('Profile Number (Column Number)')
+ax0.set_xlabel('\u0398')
 ax0.grid(True)
 ax0.legend(loc=1)
 plt.tight_layout()
-f0.savefig(save_directory + 'Dist_V_Undist.png', format='png')
+f0.savefig(save_directory + '/Dist_V_Undist.png', format='png')
 plt.show()
 
 '''

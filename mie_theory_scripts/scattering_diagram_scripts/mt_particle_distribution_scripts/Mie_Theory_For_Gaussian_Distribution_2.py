@@ -7,7 +7,7 @@ diagram for Parallel, Perpendicular, and Unpolarized Light!
 PSLs:
 Mean    Mean Uncertainty     Size Dist Sigma
 600nm     9nm                     10.0nm
-800nm     14nm                    5.6nm
+803nm     14nm                    5.6nm
 903nm     12nm                    4.1nm
 '''
 
@@ -20,13 +20,14 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import pchip_interpolate
 from scipy.signal import savgol_filter
 
-Save_Directory = '/home/austen/Documents/04-16-2019 Analysis'
-Data_Directory = '/home/austen/Documents/04-16-2019 Analysis/SD_Particle_600nmPSL.txt'
+Save_Directory = '/home/austen/Documents/Mie'
+Save_Mie = Save_Directory + '/PSL610nm_MieTheory.txt'
+#Data_Directory = '/home/austen/Documents/04-16-2019 Analysis/SD_Particle_803nmPSL.txt'
 
 # import experimental data
 #Data = pd.read_csv(Data_Directory, sep=',', header=0)
 # Particle diameter, geometric mean of the particle diameter
-d = 600
+d = 610
 # particle size standard deviation
 sigma_s = 10.0
 # define Gaussian function
@@ -549,4 +550,4 @@ Mie_Data['SU Gienger 2017'] = SU9
 
 
 
-Mie_Data.to_csv(Save_Directory + '/PSL600nm_MieTheory.txt')
+Mie_Data.to_csv(Save_Mie)
