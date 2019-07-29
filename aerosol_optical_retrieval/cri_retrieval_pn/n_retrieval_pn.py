@@ -9,7 +9,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from math import log, sqrt, pi
-from scipy import 
+from scipy.stats import chisquare
+path = '/home/austen/Desktop/'
 # generate artificial data, this is the creation of the log normal distribution
 # total particle concentration
 concentration = 1000
@@ -79,19 +80,51 @@ ax2.grid(True)
 plt.show()
 
 # testing retrieval with data generated from mie theory with added noise
-cri_n_space = np.arange(1.5, 1.65, .01)
-cri_k_space = np.arange(0.0j, 0.1j, .01j)
+cri_n_space = np.arange(1.54, 1.59, .01)
+cri_k_space = np.arange(0.0, 0.1, 0.02)
 pf_2darray_R = []
-
+m_R_space = []
+pf_space = []
+chi_square_space = []
+p_val_space = []
 for n in cri_n_space:
     for k in cri_k_space:
-        m_R = n + k
+        m_R = complex(n, k)
+        print(m_R)
+        m_R_space.append(m_R)
         for element in sizes:
             theta_R, SL_R, SR_R, SU_R = ps.ScatteringFunction(m_R, w_n, element, nMedium=1.0, minAngle=0, maxAngle=180, angularResolution=0.5, space='theta', angleMeasure='degrees', normalization=None)
             pf_2darray_R.append(SU_R)
         pf_average_R = np.average(pf_2darray_R, axis=0, weights=log_dist)
+        pf_2darray_R = []
+        pf_space.append(pf_average_R)
+        chi_val, p_val = chisquare(f_obs=pf_average, f_exp=pf_average_R)
+        chi_square_space.append(chi_val)
+        p_val_space.append(p_val)
 
+'''
+df1 = pd.DataFrame()
+df['CRI'] = m_R_space
+df1['Chi Square Statistic'] = chi_square_space
+df1['P Val'] = p_val_space
+df2['Theta'] = theta_R
+df2['Phase Function Space'] = pf_space
+df1.to_csv(path + 'data.txt')
+'''
 
-
+f3, ax3 = plt.subplots(1, 2, figsize=(12, 12))
+for counter, element in enumerate(pf_space):
+    ax3[0].plot(theta_R, element, label='PF @ m = ' + str(m_R_space[counter]))
+ax3[0].set_title('Phase Functions at Various Refractive Indices')
+ax3[0].set_xlabel('\u03b8 (\u0b00)')
+ax3[0].set_ylabel('Intensity')
+ax3[0].legend(loc=1)
+ax3[0].grid(True)
+ax3[1].plot(m_R_space, chi_square_space, color='black', marker='o', ls=' ', label='Chi stat. vs. m')
+ax3[1].set_xlabel('Complex Refractive Index')
+ax3[1].set_ylabel('Chi Square Stat.')
+ax3[1].legend(loc=1)
+ax3[1].grid(True)
+plt.show()
 
 
