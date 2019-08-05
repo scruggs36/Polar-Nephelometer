@@ -67,11 +67,11 @@ def Retrieval_v0(path, number_density, geom_stdev, diameter, sizes, wavelength, 
         # calculate weighted average of phase function data based on weights determined from the lognormal distribution
         pf_average = np.average(pf_2darray, axis=0, weights=log_dist)
         # creating noise in phase functions
-        #noise_mu = np.mean(0)
-        #noise_sigma = s
-        #noise = np.random.normal(noise_mu, noise_sigma, len(pf_average))
+        noise_mu = np.mean(0)
+        noise_sigma = s
+        noise = np.random.normal(noise_mu, noise_sigma, len(pf_average))
         # Noise up the original signal
-        #pf_average = np.add(pf_average, noise)
+        pf_average = np.add(pf_average, noise)
         # plot phase functions that comprise the weighted average phase function
         f1, ax1 = plt.subplots(1, 2, figsize=(6, 12))
         for counter, element in enumerate(pf_2darray):
@@ -103,10 +103,10 @@ def Retrieval_v0(path, number_density, geom_stdev, diameter, sizes, wavelength, 
                     pf_2darray_R.append(SU_R)
                 pf_average_R = np.average(pf_2darray_R, axis=0, weights=log_dist)
                 # the std will be different when using real data, for now we set it to the difference between data and model at each point
-                #std = np.abs(pf_average - pf_average_R)
+                std = np.abs(pf_average - pf_average_R)
                 # chi square = residual divided by standard deviation at each angle, we call it chi square as the is value has a chi square distribution, but it is not a chi square statistic
-                #chisq = np.sum((pf_average - pf_average_R)**2 / std)
-                chisq = np.sum((pf_average - pf_average_R) ** 2)
+                chisq = np.sum((pf_average - pf_average_R)**2 / std)
+                #chisq = np.sum((pf_average - pf_average_R) ** 2)
                 pf_arr.append(pf_average_R)
                 chi_arr.append(chisq)
                 pf_2darray_R = []
@@ -175,12 +175,12 @@ m = 1.59 + 0.0j
 # size array
 size_array = np.arange(700, 1110, 10)
 # generate phase function data
-noise_sigma_array = [0.1]
-#noise_sigma_array = np.arange(0.1, 3.0, 0.5)
+#noise_sigma_array = [0.1]
+noise_sigma_array = np.arange(0.1, 3.0, 0.1)
 # testing retrieval with data generated from mie theory with added noise
-cri_n_space = np.arange(1.58, 1.62, .01)
+cri_n_space = np.arange(1.5, 1.7, .01)
 #print(len(cri_n_space))
-cri_k_space = np.arange(0.0, 0.2, 0.02)
+cri_k_space = np.arange(0.0, 0.2, 0.01)
 #print(len(cri_k_space))
 
 Retrieval_v0(path=py_path, number_density=concentration, geom_stdev=sigma_g, diameter=d, sizes=size_array, wavelength=w_n, m_known=m,  added_noise_array=noise_sigma_array, n_space=cri_n_space, k_space=cri_k_space)
