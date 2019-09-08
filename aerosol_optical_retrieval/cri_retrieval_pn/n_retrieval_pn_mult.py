@@ -161,7 +161,7 @@ def Retrieval_v0(path, number_density, geom_stdev, diameter, sizes, wavelength, 
 
 
 
-py_path = 'Data/Mult_Noise/'
+py_path = 'Data/Mult_Noise_HiRes/'
 # total particle concentration
 concentration = 1000
 # geometric standard deviation
@@ -178,9 +178,9 @@ size_array = np.arange(700, 1110, 10)
 #noise_sigma_array = [0.1]
 noise_sigma_array = np.arange(0.1, 50.0, 5.0)
 # testing retrieval with data generated from mie theory with added noise
-cri_n_space = np.arange(1.5, 1.7, .01)
+cri_n_space = np.arange(1.5, 1.7, .001)
 #print(len(cri_n_space))
-cri_k_space = np.arange(0.0, 0.2, 0.01)
+cri_k_space = np.arange(0.0, 0.2, 0.001)
 #print(len(cri_k_space))
 
 Retrieval_v0(path=py_path, number_density=concentration, geom_stdev=sigma_g, diameter=d, sizes=size_array, wavelength=w_n, m_known=m,  added_noise_array=noise_sigma_array, n_space=cri_n_space, k_space=cri_k_space)

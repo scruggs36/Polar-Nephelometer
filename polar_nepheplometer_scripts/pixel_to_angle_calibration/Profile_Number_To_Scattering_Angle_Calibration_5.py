@@ -21,7 +21,7 @@ from matplotlib.ticker import MultipleLocator
 # import N2 Rayleigh scattering data
 Save_Directory = '/home/austen/Documents/'
 Fig_Directory = '/home/austen/Documents/' # save figures directory
-
+'''
 # import mie data and format into intensities, angles, and profile numbers into separate arrays
 Mie_600_SD_Directory = '/home/austen/Documents/01-23-2019_Analysis/PSL600nm_MieTheory_2.txt'
 Mie_600_SD_Data = pd.read_csv(Mie_600_SD_Directory, delimiter=',', header=0)
@@ -41,7 +41,7 @@ Mie_800_Intensity_Greenslade = np.asarray(Mie_800_SD_Data['SU Greenslade 2017'])
 Mie_800_Angles_Matheson = np.asarray(Mie_800_SD_Data['Theta Matheson 1957'])
 Mie_800_Angles_Ma = np.asarray(Mie_800_SD_Data['Theta Ma 2003'])
 Mie_800_Angles_Greenslade = np.asarray(Mie_800_SD_Data['Theta Greenslade 2017'])
-
+'''
 # import mie data and format into intensities, angles, and profile numbers into separate arrays
 Mie_900_SD_Directory = '/home/austen/Documents/01-23-2019_Analysis/PSL900nm_MieTheory_2.txt'
 Mie_900_SD_Data = pd.read_csv(Mie_900_SD_Directory, delimiter=',', header=0)
@@ -51,7 +51,7 @@ Mie_900_Intensity_Greenslade = np.asarray(Mie_900_SD_Data['SU Greenslade 2017'])
 Mie_900_Angles_Matheson = np.asarray(Mie_900_SD_Data['Theta Matheson 1957'])
 Mie_900_Angles_Ma = np.asarray(Mie_900_SD_Data['Theta Matheson 1957'])
 Mie_900_Angles_Greenslade = np.asarray(Mie_900_SD_Data['Theta Greenslade 2017'])
-
+'''
 # import experiment data for 600nm PSL
 Exp_600_SD_Directory = '/home/austen/Documents/04-16-2019 Analysis/Phase Functions 2/SD_Particle_600nmPSL.txt'
 Exp_600_SD_Data = pd.read_csv(Exp_600_SD_Directory, delimiter=',', header=0)
@@ -73,6 +73,7 @@ PSL_800_Intensity = np.asarray(Exp_800_SD_Data['Sample Intensity Corrected'])
 PSL_800_Intensity = PSL_800_Intensity[~np.isnan(PSL_800_Intensity)]
 PSL_800_PN = np.asarray(Exp_800_SD_Data['Sample Columns']) # the actual profile number needs to be added into the labview code, it is in the Python Offline Analysis!
 PSL_800_PN = PSL_800_PN[~np.isnan(PSL_800_PN)]
+'''
 # import experiment data for 900nm PSL
 Exp_900_SD_Directory = '/home/austen/Documents/04-16-2019 Analysis/Phase Functions 2/SD_Particle_900nmPSL.txt'
 Exp_900_SD_Data = pd.read_csv(Exp_900_SD_Directory, delimiter=',', header=0)
