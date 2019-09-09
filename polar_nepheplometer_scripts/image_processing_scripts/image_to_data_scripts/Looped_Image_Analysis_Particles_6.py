@@ -23,11 +23,11 @@ import os
 #Path_Bright_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
 
 # Sample images directory
-Path_Samp_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-09-06/PSL/txt/0_degree'
+Path_Samp_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-09-08/PSL/900nm_windows_on/txt'
 # Rayleigh images directories
-Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-09-06/N2/txt/0_degree'
+Path_N2_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-09-08/N2/txt'
 # save directory
-Path_Save = '/home/austen/Desktop/2019-09-06_Analysis'
+Path_Save = '/home/sm3/Desktop/2019-09-08_Analysis'
 
 
 

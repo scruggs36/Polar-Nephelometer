@@ -22,7 +22,7 @@ from math import sqrt, log, pi
 from matplotlib.ticker import MultipleLocator
 
 # import N2 Rayleigh scattering data
-Save_Directory = '/home/sm3/Desktop/'
+Save_Directory = '/home/sm3/Desktop/2019-09-08_Analysis/'
 
 
 
@@ -273,7 +273,8 @@ pf_average = []
 pf_2darray = []
 mie_data = []
 
-# import mie data and format into intensities, angles, and profile numbers into separate arrays
+
+# calculate weighted average of phase function data based on weights determined from the lognormal distribution
 for counter_0, m_i in enumerate(m_array):
     group = groups[counter_0]
     for counter_1, element_1 in enumerate(size_array):
@@ -282,19 +283,19 @@ for counter_0, m_i in enumerate(m_array):
     pf_average = np.average(pf_2darray, axis=0, weights=log_dist)
     mie_data.append([group, m_i, pf_average])
     pf_2darray = []
-# calculate weighted average of phase function data based on weights determined from the lognormal distribution
+
+
+# find all local maxima and minima in the 900nm PSL Mie scattering diagram
 mie_df = np.array(mie_data)
-max_min_array = []
+mie_max_min_array = []
 for counter, element in enumerate(m_array):
-    maximum = np.argmax(mie_data[counter][2], axis=0)
-    minimum = np.argmin(mie_data[counter][2], axis=0)
-    local_max = argrelmax(mie_data[counter][2], axis=0)
-    local_min = argrelmin(mie_data[counter][2], axis=0)
-    max_min_idx = np.sort(np.concatenate((local_max, local_min), axis=None))
-    max_min_array.append(max_min_idx)
+    mie_maximum = np.argmax(mie_data[counter][2], axis=0)
+    mie_minimum = np.argmin(mie_data[counter][2], axis=0)
+    mie_local_max = argrelmax(mie_data[counter][2], axis=0)
+    mie_local_min = argrelmin(mie_data[counter][2], axis=0)
+    mie_max_min_idx = np.sort(np.concatenate((mie_local_max, mie_local_min), axis=None))
+    mie_max_min_array.append(mie_max_min_idx)
     max_min_idx = []
-
-
 
 
 Mie_PF_Matheson = mie_data[0][2]
@@ -309,45 +310,44 @@ Mie_PF_Greenslade = mie_data[8][2]
 Mie_PF_Gienger = mie_data[9][2]
 
 
-
-
-theta_max_min_avg = np.mean([[theta_mie[x] for x in max_min_array[0]], [theta_mie[x] for x in max_min_array[1]], [theta_mie[x] for x in max_min_array[2]], [theta_mie[x] for x in max_min_array[3]], [theta_mie[x] for x in max_min_array[4]], [theta_mie[x] for x in max_min_array[5]], [theta_mie[x] for x in max_min_array[6]], [theta_mie[x] for x in max_min_array[7]], [theta_mie[x] for x in max_min_array[8]], [theta_mie[x] for x in max_min_array[9]]], axis=0)
-pf_max_min_avg = np.mean([[Mie_PF_Matheson[x] for x in max_min_array[0]], [Mie_PF_Bateman[x] for x in max_min_array[1]], [Mie_PF_Nikalov[x] for x in max_min_array[2]], [Mie_PF_Ma[x] for x in max_min_array[3]], [Mie_PF_Sultanova[x] for x in max_min_array[4]], [Mie_PF_Kasarova[x] for x in max_min_array[5]], [Mie_PF_Miles[x] for x in max_min_array[6]], [Mie_PF_Jones[x] for x in max_min_array[7]], [Mie_PF_Greenslade[x] for x in max_min_array[8]], [Mie_PF_Gienger[x] for x in max_min_array[9]]], axis=0)
-theta_max_min_std = np.std([[theta_mie[x] for x in max_min_array[0]], [theta_mie[x] for x in max_min_array[1]], [theta_mie[x] for x in max_min_array[2]], [theta_mie[x] for x in max_min_array[3]], [theta_mie[x] for x in max_min_array[4]], [theta_mie[x] for x in max_min_array[5]], [theta_mie[x] for x in max_min_array[6]], [theta_mie[x] for x in max_min_array[7]], [theta_mie[x] for x in max_min_array[8]], [theta_mie[x] for x in max_min_array[9]]], axis=0)
-pf_max_min_std = np.std([[Mie_PF_Matheson[x] for x in max_min_array[0]], [Mie_PF_Bateman[x] for x in max_min_array[1]], [Mie_PF_Nikalov[x] for x in max_min_array[2]], [Mie_PF_Ma[x] for x in max_min_array[3]], [Mie_PF_Sultanova[x] for x in max_min_array[4]], [Mie_PF_Kasarova[x] for x in max_min_array[5]], [Mie_PF_Miles[x] for x in max_min_array[6]], [Mie_PF_Jones[x] for x in max_min_array[7]], [Mie_PF_Greenslade[x] for x in max_min_array[8]], [Mie_PF_Gienger[x] for x in max_min_array[9]]], axis=0)
+theta_max_min_avg = np.mean([[theta_mie[x] for x in mie_max_min_array[0]], [theta_mie[x] for x in mie_max_min_array[1]], [theta_mie[x] for x in mie_max_min_array[2]], [theta_mie[x] for x in mie_max_min_array[3]], [theta_mie[x] for x in mie_max_min_array[4]], [theta_mie[x] for x in mie_max_min_array[5]], [theta_mie[x] for x in mie_max_min_array[6]], [theta_mie[x] for x in mie_max_min_array[7]], [theta_mie[x] for x in mie_max_min_array[8]], [theta_mie[x] for x in mie_max_min_array[9]]], axis=0)
+pf_max_min_avg = np.mean([[Mie_PF_Matheson[x] for x in mie_max_min_array[0]], [Mie_PF_Bateman[x] for x in mie_max_min_array[1]], [Mie_PF_Nikalov[x] for x in mie_max_min_array[2]], [Mie_PF_Ma[x] for x in mie_max_min_array[3]], [Mie_PF_Sultanova[x] for x in mie_max_min_array[4]], [Mie_PF_Kasarova[x] for x in mie_max_min_array[5]], [Mie_PF_Miles[x] for x in mie_max_min_array[6]], [Mie_PF_Jones[x] for x in mie_max_min_array[7]], [Mie_PF_Greenslade[x] for x in mie_max_min_array[8]], [Mie_PF_Gienger[x] for x in mie_max_min_array[9]]], axis=0)
+theta_max_min_std = np.std([[theta_mie[x] for x in mie_max_min_array[0]], [theta_mie[x] for x in mie_max_min_array[1]], [theta_mie[x] for x in mie_max_min_array[2]], [theta_mie[x] for x in mie_max_min_array[3]], [theta_mie[x] for x in mie_max_min_array[4]], [theta_mie[x] for x in mie_max_min_array[5]], [theta_mie[x] for x in mie_max_min_array[6]], [theta_mie[x] for x in mie_max_min_array[7]], [theta_mie[x] for x in mie_max_min_array[8]], [theta_mie[x] for x in mie_max_min_array[9]]], axis=0)
+pf_max_min_std = np.std([[Mie_PF_Matheson[x] for x in mie_max_min_array[0]], [Mie_PF_Bateman[x] for x in mie_max_min_array[1]], [Mie_PF_Nikalov[x] for x in mie_max_min_array[2]], [Mie_PF_Ma[x] for x in mie_max_min_array[3]], [Mie_PF_Sultanova[x] for x in mie_max_min_array[4]], [Mie_PF_Kasarova[x] for x in mie_max_min_array[5]], [Mie_PF_Miles[x] for x in mie_max_min_array[6]], [Mie_PF_Jones[x] for x in mie_max_min_array[7]], [Mie_PF_Greenslade[x] for x in mie_max_min_array[8]], [Mie_PF_Gienger[x] for x in mie_max_min_array[9]]], axis=0)
 theta_uncertainty = [theta_max_min_std[x] / theta_max_min_avg[x] * 100 for x in range(len(theta_max_min_avg))]
+
 
 # figure with local max and minima and associated errors when averaging all theory theta
 f0, ax0 = plt.subplots(figsize=(12, 7))
 ax0.semilogy(theta_mie, Mie_PF_Matheson, label=groups[0])
-ax0.semilogy([theta_mie[x] for x in max_min_array[0]], [Mie_PF_Matheson[x] for x in max_min_array[0]], color='black', marker='*', ms=3, ls=' ')
+ax0.semilogy([theta_mie[x] for x in mie_max_min_array[0]], [Mie_PF_Matheson[x] for x in mie_max_min_array[0]], color='black', marker='*', ms=3, ls=' ')
 #ax0.errorbar([theta_mie[x] for x in max_min_array[0]], [Mie_PF_Matheson[x] for x in max_min_array[0]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10)
 ax0.semilogy(theta_mie, Mie_PF_Bateman, label=groups[1])
-ax0.semilogy([theta_mie[x] for x in max_min_array[1]], [Mie_PF_Bateman[x] for x in max_min_array[1]], color='black', marker='*', ms=3, ls=' ')
+ax0.semilogy([theta_mie[x] for x in mie_max_min_array[1]], [Mie_PF_Bateman[x] for x in mie_max_min_array[1]], color='black', marker='*', ms=3, ls=' ')
 #ax0.errorbar([theta_mie[x] for x in max_min_array[1]], [Mie_PF_Bateman[x] for x in max_min_array[1]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10)
 ax0.semilogy(theta_mie, Mie_PF_Nikalov, label=groups[2])
-ax0.semilogy([theta_mie[x] for x in max_min_array[2]], [Mie_PF_Nikalov[x] for x in max_min_array[2]], color='black', marker='*', ms=3, ls=' ')
+ax0.semilogy([theta_mie[x] for x in mie_max_min_array[2]], [Mie_PF_Nikalov[x] for x in mie_max_min_array[2]], color='black', marker='*', ms=3, ls=' ')
 #ax0.errorbar([theta_mie[x] for x in max_min_array[0]], [Mie_PF_Nikalov[x] for x in max_min_array[2]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10)
 ax0.semilogy(theta_mie, Mie_PF_Ma, label=groups[3])
-ax0.semilogy([theta_mie[x] for x in max_min_array[3]], [Mie_PF_Ma[x] for x in max_min_array[3]], color='black', marker='*', ms=3, ls=' ')
+ax0.semilogy([theta_mie[x] for x in mie_max_min_array[3]], [Mie_PF_Ma[x] for x in mie_max_min_array[3]], color='black', marker='*', ms=3, ls=' ')
 #ax0.errorbar([theta_mie[x] for x in max_min_array[3]], [Mie_PF_Ma[x] for x in max_min_array[3]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10)
 ax0.semilogy(theta_mie, Mie_PF_Sultanova, label=groups[4])
-ax0.semilogy([theta_mie[x] for x in max_min_array[4]], [Mie_PF_Sultanova[x] for x in max_min_array[4]], color='black', marker='*', ms=3, ls=' ')
+ax0.semilogy([theta_mie[x] for x in mie_max_min_array[4]], [Mie_PF_Sultanova[x] for x in mie_max_min_array[4]], color='black', marker='*', ms=3, ls=' ')
 #ax0.errorbar([theta_mie[x] for x in max_min_array[4]], [Mie_PF_Sultanova[x] for x in max_min_array[4]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10)
 ax0.semilogy(theta_mie, Mie_PF_Kasarova, label=groups[5])
-ax0.semilogy([theta_mie[x] for x in max_min_array[5]], [Mie_PF_Kasarova[x] for x in max_min_array[5]], color='black', marker='*', ms=3, ls=' ')
+ax0.semilogy([theta_mie[x] for x in mie_max_min_array[5]], [Mie_PF_Kasarova[x] for x in mie_max_min_array[5]], color='black', marker='*', ms=3, ls=' ')
 #ax0.errorbar([theta_mie[x] for x in max_min_array[5]], [Mie_PF_Kasarova[x] for x in max_min_array[5]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10)
 ax0.semilogy(theta_mie, Mie_PF_Miles, label=groups[6])
-ax0.semilogy([theta_mie[x] for x in max_min_array[6]], [Mie_PF_Miles[x] for x in max_min_array[6]], color='black', marker='*', ms=3, ls=' ')
+ax0.semilogy([theta_mie[x] for x in mie_max_min_array[6]], [Mie_PF_Miles[x] for x in mie_max_min_array[6]], color='black', marker='*', ms=3, ls=' ')
 #ax0.errorbar([theta_mie[x] for x in max_min_array[6]], [Mie_PF_Miles[x] for x in max_min_array[6]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10)
 ax0.semilogy(theta_mie, Mie_PF_Jones, label=groups[7])
-ax0.semilogy([theta_mie[x] for x in max_min_array[7]], [Mie_PF_Jones[x] for x in max_min_array[7]], color='black', marker='*', ms=3, ls=' ')
+ax0.semilogy([theta_mie[x] for x in mie_max_min_array[7]], [Mie_PF_Jones[x] for x in mie_max_min_array[7]], color='black', marker='*', ms=3, ls=' ')
 #ax0.errorbar([theta_mie[x] for x in max_min_array[7]], [Mie_PF_Jones[x] for x in max_min_array[7]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10)
 ax0.semilogy(theta_mie, Mie_PF_Greenslade, label=groups[8])
-ax0.semilogy([theta_mie[x] for x in max_min_array[8]], [Mie_PF_Greenslade[x] for x in max_min_array[8]], color='black', marker='*', ms=3, ls=' ')
+ax0.semilogy([theta_mie[x] for x in mie_max_min_array[8]], [Mie_PF_Greenslade[x] for x in mie_max_min_array[8]], color='black', marker='*', ms=3, ls=' ')
 #ax0.errorbar([theta_mie[x] for x in max_min_array[8]], [Mie_PF_Greenslade[x] for x in max_min_array[8]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10)
 ax0.semilogy(theta_mie, Mie_PF_Gienger, label=groups[9])
-ax0.semilogy([theta_mie[x] for x in max_min_array[9]], [Mie_PF_Gienger[x] for x in max_min_array[9]], color='black', marker='*', ms=3, ls=' ')
+ax0.semilogy([theta_mie[x] for x in mie_max_min_array[9]], [Mie_PF_Gienger[x] for x in mie_max_min_array[9]], color='black', marker='*', ms=3, ls=' ')
 #ax0.errorbar([theta_mie[x] for x in max_min_array[9]], [Mie_PF_Gienger[x] for x in max_min_array[9]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10, label='Maxima & Minima\n with Error in \u03b8')
 ax0.errorbar(theta_max_min_avg, pf_max_min_avg, xerr=2*np.array(theta_max_min_std), yerr=2*np.array(pf_max_min_std), color='black', ls=' ', capsize=2.5, label='Maxima & Minima\n with Error in \u03b8')
 ax0.set_title('PSL Phase Functions Calculated from Various Refractive Index\n Values Given in the Literature')
@@ -361,65 +361,51 @@ plt.savefig(Save_Directory + 'Mie_PFs.pdf', format='pdf')
 plt.show()
 
 
-'''
 # import experiment data for 900nm PSL
-Exp_Directory = '/home/austen/Desktop/'
+#Exp_Directory = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-09-06/2019-09-06_Analysis/90/SD_Particle.txt'
+Exp_Directory = '/home/sm3/Desktop/2019-09-08_Analysis/SD_Particle.txt'
 Exp_Data = pd.read_csv(Exp_Directory, delimiter=',', header=0)
 Exp_Ray_PF = Exp_Data['N2 Intensity']
 Exp_Ray_PN = np.asarray(Exp_Data['N2 Columns'])
-Exp_Particle_PF = np.asarray(Exp_Data['Sample Intensity'] - Exp_Ray_PF)
+#Exp_Particle_PF = np.asarray(Exp_Data['Sample Intensity'] - Exp_Ray_PF)
+# if you don't want to perform a nitrogen/background gas subtraction use the below!
+Exp_Particle_PF = np.asarray(Exp_Data['Sample Intensity'])
 Exp_Particle_PN = Exp_Data['Sample Columns'] # the actual profile number needs to be added into the labview code, it is in the Python Offline Analysis!
-'''
 
-'''
+
 # this makes the mie data the same array length as the experimental data
-Mie_PF_Matheson = pchip_interpolate(theta_mie, mie_data[0, 3], Exp_Particle_PF, der=0, axis=0)
-Mie_PF_Bateman = pchip_interpolate(theta_mie, mie_data[1, 3], Exp_Particle_PF, der=0, axis=0)
-Mie_PF_Nikalov = pchip_interpolate(theta_mie, mie_data[2, 3], Exp_Particle_PF, der=0, axis=0)
-Mie_PF_Ma = pchip_interpolate(theta_mie, mie_data[3, 3], Exp_Particle_PF, der=0, axis=0)
-Mie_PF_Sultanova = pchip_interpolate(theta_mie, mie_data[4, 3], Exp_Particle_PF, der=0, axis=0)
-Mie_PF_Kasarova = pchip_interpolate(theta_mie, mie_data[5, 3], Exp_Particle_PF, der=0, axis=0)
-Mie_PF_Miles = pchip_interpolate(theta_mie, mie_data[6, 3], Exp_Particle_PF, der=0, axis=0)
-Mie_PF_Jones = pchip_interpolate(theta_mie, mie_data[7, 3], Exp_Particle_PF, der=0, axis=0)
-Mie_PF_Greenslade = pchip_interpolate(theta_mie, mie_data[8, 3], Exp_Particle_PF, der=0, axis=0)
-Mie_PF_Gienger = pchip_interpolate(theta_mie, mie_data[9, 3], Exp_Particle_PF, der=0, axis=0)
-'''
+Mie_PF_Matheson = pchip_interpolate(theta_mie, Mie_PF_Matheson, Exp_Particle_PF, der=0, axis=0)
+Mie_PF_Bateman = pchip_interpolate(theta_mie, Mie_PF_Bateman, Exp_Particle_PF, der=0, axis=0)
+Mie_PF_Nikalov = pchip_interpolate(theta_mie, Mie_PF_Nikalov, Exp_Particle_PF, der=0, axis=0)
+Mie_PF_Ma = pchip_interpolate(theta_mie, Mie_PF_Ma, Exp_Particle_PF, der=0, axis=0)
+Mie_PF_Sultanova = pchip_interpolate(theta_mie, Mie_PF_Sultanova, Exp_Particle_PF, der=0, axis=0)
+Mie_PF_Kasarova = pchip_interpolate(theta_mie, Mie_PF_Kasarova, Exp_Particle_PF, der=0, axis=0)
+Mie_PF_Miles = pchip_interpolate(theta_mie, Mie_PF_Miles, Exp_Particle_PF, der=0, axis=0)
+Mie_PF_Jones = pchip_interpolate(theta_mie, Mie_PF_Jones, Exp_Particle_PF, der=0, axis=0)
+Mie_PF_Greenslade = pchip_interpolate(theta_mie, Mie_PF_Greenslade, Exp_Particle_PF, der=0, axis=0)
+Mie_PF_Gienger = pchip_interpolate(theta_mie, Mie_PF_Gienger, Exp_Particle_PF, der=0, axis=0)
+
 
 # smooth experimental scattering diagrams by savitzky golay to eliminate noise spikes!
-'''
+
 Exp_Particle_PF_Savgol = savgol_filter(Exp_Particle_PF, window_length=151, polyorder=2, deriv=0)
+Exp_Particle_PF_Savgol_Pchip = pchip_interpolate(Exp_Particle_PN, Exp_Particle_PF_Savgol, Mie_PF_Matheson, der=0, axis=0)
 
-
-#PSL_900_Savgol_Pchip = pchip_interpolate(PSL_900_PN, PSL_900_Savgol, PSL_900_PN, der=0, axis=0)
-
-
-
-# find all local maxima and minima in the 900nm PSL Mie scattering diagram
-
-print('900nm PSL Features(Index) and PN:')
-Mie_900_Max = np.argmax(Mie_900_Intensity_Var)
-print('Mie maximum: ', Mie_900_Max)
-Mie_900_Local_Max = np.asarray(argrelmax(Mie_900_Intensity_Var, axis=0)).flatten()
-print('Mie local max indices: ', Mie_900_Local_Max)
-Mie_900_Local_Min = np.asarray(argrelmin(Mie_900_Intensity_Var, axis=0)).flatten()
-print('Mie local min indices: ', Mie_900_Local_Min)
-Mie_900_Local_Features = sorted(list(set(np.concatenate((Mie_900_Max, Mie_900_Local_Max, Mie_900_Local_Min), axis=None).ravel().tolist())))
-del Mie_900_Local_Features[0]
-#print('Mie local features: ', Mie_Local_Features)
-Mie_900_Featured_Angles = [Mie_900_Angles[element] for element in Mie_900_Local_Features]
-print('Mie featured angles: ', Mie_900_Featured_Angles)
 
 # find all local maxima and minima for 900nm PSL in measured scattering diagram
-Exp_900_Max = np.argmax(PSL_900_Savgol_Pchip)
-print('Exp maximum: ', Exp_900_Max)
-Exp_900_Local_Max = np.asarray(argrelmax(PSL_900_Savgol_Pchip, order=50, axis=0)).flatten()
-print('Exp local max indices: ', Exp_900_Local_Max)
-Exp_900_Local_Min = np.asarray(argrelmin(PSL_900_Savgol_Pchip, order=50, axis=0)).flatten()
-print('Exp local min indices: ', Exp_900_Local_Min)
-# note that Exp_Local_Features parses over an index that corresponds to the length of the SD array (0 ~ 790)
-Exp_900_Local_Features = sorted(list(set(np.concatenate((Exp_900_Max, Exp_900_Local_Max, Exp_900_Local_Min), axis=None).ravel().tolist())))
-print('All exp local features indexes: \n', Exp_900_Local_Features)
-print('All exp local features length: ', len(Exp_900_Local_Features))
+# you gotta play with the order number to pick up all local max and min, then drop the features that don't belong
+exp_max_min_array = []
+exp_maximum = np.argmax(Exp_Particle_PF_Savgol_Pchip, axis=0)
+exp_minimum = np.argmin(Exp_Particle_PF_Savgol_Pchip, axis=0)
+exp_local_max = argrelmax(Exp_Particle_PF_Savgol_Pchip, axis=0, order=50)
+exp_local_min = argrelmin(Exp_Particle_PF_Savgol_Pchip, axis=0, order=50)
+exp_max_min_idx = np.sort(np.concatenate((exp_local_max, exp_local_min), axis=None))
+exp_max_min_idx = np.delete(exp_max_min_idx, [0, 8])
+exp_max_min_array = [Exp_Particle_PN[x] for x in exp_max_min_idx]
+print('Mie Local Features Index: ', theta_max_min_avg)
+print('Experiment Local Features Index: ', exp_max_min_array)
+
+'''
 drop = [0]
 for index in sorted(drop, reverse=True):
     del Exp_900_Local_Features[index]
@@ -496,58 +482,65 @@ ax3.legend(loc=1)
 plt.tight_layout()
 plt.savefig(Save_Directory + 'All_PSL_Calibration.pdf', format='pdf')
 plt.show()
-
+'''
 # do a linear fit to scattering angles vs profile numbers
 # we did linegress just to check to see if the OLS was right!
-Exp_X_Vals_OLS = sm.add_constant(Features_900_PN) # adding the Rayleigh profile numbers will need to be removed after the real PNs are saved by the labview code
-model1 = sm.OLS(Mie_900_Featured_Angles, Exp_X_Vals_OLS)
+Exp_X_Vals_OLS = sm.add_constant(exp_max_min_array) # adding the Rayleigh profile numbers will need to be removed after the real PNs are saved by the labview code
+model1 = sm.OLS(theta_max_min_avg, Exp_X_Vals_OLS)
 results1 = model1.fit()
 print(results1.summary())
 
-
+Mie_Cal_Ints = np.array([Mie_PF_Gienger[x] for x in mie_max_min_array[9]])
+Exp_Cal_Ints = np.array([Exp_Particle_PF_Savgol[x] for x in exp_max_min_idx])
+Exp_to_Mie_Ratio = ((Exp_Cal_Ints - Mie_Cal_Ints) / Mie_Cal_Ints) * 100
 
 # plot imported data
 f4 = plt.figure(figsize=(10, 10))
 gs = gridspec.GridSpec(2, 2)
 ax4a = f4.add_subplot(gs[0, 0])
-ax4a.plot(Mie_900_Angles, Mie_900_Intensity_Var, 'r-', label='900nm PSL')
-ax4a.plot(Mie_900_Featured_Angles, Mie_900_Intensities_at_Features, marker='X', color='black', linestyle='None', label='Local Max & Min')
+ax4a.semilogy(theta_mie, mie_data[9][2], 'r-', label='900nm PSL')
+ax4a.semilogy([theta_mie[x] for x in mie_max_min_array[9]], [mie_data[9][2][x] for x in mie_max_min_array[9]], marker='X', color='black', linestyle='None', label='Local Max & Min')
 ax4a.set_title('Mie Theory Calculated Scattering Diagram\n Circularly Polarized 663nm Radiation')
 ax4a.set_xlabel('Angles (\u00B0)')
 ax4a.set_ylabel('Intensity')
 ax4a.legend(loc=1)
-ax4a.set_yscale('log')
 ax4a.grid(True)
 ax4b = f4.add_subplot(gs[0, 1])
-ax4b.plot(PSL_900_PN, PSL_900_Intensity, 'b-', label='900nm PSL')
-ax4b.plot(PSL_900_PN, PSL_900_Savgol, 'y-', label='900nm PSL Smoothed')
-ax4b.plot(Features_900_PN, Exp_900_Intensities_at_Features, marker='X', color='black', linestyle='None', label='Local Max & Min') # adding the Rayleigh profile numbers will need to be removed after the real PNs are saved by the labview code
+ax4b.semilogy(Exp_Particle_PN, Exp_Particle_PF, 'b-', label='900nm PSL')
+#ax4b.semilogy(Exp_Particle_PN, Exp_Particle_PF_Savgol, 'y-', label='900nm PSL Smoothed')
+#ax4b.semilogy(exp_max_min_array, [Exp_Particle_PF_Savgol[x] for x in exp_max_min_idx], marker='X', color='black', linestyle='None', label='Local Max & Min') # adding the Rayleigh profile numbers will need to be removed after the real PNs are saved by the labview code
+ax4b.semilogy(exp_max_min_array, [Exp_Particle_PF[x] for x in exp_max_min_idx], marker='X', color='black', linestyle='None', label='Local Max & Min') # adding the Rayleigh profile numbers will need to be removed after the real PNs are saved by the labview code
 ax4b.set_title('Measured Scattering Diagram\n Circularly Polarized 663nm Radiation')
 ax4b.set_xlabel('Profile Number')
 ax4b.set_ylabel('Intensity')
-ax4b.set_yscale('log')
 ax4b.legend(loc=1)
 ax4b.grid(True)
 ax4c = f4.add_subplot(gs[1, 0])
-ax4c.plot(Features_900_PN, Mie_900_Featured_Angles, marker='o', ls='', color='green', label='Angles vs Profile Numbers')
-ax4c.plot(Features_900_PN, results1.fittedvalues, color='black', linestyle='-', label='OLS: y = ' + str('{:.4f}'.format(results1.params[1])) + 'x + ' + str('{:.4f}'.format(results1.params[0])))
+ax4c.plot(exp_max_min_array, theta_max_min_avg, marker='o', ls='', color='green', label='Angles vs Profile Numbers')
+ax4c.plot(exp_max_min_array, results1.fittedvalues, color='black', linestyle='-', label='OLS: y = ' + str('{:.4f}'.format(results1.params[1])) + 'x + ' + str('{:.4f}'.format(results1.params[0])))
 ax4c.set_title('Scattering Angle as a Function of Profile Number')
 ax4c.set_xlabel('Profile Number')
 ax4c.set_ylabel('Scattering Angle (\u00B0)')
 ax4c.legend(loc=2)
 ax4c.grid(True)
 ax4d = f4.add_subplot(gs[1, 1])
-ax4d.plot(Mie_900_Featured_Angles, Mie_900_to_Exp_Intenisty_Ratios_at_Features, marker='^', color='yellow', label='Mie:Exp Intensity Ratio vs. Angle')
-ax4d.set_title('Mie:Measured Intensity Ratio as a \n Function of Local Max/Min Angle')
+ax4d.plot(theta_max_min_avg, Exp_to_Mie_Ratio, marker='^', color='purple', label='Mie:Exp Intensity Ratio vs. Angle')
+ax4d.set_title('Mie:Measured Intensity Percent Difference as a \n Function of Local Max/Min Angle')
 ax4d.set_xlabel('Scattering Angle (\u00B0)')
-ax4d.set_ylabel('Intensity Ratio')
+ax4d.set_ylabel('% Difference')
 ax4d.legend(loc=1)
 ax4d.grid(True)
 plt.tight_layout()
-plt.savefig(Fig_Directory + '900nm_Calibration.pdf', format='pdf')
+plt.savefig(Save_Directory + '900nm_Calibration.png', format='png')
+plt.savefig(Save_Directory + '900nm_Calibration.pdf', format='pdf')
 plt.show()
 
+Calibrated_Theta = np.array([(results1.params[1] * x) + results1.params[0] for x in Exp_Particle_PN])
+print('Angular Range: ', [Calibrated_Theta[0], Calibrated_Theta[-1]])
+print('Angles: ', [(results1.params[1] * x) + results1.params[0] for x in Exp_Particle_PN])
+print('Max Index: ', np.argmax(Exp_Particle_PF))
 
+'''
 # Apply correction by adding the delta angle correction to the angle axis of the PSL scattering data
 
 # Increase the resolution of the Mie data such that it is the same number of data points
