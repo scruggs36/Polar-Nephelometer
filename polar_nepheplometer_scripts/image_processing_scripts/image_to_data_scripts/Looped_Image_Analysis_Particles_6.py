@@ -23,11 +23,11 @@ import os
 #Path_Bright_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
 
 # Sample images directory
-Path_Samp_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-09-08/PSL/900nm_windows_on/txt'
+Path_Samp_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-09-08/PSL/900nm_windows_on/txt'
 # Rayleigh images directories
-Path_N2_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-09-08/N2/txt'
+Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-09-08/N2/txt'
 # save directory
-Path_Save = '/home/sm3/Desktop/2019-09-08_Analysis'
+Path_Save = '/home/austen/Desktop/2019-09-08_Analysis'
 
 
 
@@ -57,7 +57,8 @@ np.savetxt(Path_Save + '/' + 'Raw_N2.txt', Raw_N2, delimiter=',')
 
 
 # sample - n2 - bkg, and n2 - he - bkg
-Corrected_Sample = np.subtract(Raw_Sample, Raw_N2)
+#Corrected_Sample = np.subtract(Raw_Sample, Raw_N2)
+Corrected_Sample = Raw_Sample
 Corrected_Sample[Corrected_Sample < 0] = 0
 np.savetxt(Path_Save + '/' + 'Corrected_Sample.txt', Corrected_Sample)
 
@@ -362,8 +363,8 @@ print('ROI range', [(slope * cols[0]) + intercept, (slope * cols[1]) + intercept
 DF_Headers = ['Sample Columns', 'N2 Columns', 'Sample Intensity', 'N2 Intensity']
 DF_S_C = pd.DataFrame(Samp_PN)
 DF_N2_C = pd.DataFrame(N2_PN)
-#DF_Theta = pd.DataFrame(theta_N2)
-DF_PF_S = pd.DataFrame(SD_Samp)
+#DF_PF_S = pd.DataFrame(SD_Samp)
+DF_PF_S = pd.DataFrame(SD_Samp_gfit_bkg_corr)
 DF_PF_N2 = pd.DataFrame(SD_N2)
 PhaseFunctionDF = pd.concat([DF_S_C, DF_N2_C, DF_PF_S, DF_PF_N2], ignore_index=False, axis=1)
 PhaseFunctionDF.columns = DF_Headers
@@ -403,6 +404,7 @@ ax6[1, 1].legend(loc=1)
 plt.tight_layout()
 plt.savefig(Path_Save + '/Profiles.png', format='png')
 plt.show()
+
 
 '''
 f7, ax7 = plt.subplots(1, 3, figsize=(36, 7))

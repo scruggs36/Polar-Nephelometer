@@ -22,7 +22,7 @@ from math import sqrt, log, pi
 from matplotlib.ticker import MultipleLocator
 
 # import N2 Rayleigh scattering data
-Save_Directory = '/home/sm3/Desktop/2019-09-08_Analysis/'
+Save_Directory = '/home/austen/Desktop/2019-09-08_Analysis/'
 
 
 
@@ -253,7 +253,7 @@ concentration = 1000
 # geometric standard deviation
 sigma_g = 1.05
 # Particle diameter, geometric mean of the particle diameter
-d= 903
+d = 903
 # wavelength
 w_n = 663
 # CRI
@@ -310,6 +310,21 @@ Mie_PF_Greenslade = mie_data[8][2]
 Mie_PF_Gienger = mie_data[9][2]
 
 
+Mie_Theory_DF = pd.DataFrame()
+Mie_Theory_DF['Theta'] = theta_mie
+Mie_Theory_DF['Matheson'] = mie_data[0][2]
+Mie_Theory_DF['Bateman'] = mie_data[1][2]
+Mie_Theory_DF['Nikalov'] = mie_data[2][2]
+Mie_Theory_DF['Ma'] = mie_data[3][2]
+Mie_Theory_DF['Sultanova'] = mie_data[4][2]
+Mie_Theory_DF['Kasarova'] = mie_data[5][2]
+Mie_Theory_DF['Miles'] = mie_data[6][2]
+Mie_Theory_DF['Jones'] = mie_data[7][2]
+Mie_Theory_DF['Greenslade'] = mie_data[8][2]
+Mie_Theory_DF['Gienger'] = mie_data[9][2]
+#Mie_Theory_DF.to_csv(Save_Directory + 'Mie_Theory_DF.txt', sep=',')
+
+
 theta_max_min_avg = np.mean([[theta_mie[x] for x in mie_max_min_array[0]], [theta_mie[x] for x in mie_max_min_array[1]], [theta_mie[x] for x in mie_max_min_array[2]], [theta_mie[x] for x in mie_max_min_array[3]], [theta_mie[x] for x in mie_max_min_array[4]], [theta_mie[x] for x in mie_max_min_array[5]], [theta_mie[x] for x in mie_max_min_array[6]], [theta_mie[x] for x in mie_max_min_array[7]], [theta_mie[x] for x in mie_max_min_array[8]], [theta_mie[x] for x in mie_max_min_array[9]]], axis=0)
 pf_max_min_avg = np.mean([[Mie_PF_Matheson[x] for x in mie_max_min_array[0]], [Mie_PF_Bateman[x] for x in mie_max_min_array[1]], [Mie_PF_Nikalov[x] for x in mie_max_min_array[2]], [Mie_PF_Ma[x] for x in mie_max_min_array[3]], [Mie_PF_Sultanova[x] for x in mie_max_min_array[4]], [Mie_PF_Kasarova[x] for x in mie_max_min_array[5]], [Mie_PF_Miles[x] for x in mie_max_min_array[6]], [Mie_PF_Jones[x] for x in mie_max_min_array[7]], [Mie_PF_Greenslade[x] for x in mie_max_min_array[8]], [Mie_PF_Gienger[x] for x in mie_max_min_array[9]]], axis=0)
 theta_max_min_std = np.std([[theta_mie[x] for x in mie_max_min_array[0]], [theta_mie[x] for x in mie_max_min_array[1]], [theta_mie[x] for x in mie_max_min_array[2]], [theta_mie[x] for x in mie_max_min_array[3]], [theta_mie[x] for x in mie_max_min_array[4]], [theta_mie[x] for x in mie_max_min_array[5]], [theta_mie[x] for x in mie_max_min_array[6]], [theta_mie[x] for x in mie_max_min_array[7]], [theta_mie[x] for x in mie_max_min_array[8]], [theta_mie[x] for x in mie_max_min_array[9]]], axis=0)
@@ -321,34 +336,24 @@ theta_uncertainty = [theta_max_min_std[x] / theta_max_min_avg[x] * 100 for x in 
 f0, ax0 = plt.subplots(figsize=(12, 7))
 ax0.semilogy(theta_mie, Mie_PF_Matheson, label=groups[0])
 ax0.semilogy([theta_mie[x] for x in mie_max_min_array[0]], [Mie_PF_Matheson[x] for x in mie_max_min_array[0]], color='black', marker='*', ms=3, ls=' ')
-#ax0.errorbar([theta_mie[x] for x in max_min_array[0]], [Mie_PF_Matheson[x] for x in max_min_array[0]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10)
 ax0.semilogy(theta_mie, Mie_PF_Bateman, label=groups[1])
 ax0.semilogy([theta_mie[x] for x in mie_max_min_array[1]], [Mie_PF_Bateman[x] for x in mie_max_min_array[1]], color='black', marker='*', ms=3, ls=' ')
-#ax0.errorbar([theta_mie[x] for x in max_min_array[1]], [Mie_PF_Bateman[x] for x in max_min_array[1]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10)
 ax0.semilogy(theta_mie, Mie_PF_Nikalov, label=groups[2])
 ax0.semilogy([theta_mie[x] for x in mie_max_min_array[2]], [Mie_PF_Nikalov[x] for x in mie_max_min_array[2]], color='black', marker='*', ms=3, ls=' ')
-#ax0.errorbar([theta_mie[x] for x in max_min_array[0]], [Mie_PF_Nikalov[x] for x in max_min_array[2]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10)
 ax0.semilogy(theta_mie, Mie_PF_Ma, label=groups[3])
 ax0.semilogy([theta_mie[x] for x in mie_max_min_array[3]], [Mie_PF_Ma[x] for x in mie_max_min_array[3]], color='black', marker='*', ms=3, ls=' ')
-#ax0.errorbar([theta_mie[x] for x in max_min_array[3]], [Mie_PF_Ma[x] for x in max_min_array[3]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10)
 ax0.semilogy(theta_mie, Mie_PF_Sultanova, label=groups[4])
 ax0.semilogy([theta_mie[x] for x in mie_max_min_array[4]], [Mie_PF_Sultanova[x] for x in mie_max_min_array[4]], color='black', marker='*', ms=3, ls=' ')
-#ax0.errorbar([theta_mie[x] for x in max_min_array[4]], [Mie_PF_Sultanova[x] for x in max_min_array[4]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10)
 ax0.semilogy(theta_mie, Mie_PF_Kasarova, label=groups[5])
 ax0.semilogy([theta_mie[x] for x in mie_max_min_array[5]], [Mie_PF_Kasarova[x] for x in mie_max_min_array[5]], color='black', marker='*', ms=3, ls=' ')
-#ax0.errorbar([theta_mie[x] for x in max_min_array[5]], [Mie_PF_Kasarova[x] for x in max_min_array[5]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10)
 ax0.semilogy(theta_mie, Mie_PF_Miles, label=groups[6])
 ax0.semilogy([theta_mie[x] for x in mie_max_min_array[6]], [Mie_PF_Miles[x] for x in mie_max_min_array[6]], color='black', marker='*', ms=3, ls=' ')
-#ax0.errorbar([theta_mie[x] for x in max_min_array[6]], [Mie_PF_Miles[x] for x in max_min_array[6]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10)
 ax0.semilogy(theta_mie, Mie_PF_Jones, label=groups[7])
 ax0.semilogy([theta_mie[x] for x in mie_max_min_array[7]], [Mie_PF_Jones[x] for x in mie_max_min_array[7]], color='black', marker='*', ms=3, ls=' ')
-#ax0.errorbar([theta_mie[x] for x in max_min_array[7]], [Mie_PF_Jones[x] for x in max_min_array[7]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10)
 ax0.semilogy(theta_mie, Mie_PF_Greenslade, label=groups[8])
 ax0.semilogy([theta_mie[x] for x in mie_max_min_array[8]], [Mie_PF_Greenslade[x] for x in mie_max_min_array[8]], color='black', marker='*', ms=3, ls=' ')
-#ax0.errorbar([theta_mie[x] for x in max_min_array[8]], [Mie_PF_Greenslade[x] for x in max_min_array[8]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10)
 ax0.semilogy(theta_mie, Mie_PF_Gienger, label=groups[9])
 ax0.semilogy([theta_mie[x] for x in mie_max_min_array[9]], [Mie_PF_Gienger[x] for x in mie_max_min_array[9]], color='black', marker='*', ms=3, ls=' ')
-#ax0.errorbar([theta_mie[x] for x in max_min_array[9]], [Mie_PF_Gienger[x] for x in max_min_array[9]], xerr=2*np.array(theta_max_min_std), color='black', ls=' ', capsize=10, label='Maxima & Minima\n with Error in \u03b8')
 ax0.errorbar(theta_max_min_avg, pf_max_min_avg, xerr=2*np.array(theta_max_min_std), yerr=2*np.array(pf_max_min_std), color='black', ls=' ', capsize=2.5, label='Maxima & Minima\n with Error in \u03b8')
 ax0.set_title('PSL Phase Functions Calculated from Various Refractive Index\n Values Given in the Literature')
 ax0.set_xlabel('\u03b8')
@@ -363,33 +368,21 @@ plt.show()
 
 # import experiment data for 900nm PSL
 #Exp_Directory = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-09-06/2019-09-06_Analysis/90/SD_Particle.txt'
-Exp_Directory = '/home/sm3/Desktop/2019-09-08_Analysis/SD_Particle.txt'
+Exp_Directory = '/home/austen/Desktop/2019-09-08_Analysis/900nm_windows_on/SD_Particle.txt'
 Exp_Data = pd.read_csv(Exp_Directory, delimiter=',', header=0)
 Exp_Ray_PF = Exp_Data['N2 Intensity']
 Exp_Ray_PN = np.asarray(Exp_Data['N2 Columns'])
 #Exp_Particle_PF = np.asarray(Exp_Data['Sample Intensity'] - Exp_Ray_PF)
 # if you don't want to perform a nitrogen/background gas subtraction use the below!
 Exp_Particle_PF = np.asarray(Exp_Data['Sample Intensity'])
+Exp_Particle_PF = Exp_Particle_PF[~np.isnan(Exp_Particle_PF)]
 Exp_Particle_PN = Exp_Data['Sample Columns'] # the actual profile number needs to be added into the labview code, it is in the Python Offline Analysis!
-
-
-# this makes the mie data the same array length as the experimental data
-Mie_PF_Matheson = pchip_interpolate(theta_mie, Mie_PF_Matheson, Exp_Particle_PF, der=0, axis=0)
-Mie_PF_Bateman = pchip_interpolate(theta_mie, Mie_PF_Bateman, Exp_Particle_PF, der=0, axis=0)
-Mie_PF_Nikalov = pchip_interpolate(theta_mie, Mie_PF_Nikalov, Exp_Particle_PF, der=0, axis=0)
-Mie_PF_Ma = pchip_interpolate(theta_mie, Mie_PF_Ma, Exp_Particle_PF, der=0, axis=0)
-Mie_PF_Sultanova = pchip_interpolate(theta_mie, Mie_PF_Sultanova, Exp_Particle_PF, der=0, axis=0)
-Mie_PF_Kasarova = pchip_interpolate(theta_mie, Mie_PF_Kasarova, Exp_Particle_PF, der=0, axis=0)
-Mie_PF_Miles = pchip_interpolate(theta_mie, Mie_PF_Miles, Exp_Particle_PF, der=0, axis=0)
-Mie_PF_Jones = pchip_interpolate(theta_mie, Mie_PF_Jones, Exp_Particle_PF, der=0, axis=0)
-Mie_PF_Greenslade = pchip_interpolate(theta_mie, Mie_PF_Greenslade, Exp_Particle_PF, der=0, axis=0)
-Mie_PF_Gienger = pchip_interpolate(theta_mie, Mie_PF_Gienger, Exp_Particle_PF, der=0, axis=0)
+Exp_Particle_PN = Exp_Particle_PN[~np.isnan(Exp_Particle_PN)]
 
 
 # smooth experimental scattering diagrams by savitzky golay to eliminate noise spikes!
-
 Exp_Particle_PF_Savgol = savgol_filter(Exp_Particle_PF, window_length=151, polyorder=2, deriv=0)
-Exp_Particle_PF_Savgol_Pchip = pchip_interpolate(Exp_Particle_PN, Exp_Particle_PF_Savgol, Mie_PF_Matheson, der=0, axis=0)
+Exp_Particle_PF_Savgol_Pchip = pchip_interpolate(xi=Exp_Particle_PN, yi=Exp_Particle_PF_Savgol, x=Exp_Particle_PN, der=0, axis=0)
 
 
 # find all local maxima and minima for 900nm PSL in measured scattering diagram
@@ -400,89 +393,12 @@ exp_minimum = np.argmin(Exp_Particle_PF_Savgol_Pchip, axis=0)
 exp_local_max = argrelmax(Exp_Particle_PF_Savgol_Pchip, axis=0, order=50)
 exp_local_min = argrelmin(Exp_Particle_PF_Savgol_Pchip, axis=0, order=50)
 exp_max_min_idx = np.sort(np.concatenate((exp_local_max, exp_local_min), axis=None))
-exp_max_min_idx = np.delete(exp_max_min_idx, [0, 8])
+#exp_max_min_idx = np.delete(exp_max_min_idx, [0])
 exp_max_min_array = [Exp_Particle_PN[x] for x in exp_max_min_idx]
 print('Mie Local Features Index: ', theta_max_min_avg)
 print('Experiment Local Features Index: ', exp_max_min_array)
 
-'''
-drop = [0]
-for index in sorted(drop, reverse=True):
-    del Exp_900_Local_Features[index]
-Exp_900_Local_Features = sorted(Exp_900_Local_Features)
-# had to add these in when the last local minima is too shallow
-Exp_900_Local_Features.append(636)
-Exp_900_Local_Features.append(696)
-Exp_900_Local_PN = [PSL_900_PN[x] for x in Exp_900_Local_Features]
-print('All exp local features pn: \n', Exp_900_Local_PN)
-print('Kept local features: ', Exp_900_Local_Features)
-print('Length del local features: ', len(Exp_900_Local_Features))
-Features_900_PN = []
-for element in Exp_900_Local_Features:
-    Features_900_PN.append(PSL_900_PN[element])
-# note Features PN corresponds to the actual index of the CCD, (200 ~ 1000)
-print('Profile Numbers @ exp local features: ', Features_900_PN)
-# pull Mie 900nm PSL intensities from local max and minima, create arrays
-Mie_900_Intensities_at_Features = [Mie_900_Intensity_Var[element] for element in Mie_900_Local_Features]
-# element in Exp_Local_Features or Features_PN
-Exp_900_Intensities_at_Features = [PSL_900_Savgol[element] for element in Exp_900_Local_Features]
-Mie_900_to_Exp_Intenisty_Ratios_at_Features = np.divide(np.array(Mie_900_Intensities_at_Features), np.array(Exp_900_Intensities_at_Features))
-Ratio_900_Avg = np.average(Mie_900_to_Exp_Intenisty_Ratios_at_Features)
 
-
-# plot 900 imported data
-f2, ax2 = plt.subplots(1, 2, figsize=(10, 4))
-ax2[0].plot(Mie_900_Angles, Mie_900_Intensity_Matheson, color='orange', ls='-', label='Matheson 1957 900nm PSL')
-ax2[0].plot(Mie_900_Angles, Mie_900_Intensity_Ma, color='purple', ls='-', label='Ma 2003 900nm PSL')
-ax2[0].plot(Mie_900_Angles, Mie_900_Intensity_Greenslade, color='black', ls='-', label='Greenslade 2017 900nm PSL')
-ax2[0].set_title('Mie Theory Calculated Scattering Diagram\n Circularly Polarized 663nm Radiation')
-ax2[0].set_xlabel('Angles (\u00B0)')
-ax2[0].set_ylabel('Intensity')
-ax2[0].legend(loc=1)
-ax2[0].set_yscale('log')
-ax2[0].grid(True)
-ax2[1].plot(PSL_900_PN, PSL_900_Intensity, color='blue', ls='-', label='Raw 900nm PSL')
-ax2[1].plot(PSL_900_PN, PSL_900_Savgol, color='lawngreen', ls='-', label='Savgol 900nm PSL')
-ax2[1].plot(PSL_900_PN, PSL_900_Savgol_Pchip, color='red', ls='-', label='Savgol + Pchip 900nm PSL')
-ax2[1].plot(Exp_900_Local_PN, Exp_900_Intensities_at_Features, marker='*', ls='', ms=6, color='black', label='Local Max & Min')
-ax2[1].set_title('Measured Scattering Diagram\n Circularly Polarized 663nm Radiation')
-ax2[1].set_xlabel('Profile Number')
-ax2[1].set_ylabel('Intensity')
-ax2[1].set_yscale('log')
-ax2[1].legend(loc=1)
-ax2[1].grid(True)
-plt.tight_layout()
-plt.savefig(Fig_Directory + '900nm_PSL.pdf', format='pdf')
-plt.show()
-
-
-# create a 2d array of Mie theta and Exp PN at local features, combining all the 600, 800, and 900 psl data
-All_PN = np.concatenate((Features_600_PN, Features_800_PN, Features_900_PN), axis=None).ravel().tolist()
-All_Theta = np.concatenate((Mie_600_Featured_Angles, Mie_800_Featured_Angles, Mie_900_Featured_Angles), axis=None).ravel().tolist()
-print('All_PN: ', All_PN)
-print('All_Theta: ', All_Theta)
-
-# OLS on all PSL data
-All_PN_W_Const = sm.add_constant(All_PN) # adding the Rayleigh profile numbers will need to be removed after the real PNs are saved by the labview code
-model0 = sm.OLS(All_Theta, All_PN_W_Const)
-results0 = model0.fit()
-print(results0.summary())
-
-# plotting all the local max & min on one plot and conducting an OLS on all features
-f3, ax3 = plt.subplots(figsize=(12, 7))
-ax3.plot(Features_600_PN, Mie_600_Featured_Angles, marker='o', ms='4', ls='', color='red', label='600nm PSL Local Max & Min')
-ax3.plot(Features_800_PN, Mie_800_Featured_Angles, marker='^', ms='4', ls='', color='blue', label='800nm PSL Local Max & Min')
-ax3.plot(Features_900_PN, Mie_900_Featured_Angles, marker='x', ms='4', ls='', color='green', label='900nm PSL Local Max & Min')
-ax3.plot(All_PN, results0.fittedvalues, color='black', ls='-', label='OLS: y = ' + str('{:.4f}'.format(results0.params[1])) + 'x + ' + str('{:.4f}'.format(results0.params[0])))
-ax3.grid(True)
-ax3.set_title('Linear Regression to All Local Features in the PSL Data')
-ax3.set_xlabel('PN')
-ax3.set_ylabel('\u03b8 (\u00b0)')
-ax3.legend(loc=1)
-plt.tight_layout()
-plt.savefig(Save_Directory + 'All_PSL_Calibration.pdf', format='pdf')
-plt.show()
-'''
 # do a linear fit to scattering angles vs profile numbers
 # we did linegress just to check to see if the OLS was right!
 Exp_X_Vals_OLS = sm.add_constant(exp_max_min_array) # adding the Rayleigh profile numbers will need to be removed after the real PNs are saved by the labview code
@@ -540,147 +456,134 @@ print('Angular Range: ', [Calibrated_Theta[0], Calibrated_Theta[-1]])
 print('Angles: ', [(results1.params[1] * x) + results1.params[0] for x in Exp_Particle_PN])
 print('Max Index: ', np.argmax(Exp_Particle_PF))
 
-'''
-# Apply correction by adding the delta angle correction to the angle axis of the PSL scattering data
+# this makes the mie data the same array length as the experimental data
+Mie_PF_Matheson = pchip_interpolate(xi=theta_mie, yi=Mie_PF_Matheson, x=Calibrated_Theta, der=0, axis=0)
+Mie_PF_Bateman = pchip_interpolate(xi=theta_mie, yi=Mie_PF_Bateman, x=Calibrated_Theta, der=0, axis=0)
+Mie_PF_Nikalov = pchip_interpolate(xi=theta_mie, yi=Mie_PF_Nikalov, x=Calibrated_Theta, der=0, axis=0)
+Mie_PF_Ma = pchip_interpolate(xi=theta_mie, yi=Mie_PF_Ma, x=Calibrated_Theta, der=0, axis=0)
+Mie_PF_Sultanova = pchip_interpolate(xi=theta_mie, yi=Mie_PF_Sultanova, x=Calibrated_Theta, der=0, axis=0)
+Mie_PF_Kasarova = pchip_interpolate(xi=theta_mie, yi=Mie_PF_Kasarova, x=Calibrated_Theta, der=0, axis=0)
+Mie_PF_Miles = pchip_interpolate(xi=theta_mie, yi=Mie_PF_Miles, x=Calibrated_Theta, der=0, axis=0)
+Mie_PF_Jones = pchip_interpolate(xi=theta_mie, yi=Mie_PF_Jones, x=Calibrated_Theta, der=0, axis=0)
+Mie_PF_Greenslade = pchip_interpolate(xi=theta_mie, yi=Mie_PF_Greenslade, x=Calibrated_Theta, der=0, axis=0)
+Mie_PF_Gienger = pchip_interpolate(xi=theta_mie, yi=Mie_PF_Gienger, x=Calibrated_Theta, der=0, axis=0)
 
-# Increase the resolution of the Mie data such that it is the same number of data points
-# as the experimental data
-
-Mie_600_Spline_Func = interp1d(Mie_600_Angles, Mie_600_Intensity_Var, kind='cubic')
-Mie_600_Spline_Angles = np.linspace(0, 180, len(PSL_600_PN), endpoint=False)
-Mie_600_Spline_Intensity = Mie_600_Spline_Func(Mie_600_Spline_Angles)
-
-Mie_800_Spline_Func = interp1d(Mie_800_Angles, Mie_800_Intensity_Var, kind='cubic')
-Mie_800_Spline_Angles = np.linspace(0, 180, len(PSL_800_PN), endpoint=False)
-Mie_800_Spline_Intensity = Mie_800_Spline_Func(Mie_800_Spline_Angles)
-
-Mie_900_Spline_Func = interp1d(Mie_900_Angles, Mie_900_Intensity_Var, kind='cubic')
-Mie_900_Spline_Angles = np.linspace(0, 180, len(PSL_900_PN), endpoint=False)
-Mie_900_Spline_Intensity = Mie_900_Spline_Func(Mie_900_Spline_Angles)
-
-# First normalize the intensities and plot them one ontop of the other
-Mie_600_Spline_Int_Norm = Mie_600_Spline_Intensity / np.linalg.norm(Mie_600_Spline_Intensity)
-Mie_800_Spline_Int_Norm = Mie_800_Spline_Intensity / np.linalg.norm(Mie_800_Spline_Intensity)
-Mie_900_Spline_Int_Norm = Mie_900_Spline_Intensity / np.linalg.norm(Mie_900_Spline_Intensity)
-
-PSL_600_Savgol_Int_Norm = PSL_600_Savgol / np.linalg.norm(PSL_600_Savgol)
-PSL_800_Savgol_Int_Norm = PSL_800_Savgol / np.linalg.norm(PSL_800_Savgol)
-PSL_900_Savgol_Int_Norm = PSL_900_Savgol / np.linalg.norm(PSL_900_Savgol)
-
-# parameters from linear calibration conducted like manfred et al.
-slope = results0.params[1]
-intercept = results0.params[0]
-#slope = 0.2112
-#intercept = -47.972
-
-# convert profile numbers to angles with the OLS from the Manfred appraoach
-PSL_600_Profiles_to_Angles = [(slope * x) + intercept for x in PSL_600_PN]
-PSL_600_Profiles_to_Angles = np.array(PSL_600_Profiles_to_Angles)
-print(type(PSL_600_Profiles_to_Angles), PSL_600_Profiles_to_Angles.shape)
-
-PSL_800_Profiles_to_Angles = [(slope * x) + intercept for x in PSL_800_PN]
-PSL_800_Profiles_to_Angles = np.array(PSL_800_Profiles_to_Angles)
-print(type(PSL_800_Profiles_to_Angles), PSL_800_Profiles_to_Angles.shape)
-
-PSL_900_Profiles_to_Angles = [(slope * x) + intercept for x in PSL_900_PN]
-PSL_900_Profiles_to_Angles = np.array(PSL_900_Profiles_to_Angles)
-print(type(PSL_900_Profiles_to_Angles), PSL_900_Profiles_to_Angles.shape)
+comparator = np.absolute((Exp_Particle_PF * 0.0010) - Mie_PF_Gienger)
 
 
 # make a plot of the 900 spline data and the experimental data overlayed
-f5, ax5 = plt.subplots(figsize=(12, 6))
-#pt0, = ax5.plot(Mie_900_Spline_Angles, Mie_900_Spline_Intensity, color='red', linestyle='-', label='Mie 900nm PSL Spline vs. Theta')
-pt = ax5.plot(PSL_900_Profiles_to_Angles, PSL_900_Savgol * Ratio_900_Avg, color='purple', linestyle='-', lw=4, label='Meas. 900nm PSL Savgol vs. Theta')
-#pt2, = ax5.plot(PSL_900_Profiles_to_Angles, PSL_900_Savgol, color='green', linestyle='-', label='Exp 900nm PSL Savgol vs. Theta')
-#ax5.set_xlabel('Angles (\u00B0)', color='red')
-ax5.set_xlabel('Angles (\u00B0)', fontsize=20)
-ax5.set_ylabel('Intensity', fontsize=20)
-#ax5.set_title('900nm Polystyrene Latex Sphere Raw Phase Function to Calibrated Phase Function')
-#ax5.tick_params(axis='x', labelcolor='red')
-ax5.tick_params(axis='x')
-ax5.minorticks_on()
-ax5.grid(True, which='both')
-ax5.set_yscale('log')
-#ax5.legend(loc=1)
-#ax5a = ax5.twiny()
-#pt3, = ax5a.plot(PSL_900_PN, PSL_900_Savgol, color='blue', linestyle='-', label='Exp 900nm PSL Savgol vs. PN')
-#ax5a.set_xlabel('Profile Numbers', color='blue')
-#ax5a.set_ylabel('Intensity')
-#ax5a.tick_params(axis='x', labelcolor='blue')
-#pt = [pt0, pt1, pt2, pt3]
-ax5.legend(pt, [pt_.get_label() for pt_ in pt], loc=1, fontsize='small')
-# this little bit set_major_locator(plt.MaxNLocator(10)) sets the x axis minor ticks to 5 degree increments
-#ax5.xaxis.set_major_locator(plt.MaxNLocator(10))
-#f2.suptitle('Overlayed Mie Intensity Normalized Spline Fit Scattering Diagram\n and Experiment Normalized and Smoothed Scattering Diagram', y=1.03)
+f5, ax5 = plt.subplots(1, 2, figsize=(12, 6))
+ax5[0].semilogy(theta_mie, np.array(mie_data[9][2]), color='red', linestyle='-', label='Mie Theory')
+ax5[0].semilogy(Calibrated_Theta, Exp_Particle_PF * 0.0010, color='purple', linestyle='-', label='Calibrated Measurement')
+ax5[0].set_xlabel('\u03b8 (\u00B0)')
+ax5[0].set_ylabel('Intensity')
+ax5[0].set_title('Theory and Calibrated Measurement')
+#ax5.tick_params(axis='x')
+ax5[0].minorticks_on()
+ax5[0].grid(True)
+ax5[0].legend(loc=1)
+ax5[1].plot(Calibrated_Theta, comparator, color='black', linestyle='-', label='Calibrated Measurement')
+ax5[1].set_xlabel('\u03b8 (\u00B0)')
+ax5[1].set_ylabel('Intensity')
+ax5[1].set_title('Absolute Value of the Difference Between\n Experiment and Mie Theory')
+#ax5.tick_params(axis='x')
+ax5[1].minorticks_on()
+ax5[1].grid(True)
+ax5[1].legend(loc=1)
 plt.tight_layout()
-plt.savefig(Fig_Directory + '900nm_PSL_Calibrated.pdf', format='pdf')
+plt.savefig(Save_Directory + 'Validation.pdf', format='pdf')
+plt.savefig(Save_Directory + 'Validation.png', format='png')
 plt.show()
 
-C0 = pd.Series(Mie_900_Spline_Angles, name='Spline Mie Theta')
-C1 = pd.Series(Mie_900_Spline_Intensity, name='Spline Mie Intensity')
-C2 = pd.Series(PSL_900_PN, name='PN')
-C3 = pd.Series(PSL_900_Profiles_to_Angles, name='PN to Angle')
-C4 = pd.Series(PSL_900_Savgol, name='Exp Smoothed Intensity')
-C5 = pd.Series(Features_900_PN, name='Cal Exp Profiles Local Max & Min')
-C6 = pd.Series(Mie_900_Featured_Angles, name='Cal Mie Angles Local Max & Min')
-C7 = pd.Series([(x * results0.fittedvalues[1]) + results0.fittedvalues[0] for x in Features_900_PN], name='Cal Fit Angles')
-C8 = pd.Series(results0.fittedvalues[1], name='Cal Fit Slope')
-C9 = pd.Series(results0.fittedvalues[0], name='Cal Fit Intercept')
-All_Data = pd.concat([C0, C1, C2, C3, C4, C5, C6, C7, C8, C9], axis=1)
-All_Data.to_csv(Save_Directory + '/Calibrated_Data_PSL900nm.txt')
+# Mie theory sample 2
+Mie_Directory_2 = '/home/austen/Desktop/2019-09-08_Analysis/800nm/Mie_Theory_DF.txt'
+Mie_Data_2 = pd.read_csv(Mie_Directory_2, delimiter=',')
+Mie_Sample_PF_2 = Mie_Data_2['Gienger']
 
-# plot calibrated PSL 600nm data against theory
+# Measurement 2
+Exp_Directory_2 = '/home/austen/Desktop/2019-09-08_Analysis/800nm/SD_Particle.txt'
+Exp_Data_2 = pd.read_csv(Exp_Directory_2, delimiter=',', header=0)
+Exp_Ray_PF_2 = Exp_Data_2['N2 Intensity']
+Exp_Ray_PN_2 = np.asarray(Exp_Data_2['N2 Columns'])
+#Exp_Particle_PF = np.asarray(Exp_Data['Sample Intensity'] - Exp_Ray_PF)
+# if you don't want to perform a nitrogen/background gas subtraction use the below!
+Exp_Particle_PF_2 = np.asarray(Exp_Data_2['Sample Intensity'])
+Exp_Particle_PN_2 = np.array(Exp_Data_2['Sample Columns'])
+Calibrated_Theta_2 = (results1.params[1] * Exp_Particle_PN_2) + results1.params[0]
+
+
+# Mie theory sample 3
+Mie_Directory_3 = '/home/austen/Desktop/2019-09-08_Analysis/600nm/Mie_Theory_DF.txt'
+Mie_Data_3 = pd.read_csv(Mie_Directory_3, delimiter=',')
+Mie_Sample_PF_3 = np.array(Mie_Data_3['Gienger'])
+
+# Measurement 3
+Exp_Directory_3 = '/home/austen/Desktop/2019-09-08_Analysis/600nm/SD_Particle.txt'
+Exp_Data_3 = pd.read_csv(Exp_Directory_3, delimiter=',', header=0)
+Exp_Ray_PF_3 = Exp_Data_3['N2 Intensity']
+Exp_Ray_PN_3 = np.asarray(Exp_Data_3['N2 Columns'])
+#Exp_Particle_PF = np.asarray(Exp_Data['Sample Intensity'] - Exp_Ray_PF)
+# if you don't want to perform a nitrogen/background gas subtraction use the below!
+Exp_Particle_PF_3 = np.array(Exp_Data_3['Sample Intensity'])
+Exp_Particle_PF_3 = Exp_Particle_PF_3[~np.isnan(Exp_Particle_PF_3)]
+Exp_Particle_PN_3 = np.array(Exp_Data_3['Sample Columns'])
+Exp_Particle_PN_3 = Exp_Particle_PN_3[~np.isnan(Exp_Particle_PN_3)]
+Calibrated_Theta_3 = (results1.params[1] * Exp_Particle_PN_3) + results1.params[0]
+
+'''
 f6, ax6 = plt.subplots(figsize=(12, 6))
-pt0, = ax6.plot(Mie_600_Spline_Angles, Mie_600_Spline_Intensity, color='red', linestyle='-', label='Mie 600nm PSL Spline vs. Theta')
-pt1, = ax6.plot(PSL_600_Profiles_to_Angles, PSL_600_Savgol * Ratio_900_Avg * 0.30, color='purple', linestyle='-', label='Exp 600nm PSL Savgol Scaled vs. Theta')
-pt2, = ax6.plot(PSL_600_Profiles_to_Angles, PSL_600_Savgol, color='green', linestyle='-', label='Exp 600nm PSL Savgol vs. Theta')
-ax6.set_xlabel('Angles (\u00B0)', color='red')
+ax6.semilogy(Calibrated_Theta_2, Exp_Particle_PF_2 * .0010, color='purple', ls='-', label='Calibrated Measurement')
+ax6.semilogy(theta_mie, Mie_Sample_PF_2, color='red', ls='-', label='Mie Theory')
+ax6.set_title('Measurement Compared to Mie Theory')
+ax6.set_xlabel('\u03b8')
 ax6.set_ylabel('Intensity')
-ax6.set_title('600nm Polystyrene Latex Sphere Raw Phase Function to Calibrated Phase Function')
-ax6.tick_params(axis='x', labelcolor='red')
-ax6.minorticks_on()
-ax6.grid(True, which='both')
+ax6.grid(True)
 ax6.legend(loc=1)
-ax6.set_yscale('log')
-ax6a = ax6.twiny()
-pt3, = ax6a.plot(PSL_600_PN, PSL_600_Savgol, color='blue', linestyle='-', label='Exp. Smoothed Intensity vs. PN')
-ax6a.set_xlabel('Profile Numbers', color='blue')
-ax6a.set_ylabel('Intensity')
-ax6a.tick_params(axis='x', labelcolor='blue')
-pt = [pt0, pt1, pt2, pt3]
-ax6.legend(pt, [pt_.get_label() for pt_ in pt], loc=1, fontsize='small')
-# this little bit set_major_locator(plt.MaxNLocator(10)) sets the x axis minor ticks to 5 degree increments
-ax6.xaxis.set_major_locator(plt.MaxNLocator(10))
-#f2.suptitle('Overlayed Mie Intensity Normalized Spline Fit Scattering Diagram\n and Experiment Normalized and Smoothed Scattering Diagram', y=1.03)
 plt.tight_layout()
-plt.savefig(Fig_Directory + '600nm_PSL_Calibrated.pdf', format='pdf')
-plt.show()
-
-
-# plot calibrated PSL 800nm data against theory
-f7, ax7 = plt.subplots(figsize=(12, 6))
-pt0, = ax7.plot(Mie_800_Spline_Angles, Mie_800_Spline_Intensity, color='red', linestyle='-', label='Mie 800nm PSL Spline vs. Theta')
-pt1, = ax7.plot(PSL_800_Profiles_to_Angles, PSL_800_Savgol * Ratio_900_Avg * 0.36, color='purple', linestyle='-', label='Exp 800nm PSL Savgol Scaled vs. Theta')
-pt2, = ax7.plot(PSL_800_Profiles_to_Angles, PSL_800_Savgol, color='green', linestyle='-', label='Exp 800nm PSL Savgol vs. Theta')
-ax7.set_xlabel('Angles (\u00B0)', color='red')
-ax7.set_ylabel('Intensity')
-ax7.set_title('800nm Polystyrene Latex Sphere Raw Phase Function to Calibrated Phase Function')
-ax7.tick_params(axis='x', labelcolor='red')
-ax7.minorticks_on()
-ax7.grid(True, which='both')
-ax7.legend(loc=1)
-ax7.set_yscale('log')
-ax7a = ax7.twiny()
-pt3, = ax7a.plot(PSL_800_PN, PSL_800_Savgol, color='blue', linestyle='-', label='Exp. Smoothed Intensity vs. PN')
-ax7a.set_xlabel('Profile Numbers', color='blue')
-ax7a.set_ylabel('Intensity')
-ax7a.tick_params(axis='x', labelcolor='blue')
-pt = [pt0, pt1, pt2, pt3]
-ax7.legend(pt, [pt_.get_label() for pt_ in pt], loc=1, fontsize='small')
-# this little bit set_major_locator(plt.MaxNLocator(10)) sets the x axis minor ticks to 5 degree increments
-ax7.xaxis.set_major_locator(plt.MaxNLocator(10))
-#f2.suptitle('Overlayed Mie Intensity Normalized Spline Fit Scattering Diagram\n and Experiment Normalized and Smoothed Scattering Diagram', y=1.03)
-plt.tight_layout()
-plt.savefig(Fig_Directory + '800nm_PSL_Calibrated.pdf', format='pdf')
+plt.savefig(Save_Directory + 'Validation2.pdf', format='pdf')
+plt.savefig(Save_Directory + 'Validation2.png', format='png')
 plt.show()
 '''
+'''
+f7, ax7 = plt.subplots(figsize=(12, 6))
+ax7.semilogy(Calibrated_Theta_3, Exp_Particle_PF_3 * 0.0010, color='purple', ls='-', label='Calibrated Measurement')
+ax7.semilogy(theta_mie, Mie_Sample_PF_3, color='red', ls='-', label='Mie Theory')
+ax7.set_title('Measurement Compared to Mie Theory')
+ax7.set_xlabel('\u03b8')
+ax7.set_ylabel('Intensity')
+ax7.grid(True)
+ax7.legend(loc=1)
+plt.tight_layout()
+plt.savefig(Save_Directory + 'Validation3.pdf', format='pdf')
+plt.savefig(Save_Directory + 'Validation3.png', format='png')
+plt.show()
+'''
+print(Calibrated_Theta_3)
+print(Mie_Sample_PF_3)
+# xi is small theory theta axis, yi = small theory intensities, x=new thetas to compute at intensities at, same size as measurement PN axis!
+pchip_3 = pchip_interpolate(xi=theta_mie, yi=Mie_Sample_PF_3, x=Calibrated_Theta_3, der=0, axis=0)
+comparator_3 = np.absolute((Exp_Particle_PF_3 * 0.0008) - pchip_3)
+# make a plot of the 900 spline data and the experimental data overlayed
+f8, ax8 = plt.subplots(1, 2, figsize=(12, 6))
+ax8[0].semilogy(theta_mie, Mie_Sample_PF_3, color='red', linestyle='-', label='Mie Theory')
+ax8[0].semilogy(Calibrated_Theta_3, Exp_Particle_PF_3 * 0.0008, color='purple', linestyle='-', label='Calibrated Measurement')
+ax8[0].set_xlabel('\u03b8 (\u00B0)')
+ax8[0].set_ylabel('Intensity')
+ax8[0].set_title('Theory and Calibrated Measurement')
+#ax5.tick_params(axis='x')
+ax8[0].minorticks_on()
+ax8[0].grid(True)
+ax8[0].legend(loc=1)
+ax8[1].plot(Calibrated_Theta_3, comparator_3, color='black', linestyle='-', label='Calibrated Measurement')
+ax8[1].set_xlabel('\u03b8 (\u00B0)')
+ax8[1].set_ylabel('Intensity')
+ax8[1].set_title('Absolute Value of the Difference Between\n Experiment and Mie Theory')
+#ax5.tick_params(axis='x')
+ax8[1].minorticks_on()
+ax8[1].grid(True)
+ax8[1].legend(loc=1)
+plt.tight_layout()
+plt.savefig(Save_Directory + 'Validation4.pdf', format='pdf')
+plt.savefig(Save_Directory + 'Validation4.png', format='png')
+plt.show()
+#'''
