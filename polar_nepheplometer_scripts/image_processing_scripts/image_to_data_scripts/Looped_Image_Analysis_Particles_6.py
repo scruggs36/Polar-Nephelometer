@@ -23,11 +23,11 @@ import os
 #Path_Bright_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
 
 # Sample images directory
-Path_Samp_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-09-08/PSL/900nm_windows_on/txt'
+Path_Samp_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-09-28/PSL600/3s/PSL600_3s_0.5lamda_0_AVG_.txt'
 # Rayleigh images directories
-Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-09-08/N2/txt'
+Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-09-28/N2/3s/N2_3s_0.5lamda_0_AVG_.txt'
 # save directory
-Path_Save = '/home/austen/Desktop/2019-09-08_Analysis'
+Path_Save = '/home/austen/Desktop/2019-09-26_Analysis'
 
 
 
@@ -45,10 +45,16 @@ def Ndarray_Average(directory):
     return nd_arr_avg
 
 
+Raw_Sample = np.loadtxt(Path_Samp_Dir, delimiter='\t')
+Raw_N2 = np.loadtxt(Path_N2_Dir, delimiter='\t')
+Corrected_Sample = Raw_Sample - Raw_N2
+Corrected_Sample[Corrected_Sample < 0] = 0
+
+
 # averaging sample, n2, he, bkg
 #Bright = Ndarray_Average(Path_Bright_Dir)
 #np.savetxt(Path_Save + '/' + 'Bright.txt', Bright)
-
+'''
 Raw_Sample = Ndarray_Average(Path_Samp_Dir)
 np.savetxt(Path_Save + '/' + 'Raw_Sample.txt', Raw_Sample, delimiter=',')
 
@@ -58,10 +64,10 @@ np.savetxt(Path_Save + '/' + 'Raw_N2.txt', Raw_N2, delimiter=',')
 
 # sample - n2 - bkg, and n2 - he - bkg
 #Corrected_Sample = np.subtract(Raw_Sample, Raw_N2)
-Corrected_Sample = Raw_Sample
+Corrected_Sample = Raw_Sample - Raw_N2
 Corrected_Sample[Corrected_Sample < 0] = 0
 np.savetxt(Path_Save + '/' + 'Corrected_Sample.txt', Corrected_Sample)
-
+'''
 
 '''
 # this saves the corrected ndarray as a txt file, and saves it as a jpg
@@ -81,7 +87,7 @@ Corrected_He_PNG = cv2.cvtColor(cv2.imread(Path_Save + '/' + 'Corrected_He.png')
 
 
 # Initial boundaries on the image , cols can be: [250, 1040], [300, 1040], [405, 887]
-rows = [500, 700]
+rows = [400, 600]
 cols = [230, 1060]
 cols_array = (np.arange(cols[0], cols[1], 1)).astype(int)
 #ROI = im[rows[0]:rows[1], cols[0]:cols[1]]
@@ -161,7 +167,7 @@ cax_a = divider_a.append_axes("right", size="5%", pad=0.05)
 fcal.colorbar(im_fcal, cax=cax_a)
 axcal.set_title('Sample: 900nm Polystyrene Latex Spheres \n at 0\u00b0 Retardance')
 plt.savefig(Path_Save + '/Sample.png', format='png')
-plt.savefig(Path_Save + '/Sample.pdf', format='pdf')
+#plt.savefig(Path_Save + '/Sample.pdf', format='pdf')
 plt.show()
 
 
@@ -178,7 +184,7 @@ cax_a = divider_a.append_axes("right", size="5%", pad=0.05)
 f0.colorbar(im_f0a, cax=cax_a)
 ax0.set_title('Background: Nitrogen Rayleigh Scattering \n at 0\u00b0 Retardance')
 plt.savefig(Path_Save + '/N2.png', format='png')
-plt.savefig(Path_Save + '/N2.pdf', format='pdf')
+#plt.savefig(Path_Save + '/N2.pdf', format='pdf')
 plt.show()
 
 
@@ -364,7 +370,7 @@ DF_Headers = ['Sample Columns', 'N2 Columns', 'Sample Intensity', 'N2 Intensity'
 DF_S_C = pd.DataFrame(Samp_PN)
 DF_N2_C = pd.DataFrame(N2_PN)
 #DF_PF_S = pd.DataFrame(SD_Samp)
-DF_PF_S = pd.DataFrame(SD_Samp_gfit_bkg_corr)
+DF_PF_S = pd.DataFrame(SD_Samp)
 DF_PF_N2 = pd.DataFrame(SD_N2)
 PhaseFunctionDF = pd.concat([DF_S_C, DF_N2_C, DF_PF_S, DF_PF_N2], ignore_index=False, axis=1)
 PhaseFunctionDF.columns = DF_Headers

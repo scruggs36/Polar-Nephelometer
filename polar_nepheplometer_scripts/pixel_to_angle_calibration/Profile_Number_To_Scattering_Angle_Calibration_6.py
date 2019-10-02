@@ -22,7 +22,7 @@ from math import sqrt, log, pi
 from matplotlib.ticker import MultipleLocator
 
 # import N2 Rayleigh scattering data
-Save_Directory = '/home/austen/Desktop/2019-09-08_Analysis/'
+Save_Directory = '/home/austen/Desktop/2019-09-26_Analysis/'
 
 
 
@@ -251,7 +251,7 @@ print('Gienger 2017 RI: ', m9)
 # total particle concentration
 concentration = 1000
 # geometric standard deviation
-sigma_g = 1.05
+sigma_g = 1.005
 # Particle diameter, geometric mean of the particle diameter
 d = 903
 # wavelength
@@ -260,7 +260,7 @@ w_n = 663
 m_array = [m0[2], m1[2], m2[2], m3[2], m4[2], m5[2], m6[2], m7[2], m8[2], m9[2]]
 groups = ['Matheson 1952', 'Bateman 1959', 'Nikalov 2000', 'Ma 2003', 'Sultanova 2003', 'Kasarova 2006', 'Miles 2010', 'Jones 2013', 'Greenslade 2017', 'Gienger 2017']
 # size array
-size_array = np.arange(700, 1110, 10)
+size_array = np.arange(d-100, d+100, 10)
 
 # log normal distribution function
 def LogNormal(size, mu, gsd, N):
@@ -269,8 +269,13 @@ def LogNormal(size, mu, gsd, N):
 # create log normal distribution values in array
 log_dist = np.array([LogNormal(element, d, sigma_g, concentration) for element in size_array])
 
-pf_average = []
-pf_2darray = []
+SL_average = []
+SR_average = []
+SU_average = []
+
+SL_2darray = []
+SR_2darray = []
+SU_2darray = []
 mie_data = []
 
 
@@ -279,10 +284,17 @@ for counter_0, m_i in enumerate(m_array):
     group = groups[counter_0]
     for counter_1, element_1 in enumerate(size_array):
         theta_mie, SL, SR, SU = ps.ScatteringFunction(m_i, w_n, element_1, nMedium=1.0, minAngle=0, maxAngle=180, angularResolution=0.5, space='theta', angleMeasure='degrees', normalization=None)
-        pf_2darray.append(SL)
-    pf_average = np.average(pf_2darray, axis=0, weights=log_dist)
-    mie_data.append([group, m_i, pf_average])
-    pf_2darray = []
+        SL_2darray.append(SL)
+        SR_2darray.append(SR)
+        SU_2darray.append(SU)
+    SL_average = np.average(SL_2darray, axis=0, weights=log_dist)
+    SR_average = np.average(SR_2darray, axis=0, weights=log_dist)
+    SU_average = np.average(SU_2darray, axis=0, weights=log_dist)
+    mie_data.append([group, m_i, SL_average, SR_average, SU_average])
+    SL_2darray = []
+    SR_2darray = []
+    SU_2darray = []
+
 
 
 # find all local maxima and minima in the 900nm PSL Mie scattering diagram
@@ -312,17 +324,39 @@ Mie_PF_Gienger = mie_data[9][2]
 
 Mie_Theory_DF = pd.DataFrame()
 Mie_Theory_DF['Theta'] = theta_mie
-Mie_Theory_DF['Matheson'] = mie_data[0][2]
-Mie_Theory_DF['Bateman'] = mie_data[1][2]
-Mie_Theory_DF['Nikalov'] = mie_data[2][2]
-Mie_Theory_DF['Ma'] = mie_data[3][2]
-Mie_Theory_DF['Sultanova'] = mie_data[4][2]
-Mie_Theory_DF['Kasarova'] = mie_data[5][2]
-Mie_Theory_DF['Miles'] = mie_data[6][2]
-Mie_Theory_DF['Jones'] = mie_data[7][2]
-Mie_Theory_DF['Greenslade'] = mie_data[8][2]
-Mie_Theory_DF['Gienger'] = mie_data[9][2]
-#Mie_Theory_DF.to_csv(Save_Directory + 'Mie_Theory_DF.txt', sep=',')
+Mie_Theory_DF['Matheson SL'] = mie_data[0][2]
+Mie_Theory_DF['Bateman SL'] = mie_data[1][2]
+Mie_Theory_DF['Nikalov SL'] = mie_data[2][2]
+Mie_Theory_DF['Ma SL'] = mie_data[3][2]
+Mie_Theory_DF['Sultanova SL'] = mie_data[4][2]
+Mie_Theory_DF['Kasarova SL'] = mie_data[5][2]
+Mie_Theory_DF['Miles SL'] = mie_data[6][2]
+Mie_Theory_DF['Jones SL'] = mie_data[7][2]
+Mie_Theory_DF['Greenslade SL'] = mie_data[8][2]
+Mie_Theory_DF['Gienger SL'] = mie_data[9][2]
+
+Mie_Theory_DF['Matheson SR'] = mie_data[0][3]
+Mie_Theory_DF['Bateman SR'] = mie_data[1][3]
+Mie_Theory_DF['Nikalov SR'] = mie_data[2][3]
+Mie_Theory_DF['Ma SR'] = mie_data[3][3]
+Mie_Theory_DF['Sultanova SR'] = mie_data[4][3]
+Mie_Theory_DF['Kasarova SR'] = mie_data[5][3]
+Mie_Theory_DF['Miles SR'] = mie_data[6][3]
+Mie_Theory_DF['Jones SR'] = mie_data[7][3]
+Mie_Theory_DF['Greenslade SR'] = mie_data[8][3]
+Mie_Theory_DF['Gienger SR'] = mie_data[9][3]
+
+Mie_Theory_DF['Matheson SU'] = mie_data[0][4]
+Mie_Theory_DF['Bateman SU'] = mie_data[1][4]
+Mie_Theory_DF['Nikalov SU'] = mie_data[2][4]
+Mie_Theory_DF['Ma SU'] = mie_data[3][4]
+Mie_Theory_DF['Sultanova SU'] = mie_data[4][4]
+Mie_Theory_DF['Kasarova SU'] = mie_data[5][4]
+Mie_Theory_DF['Miles SU'] = mie_data[6][4]
+Mie_Theory_DF['Jones SU'] = mie_data[7][4]
+Mie_Theory_DF['Greenslade SU'] = mie_data[8][4]
+Mie_Theory_DF['Gienger SU'] = mie_data[9][4]
+Mie_Theory_DF.to_csv(Save_Directory + 'Mie_Theory_DF.txt', sep=',')
 
 
 theta_max_min_avg = np.mean([[theta_mie[x] for x in mie_max_min_array[0]], [theta_mie[x] for x in mie_max_min_array[1]], [theta_mie[x] for x in mie_max_min_array[2]], [theta_mie[x] for x in mie_max_min_array[3]], [theta_mie[x] for x in mie_max_min_array[4]], [theta_mie[x] for x in mie_max_min_array[5]], [theta_mie[x] for x in mie_max_min_array[6]], [theta_mie[x] for x in mie_max_min_array[7]], [theta_mie[x] for x in mie_max_min_array[8]], [theta_mie[x] for x in mie_max_min_array[9]]], axis=0)
@@ -333,42 +367,87 @@ theta_uncertainty = [theta_max_min_std[x] / theta_max_min_avg[x] * 100 for x in 
 
 
 # figure with local max and minima and associated errors when averaging all theory theta
-f0, ax0 = plt.subplots(figsize=(12, 7))
-ax0.semilogy(theta_mie, Mie_PF_Matheson, label=groups[0])
-ax0.semilogy([theta_mie[x] for x in mie_max_min_array[0]], [Mie_PF_Matheson[x] for x in mie_max_min_array[0]], color='black', marker='*', ms=3, ls=' ')
-ax0.semilogy(theta_mie, Mie_PF_Bateman, label=groups[1])
-ax0.semilogy([theta_mie[x] for x in mie_max_min_array[1]], [Mie_PF_Bateman[x] for x in mie_max_min_array[1]], color='black', marker='*', ms=3, ls=' ')
-ax0.semilogy(theta_mie, Mie_PF_Nikalov, label=groups[2])
-ax0.semilogy([theta_mie[x] for x in mie_max_min_array[2]], [Mie_PF_Nikalov[x] for x in mie_max_min_array[2]], color='black', marker='*', ms=3, ls=' ')
-ax0.semilogy(theta_mie, Mie_PF_Ma, label=groups[3])
-ax0.semilogy([theta_mie[x] for x in mie_max_min_array[3]], [Mie_PF_Ma[x] for x in mie_max_min_array[3]], color='black', marker='*', ms=3, ls=' ')
-ax0.semilogy(theta_mie, Mie_PF_Sultanova, label=groups[4])
-ax0.semilogy([theta_mie[x] for x in mie_max_min_array[4]], [Mie_PF_Sultanova[x] for x in mie_max_min_array[4]], color='black', marker='*', ms=3, ls=' ')
-ax0.semilogy(theta_mie, Mie_PF_Kasarova, label=groups[5])
-ax0.semilogy([theta_mie[x] for x in mie_max_min_array[5]], [Mie_PF_Kasarova[x] for x in mie_max_min_array[5]], color='black', marker='*', ms=3, ls=' ')
-ax0.semilogy(theta_mie, Mie_PF_Miles, label=groups[6])
-ax0.semilogy([theta_mie[x] for x in mie_max_min_array[6]], [Mie_PF_Miles[x] for x in mie_max_min_array[6]], color='black', marker='*', ms=3, ls=' ')
-ax0.semilogy(theta_mie, Mie_PF_Jones, label=groups[7])
-ax0.semilogy([theta_mie[x] for x in mie_max_min_array[7]], [Mie_PF_Jones[x] for x in mie_max_min_array[7]], color='black', marker='*', ms=3, ls=' ')
-ax0.semilogy(theta_mie, Mie_PF_Greenslade, label=groups[8])
-ax0.semilogy([theta_mie[x] for x in mie_max_min_array[8]], [Mie_PF_Greenslade[x] for x in mie_max_min_array[8]], color='black', marker='*', ms=3, ls=' ')
-ax0.semilogy(theta_mie, Mie_PF_Gienger, label=groups[9])
-ax0.semilogy([theta_mie[x] for x in mie_max_min_array[9]], [Mie_PF_Gienger[x] for x in mie_max_min_array[9]], color='black', marker='*', ms=3, ls=' ')
-ax0.errorbar(theta_max_min_avg, pf_max_min_avg, xerr=2*np.array(theta_max_min_std), yerr=2*np.array(pf_max_min_std), color='black', ls=' ', capsize=2.5, label='Maxima & Minima\n with Error in \u03b8')
-ax0.set_title('PSL Phase Functions Calculated from Various Refractive Index\n Values Given in the Literature')
-ax0.set_xlabel('\u03b8')
-ax0.set_ylabel('Intensity')
-ax0.grid(True)
-ax0.legend(loc=1)
+f0a, ax0a = plt.subplots(figsize=(12, 7))
+ax0a.semilogy(theta_mie, Mie_Theory_DF['Matheson SL'], label=groups[0])
+ax0a.semilogy([theta_mie[x] for x in mie_max_min_array[0]], [Mie_PF_Matheson[x] for x in mie_max_min_array[0]], color='black', marker='*', ms=3, ls=' ')
+ax0a.semilogy(theta_mie, Mie_Theory_DF['Bateman SL'], label=groups[1])
+ax0a.semilogy([theta_mie[x] for x in mie_max_min_array[1]], [Mie_PF_Bateman[x] for x in mie_max_min_array[1]], color='black', marker='*', ms=3, ls=' ')
+ax0a.semilogy(theta_mie, Mie_Theory_DF['Nikalov SL'], label=groups[2])
+ax0a.semilogy([theta_mie[x] for x in mie_max_min_array[2]], [Mie_PF_Nikalov[x] for x in mie_max_min_array[2]], color='black', marker='*', ms=3, ls=' ')
+ax0a.semilogy(theta_mie, Mie_Theory_DF['Ma SL'], label=groups[3])
+ax0a.semilogy([theta_mie[x] for x in mie_max_min_array[3]], [Mie_PF_Ma[x] for x in mie_max_min_array[3]], color='black', marker='*', ms=3, ls=' ')
+ax0a.semilogy(theta_mie, Mie_Theory_DF['Sultanova SL'], label=groups[4])
+ax0a.semilogy([theta_mie[x] for x in mie_max_min_array[4]], [Mie_PF_Sultanova[x] for x in mie_max_min_array[4]], color='black', marker='*', ms=3, ls=' ')
+ax0a.semilogy(theta_mie, Mie_Theory_DF['Kasarova SL'], label=groups[5])
+ax0a.semilogy([theta_mie[x] for x in mie_max_min_array[5]], [Mie_PF_Kasarova[x] for x in mie_max_min_array[5]], color='black', marker='*', ms=3, ls=' ')
+ax0a.semilogy(theta_mie, Mie_Theory_DF['Miles SL'], label=groups[6])
+ax0a.semilogy([theta_mie[x] for x in mie_max_min_array[6]], [Mie_PF_Miles[x] for x in mie_max_min_array[6]], color='black', marker='*', ms=3, ls=' ')
+ax0a.semilogy(theta_mie, Mie_Theory_DF['Jones SL'], label=groups[7])
+ax0a.semilogy([theta_mie[x] for x in mie_max_min_array[7]], [Mie_PF_Jones[x] for x in mie_max_min_array[7]], color='black', marker='*', ms=3, ls=' ')
+ax0a.semilogy(theta_mie, Mie_Theory_DF['Greenslade SL'], label=groups[8])
+ax0a.semilogy([theta_mie[x] for x in mie_max_min_array[8]], [Mie_PF_Greenslade[x] for x in mie_max_min_array[8]], color='black', marker='*', ms=3, ls=' ')
+ax0a.semilogy(theta_mie, Mie_Theory_DF['Gienger SL'], label=groups[9])
+ax0a.semilogy([theta_mie[x] for x in mie_max_min_array[9]], [Mie_PF_Gienger[x] for x in mie_max_min_array[9]], color='black', marker='*', ms=3, ls=' ')
+ax0a.errorbar(theta_max_min_avg, pf_max_min_avg, xerr=2*np.array(theta_max_min_std), yerr=2*np.array(pf_max_min_std), color='black', ls=' ', capsize=2.5, label='Maxima & Minima\n with Error in \u03b8')
+ax0a.set_title('PSL SL Phase Functions Calculated from Various Refractive Index\n Values Given in the Literature')
+ax0a.set_xlabel('\u03b8')
+ax0a.set_ylabel('Intensity')
+ax0a.grid(True)
+ax0a.legend(loc=1)
 plt.tight_layout()
-plt.savefig(Save_Directory + 'Mie_PFs.png', format='png')
-plt.savefig(Save_Directory + 'Mie_PFs.pdf', format='pdf')
+plt.savefig(Save_Directory + 'Mie_SL.png', format='png')
+plt.savefig(Save_Directory + 'Mie_SL.pdf', format='pdf')
 plt.show()
 
 
+f0b, ax0b = plt.subplots(figsize=(12, 7))
+ax0b.semilogy(theta_mie, Mie_Theory_DF['Matheson SR'], label=groups[0])
+ax0b.semilogy(theta_mie, Mie_Theory_DF['Bateman SR'], label=groups[1])
+ax0b.semilogy(theta_mie, Mie_Theory_DF['Nikalov SR'], label=groups[2])
+ax0b.semilogy(theta_mie, Mie_Theory_DF['Ma SR'], label=groups[3])
+ax0b.semilogy(theta_mie, Mie_Theory_DF['Sultanova SR'], label=groups[4])
+ax0b.semilogy(theta_mie, Mie_Theory_DF['Kasarova SR'], label=groups[5])
+ax0b.semilogy(theta_mie, Mie_Theory_DF['Miles SR'], label=groups[6])
+ax0b.semilogy(theta_mie, Mie_Theory_DF['Jones SR'], label=groups[7])
+ax0b.semilogy(theta_mie, Mie_Theory_DF['Greenslade SR'], label=groups[8])
+ax0b.semilogy(theta_mie, Mie_Theory_DF['Gienger SR'], label=groups[9])
+ax0b.set_title('PSL SR Phase Functions Calculated from Various Refractive Index\n Values Given in the Literature')
+ax0b.set_xlabel('\u03b8')
+ax0b.set_ylabel('Intensity')
+ax0b.grid(True)
+ax0b.legend(loc=1)
+plt.tight_layout()
+plt.savefig(Save_Directory + 'Mie_SR.png', format='png')
+plt.savefig(Save_Directory + 'Mie_SR.pdf', format='pdf')
+plt.show()
+
+
+f0c, ax0c = plt.subplots(figsize=(12, 7))
+ax0c.semilogy(theta_mie, Mie_Theory_DF['Matheson SU'], label=groups[0])
+ax0c.semilogy(theta_mie, Mie_Theory_DF['Bateman SU'], label=groups[1])
+ax0c.semilogy(theta_mie, Mie_Theory_DF['Nikalov SU'], label=groups[2])
+ax0c.semilogy(theta_mie, Mie_Theory_DF['Ma SU'], label=groups[3])
+ax0c.semilogy(theta_mie, Mie_Theory_DF['Sultanova SU'], label=groups[4])
+ax0c.semilogy(theta_mie, Mie_Theory_DF['Kasarova SU'], label=groups[5])
+ax0c.semilogy(theta_mie, Mie_Theory_DF['Miles SU'], label=groups[6])
+ax0c.semilogy(theta_mie, Mie_Theory_DF['Jones SU'], label=groups[7])
+ax0c.semilogy(theta_mie, Mie_Theory_DF['Greenslade SU'], label=groups[8])
+ax0c.semilogy(theta_mie, Mie_Theory_DF['Gienger SU'], label=groups[9])
+ax0c.set_title('PSL SU Phase Functions Calculated from Various Refractive Index\n Values Given in the Literature')
+ax0c.set_xlabel('\u03b8')
+ax0c.set_ylabel('Intensity')
+ax0c.grid(True)
+ax0c.legend(loc=1)
+plt.tight_layout()
+plt.savefig(Save_Directory + 'Mie_SU.png', format='png')
+plt.savefig(Save_Directory + 'Mie_SU.pdf', format='pdf')
+plt.show()
+
+
+'''
 # import experiment data for 900nm PSL
 #Exp_Directory = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-09-06/2019-09-06_Analysis/90/SD_Particle.txt'
-Exp_Directory = '/home/austen/Desktop/2019-09-08_Analysis/900nm_windows_on/SD_Particle.txt'
+Exp_Directory = '/home/austen/Desktop/2019-09-26_Analysis/PSL900nm/0lamda/SD_Particle.txt'
 Exp_Data = pd.read_csv(Exp_Directory, delimiter=',', header=0)
 Exp_Ray_PF = Exp_Data['N2 Intensity']
 Exp_Ray_PN = np.asarray(Exp_Data['N2 Columns'])
@@ -468,7 +547,7 @@ Mie_PF_Jones = pchip_interpolate(xi=theta_mie, yi=Mie_PF_Jones, x=Calibrated_The
 Mie_PF_Greenslade = pchip_interpolate(xi=theta_mie, yi=Mie_PF_Greenslade, x=Calibrated_Theta, der=0, axis=0)
 Mie_PF_Gienger = pchip_interpolate(xi=theta_mie, yi=Mie_PF_Gienger, x=Calibrated_Theta, der=0, axis=0)
 
-comparator = np.absolute((Exp_Particle_PF * 0.0010) - Mie_PF_Gienger)
+comparator = (np.absolute((Exp_Particle_PF * 0.0010) - Mie_PF_Gienger)/Mie_PF_Gienger) * 100
 
 
 # make a plot of the 900 spline data and the experimental data overlayed
@@ -485,7 +564,7 @@ ax5[0].legend(loc=1)
 ax5[1].plot(Calibrated_Theta, comparator, color='black', linestyle='-', label='Calibrated Measurement')
 ax5[1].set_xlabel('\u03b8 (\u00B0)')
 ax5[1].set_ylabel('Intensity')
-ax5[1].set_title('Absolute Value of the Difference Between\n Experiment and Mie Theory')
+ax5[1].set_title('Percent Error from Mie Theory')
 #ax5.tick_params(axis='x')
 ax5[1].minorticks_on()
 ax5[1].grid(True)
@@ -494,7 +573,8 @@ plt.tight_layout()
 plt.savefig(Save_Directory + 'Validation.pdf', format='pdf')
 plt.savefig(Save_Directory + 'Validation.png', format='png')
 plt.show()
-
+'''
+'''
 # Mie theory sample 2
 Mie_Directory_2 = '/home/austen/Desktop/2019-09-08_Analysis/800nm/Mie_Theory_DF.txt'
 Mie_Data_2 = pd.read_csv(Mie_Directory_2, delimiter=',')
@@ -530,7 +610,7 @@ Exp_Particle_PN_3 = np.array(Exp_Data_3['Sample Columns'])
 Exp_Particle_PN_3 = Exp_Particle_PN_3[~np.isnan(Exp_Particle_PN_3)]
 Calibrated_Theta_3 = (results1.params[1] * Exp_Particle_PN_3) + results1.params[0]
 
-'''
+
 f6, ax6 = plt.subplots(figsize=(12, 6))
 ax6.semilogy(Calibrated_Theta_2, Exp_Particle_PF_2 * .0010, color='purple', ls='-', label='Calibrated Measurement')
 ax6.semilogy(theta_mie, Mie_Sample_PF_2, color='red', ls='-', label='Mie Theory')
@@ -557,7 +637,7 @@ plt.tight_layout()
 plt.savefig(Save_Directory + 'Validation3.pdf', format='pdf')
 plt.savefig(Save_Directory + 'Validation3.png', format='png')
 plt.show()
-'''
+
 print(Calibrated_Theta_3)
 print(Mie_Sample_PF_3)
 # xi is small theory theta axis, yi = small theory intensities, x=new thetas to compute at intensities at, same size as measurement PN axis!
@@ -586,4 +666,50 @@ plt.tight_layout()
 plt.savefig(Save_Directory + 'Validation4.pdf', format='pdf')
 plt.savefig(Save_Directory + 'Validation4.png', format='png')
 plt.show()
-#'''
+'''
+
+'''
+# import experiment data for 900nm PSL: this was to give us an idea of the angular range
+#Exp_Directory = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-09-06/2019-09-06_Analysis/90/SD_Particle.txt'
+Exp_Directory_B = '/home/austen/Desktop/2019-09-17_Analysis/SD_Particle.txt'
+Exp_Data_B = pd.read_csv(Exp_Directory_B, delimiter=',', header=0)
+Exp_Ray_PF_B = Exp_Data_B['N2 Intensity']
+Exp_Ray_PN_B = np.asarray(Exp_Data_B['N2 Columns'])
+#Exp_Particle_PF = np.asarray(Exp_Data['Sample Intensity'] - Exp_Ray_PF)
+# if you don't want to perform a nitrogen/background gas subtraction use the below!
+Exp_Particle_PF_B = np.asarray(Exp_Data_B['Sample Intensity'])
+Exp_Particle_PF_B = Exp_Particle_PF_B[~np.isnan(Exp_Particle_PF_B)]
+Exp_Particle_PN_B = Exp_Data_B['Sample Columns'] # the actual profile number needs to be added into the labview code, it is in the Python Offline Analysis!
+Exp_Particle_PN_B = Exp_Particle_PN_B[~np.isnan(Exp_Particle_PN_B)]
+Calibrated_Theta_B = [(results1.params[1] * x) + results1.params[0] for x in Exp_Particle_PN_B]
+B = 0.020
+comparator_B = (np.absolute((Exp_Particle_PF_B * B) - Mie_PF_Gienger) / Mie_PF_Gienger) * 100
+
+# smooth experimental scattering diagrams by savitzky golay to eliminate noise spikes!
+Exp_Particle_PF_Savgol_B = savgol_filter(Exp_Particle_PF_B, window_length=151, polyorder=2, deriv=0)
+Exp_Particle_PF_Savgol_Pchip_B = pchip_interpolate(xi=Exp_Particle_PN_B, yi=Exp_Particle_PF_Savgol_B, x=Exp_Particle_PN, der=0, axis=0)
+
+# make a plot of the 900 spline data and the experimental data overlayed
+f9, ax9 = plt.subplots(1, 2, figsize=(12, 6))
+ax9[0].semilogy(theta_mie, np.array(mie_data[9][2]), color='red', linestyle='-', label='Mie Theory')
+ax9[0].semilogy(Calibrated_Theta_B, Exp_Particle_PF_B * B, color='purple', linestyle='-', label='Calibrated Measurement')
+ax9[0].set_xlabel('\u03b8 (\u00B0)')
+ax9[0].set_ylabel('Intensity')
+ax9[0].set_title('Theory and Calibrated Measurement')
+#ax9.tick_params(axis='x')
+ax9[0].minorticks_on()
+ax9[0].grid(True)
+ax9[0].legend(loc=1)
+ax9[1].plot(Calibrated_Theta_B, comparator_B, color='black', linestyle='-', label='Calibrated Measurement')
+ax9[1].set_xlabel('\u03b8 (\u00B0)')
+ax9[1].set_ylabel('Intensity')
+ax9[1].set_title('Percent Error from Mie Theory')
+#ax9.tick_params(axis='x')
+ax9[1].minorticks_on()
+ax9[1].grid(True)
+ax9[1].legend(loc=1)
+plt.tight_layout()
+plt.savefig(Save_Directory + 'Range.pdf', format='pdf')
+plt.savefig(Save_Directory + 'Range.png', format='png')
+plt.show()
+'''
