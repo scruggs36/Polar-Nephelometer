@@ -22,11 +22,11 @@ import os
 # Beam finding images directories
 #Path_Bright_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
 # Rayleigh images directories
-Path_CO2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-10-18/CO2/120s/CO2_120s_0lamda_0_AVG_.txt'
+Path_CO2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/10.31.19/CO2/new/CO2_100s_0lamda_0_AVG_.txt'
 #Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-10-11/CO2/lamda_0.5/CO2_300s_0.5lamda_0_AVG_.txt'
-Path_He_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-10-18/He/120s/He_120s_0lamda_0_AVG_.txt'
+Path_He_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/10.31.19/He/new/He_100s_0lamda_0_AVG_.txt'
 # save directory
-Path_Save = '/home/austen/Desktop/Rayleigh_Analysis'
+Path_Save = '/home/austen/Desktop/Rayleigh_Analysis/T3'
 
 
 
@@ -79,8 +79,8 @@ Raw_N2_im = np.loadtxt(Path_Save + '/' + 'Raw_N2.txt').astype(dtype=np.uint16)
 
 
 # Initial boundaries on the image , cols can be: [250, 1040], [300, 1040], [405, 887]
-rows = [400, 500]
-cols = [260, 1020]
+rows = [400, 600]
+cols = [400, 900]
 cols_array = (np.arange(cols[0], cols[1], 1)).astype(int)
 #ROI = im[rows[0]:rows[1], cols[0]:cols[1]]
 
@@ -108,7 +108,7 @@ print(iterator)
 mid = []
 top = []
 bot = []
-sigma_pixels = 5
+sigma_pixels = 20
 for counter, element in enumerate(range(iterator)):
     if counter < iterator:
         print(counter)
@@ -356,8 +356,8 @@ ax4[1, 0].set_ylabel('Intensity (DN)')
 ax4[1, 0].set_title('Profiles Taken Along Vertical \n Bounded Transects')
 ax4[1, 0].grid(True)
 ax4[1, 1].plot(CO2_PN, SD_CO2, linestyle='-', color='red', label='SD: Raw CO2')
-#ax4[1, 1].plot(CO2_PN, SD_CO2_gfit_bkg_corr, linestyle='-', color='blue', label='SD: Sample - N2')
-#ax4[1, 1].plot(cols_array, SD_Samp_imsub_corrected, linestyle='-', color='green', label='SD: Sample - N2 - Edge Corrected')
+ax4[1, 1].plot(CO2_PN, SD_CO2_gfit, linestyle='-', color='blue', label='SD: CO2 Gaussian Fit')
+ax4[1, 1].plot(cols_array, SD_CO2_gfit_bkg_corr, linestyle='-', color='green', label='SD: CO2 Gaussian Fit -  Bkg Constant')
 ax4[1, 1].set_xlabel('Profile Numbers (column numbers)')
 ax4[1, 1].set_ylabel('Summed Profile Intensities (DN)')
 ax4[1, 1].set_title('Scattering Diagram')
@@ -418,14 +418,18 @@ print('ROI range', [(slope * cols[0]) + intercept, (slope * cols[1]) + intercept
 # Save Phase Function, the data saved here has no subtractions/corrections applied to them, each is raw signal
 # note the CCD Noise cannot be backed out, as we would have to cover the lens to do it, if at some point we take
 # covered images we could do it...
-DF_Headers = ['CO2 Columns', 'He Columns', 'CO2 Theta', 'He Theta', 'CO2 Intensity', 'He Intensity']
+DF_Headers = ['CO2 Columns', 'He Columns', 'CO2 Theta', 'He Theta', 'CO2 Intensity', 'CO2 Intensity gfit', 'CO2 Intensity gfit corr', 'He Intensity', 'He Intensity gfit', 'He Intensity gfit corr']
 DF_CO2_C = pd.DataFrame(CO2_PN)
 DF_He_C = pd.DataFrame(He_PN)
 DF_CO2_Theta = pd.DataFrame([(x * slope) + intercept for x in CO2_PN])
 DF_He_Theta = pd.DataFrame([(x * slope) + intercept for x in He_PN])
 DF_PF_CO2 = pd.DataFrame(SD_CO2)
+DF_PF_CO2_gfit = pd.DataFrame(SD_CO2_gfit)
+DF_PF_CO2_gfit_bkg_corr = pd.DataFrame(SD_CO2_gfit_bkg_corr)
 DF_PF_He = pd.DataFrame(SD_He)
-PhaseFunctionDF = pd.concat([DF_CO2_C, DF_He_C, DF_CO2_Theta, DF_He_Theta, DF_PF_CO2, DF_PF_He], ignore_index=False, axis=1)
+DF_PF_He_gfit = pd.DataFrame(SD_He_gfit)
+DF_PF_He_gfit_bkg_corr = pd.DataFrame(SD_He_gfit_bkg_corr)
+PhaseFunctionDF = pd.concat([DF_CO2_C, DF_He_C, DF_CO2_Theta, DF_He_Theta, DF_PF_CO2, DF_PF_CO2_gfit, DF_PF_CO2_gfit_bkg_corr, DF_PF_He, DF_PF_He_gfit, DF_PF_He_gfit_bkg_corr], ignore_index=False, axis=1)
 PhaseFunctionDF.columns = DF_Headers
 PhaseFunctionDF.to_csv(Path_Save + '/SD_Rayleigh.txt')
 

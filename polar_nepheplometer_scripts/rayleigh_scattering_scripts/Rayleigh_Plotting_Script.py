@@ -9,15 +9,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-H_path = '/home/austen/Desktop/Rayleigh_Analysis/PF_lamda0.5'
-V_path = '/home/austen/Desktop/Rayleigh_Analysis/PF_lamda0'
+H_path = '/home/austen/Desktop/Rayleigh_Analysis/T3/lamda_0.5/PFs'
+V_path = '/home/austen/Desktop/Rayleigh_Analysis/T3/lamda_0/PFs'
 
 f0, ax0 = plt.subplots(1, 3, figsize=(20, 12))
 
 H_files = os.listdir(H_path)
 for file in H_files:
     df = pd.read_csv(H_path + '/' + str(file), sep=',', header=0)
-    pf = df['CO2 Intensity'] - df['He Intensity']
+    pf = df['CO2 Intensity gfit corr'] #- df['He Intensity gfit corr']
     theta = df['CO2 Theta']
     ax0[0].plot(theta, pf, label=str(file))
     ax0[2].plot(theta, pf, label=str(file))
@@ -25,7 +25,7 @@ for file in H_files:
 V_files = os.listdir(V_path)
 for file in V_files:
     df = pd.read_csv(V_path + '/' + str(file), sep=',', header=0)
-    pf = df['CO2 Intensity'] - df['He Intensity']
+    pf = df['CO2 Intensity gfit corr'] #- df['He Intensity gfit corr']
     theta = df['CO2 Theta']
     ax0[1].plot(theta, pf, label=str(file))
     ax0[2].plot(theta, pf, label=str(file))
