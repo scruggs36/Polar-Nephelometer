@@ -22,11 +22,11 @@ import os
 # Beam finding images directories
 #Path_Bright_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
 # Rayleigh images directories
-Path_CO2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/10.31.19/CO2/new/CO2_100s_0lamda_0_AVG_.txt'
-#Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-10-11/CO2/lamda_0.5/CO2_300s_0.5lamda_0_AVG_.txt'
-Path_He_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/10.31.19/He/new/He_100s_0lamda_0_AVG_.txt'
+Path_CO2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.19.19/CO2/400s/CO2_400s_0.5lamda_0_AVG_.txt'
+#Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.19.19/N2/400s/N2_400s_0.5lamda_0_AVG_.txt'
+Path_He_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.19.19/He/400s/He_400s_0.5lamda_0_AVG_.txt'
 # save directory
-Path_Save = '/home/austen/Desktop/Rayleigh_Analysis/T3'
+Path_Save = '/home/austen/Desktop/Rayleigh_Analysis/T4'
 
 
 
@@ -79,8 +79,8 @@ Raw_N2_im = np.loadtxt(Path_Save + '/' + 'Raw_N2.txt').astype(dtype=np.uint16)
 
 
 # Initial boundaries on the image , cols can be: [250, 1040], [300, 1040], [405, 887]
-rows = [400, 600]
-cols = [400, 900]
+rows = [150, 225]
+cols = [50, 835]
 cols_array = (np.arange(cols[0], cols[1], 1)).astype(int)
 #ROI = im[rows[0]:rows[1], cols[0]:cols[1]]
 
@@ -108,7 +108,7 @@ print(iterator)
 mid = []
 top = []
 bot = []
-sigma_pixels = 20
+sigma_pixels = 15
 for counter, element in enumerate(range(iterator)):
     if counter < iterator:
         print(counter)
@@ -116,7 +116,7 @@ for counter, element in enumerate(range(iterator)):
         y = row_max_index_array[(counter) * tuner: (counter + 1) * tuner]
         print(x)
         #print(y)
-        polynomial_fit = np.poly1d(np.polyfit(x, y, deg=2))
+        polynomial_fit = np.poly1d(np.polyfit(x, y, deg=6))
         #sigma_pixels = 20
         [mid.append(polynomial_fit(element)) for element in x]
         [top.append(polynomial_fit(element) - sigma_pixels) for element in x]
@@ -127,21 +127,17 @@ for counter, element in enumerate(range(iterator)):
         y = row_max_index_array[(counter) * tuner: len(row_max_index_array)]
         print(x)
         # print(y)
-        polynomial_fit = np.poly1d(np.polyfit(x, y, deg=2))
+        polynomial_fit = np.poly1d(np.polyfit(x, y, deg=6))
         #sigma_pixels = 20
         [mid.append(polynomial_fit(element)) for element in x]
         [top.append(polynomial_fit(element) - sigma_pixels) for element in x]
         [bot.append(polynomial_fit(element) + sigma_pixels) for element in x]
 
-#print(len(mid))
-#print(mid)
-#top = np.array(top).ravel()
-#print(top.shape)
-#print(top)
-#bot = np.array(bot).ravel()
-#print(bot.shape)
-#print(bot)
-
+coords_df = pd.DataFrame()
+coords_df['Top'] = top
+coords_df['Middle'] = mid
+coords_df['Bottom'] = bot
+coords_df.to_csv(Path_Save + '/image_coordinates.txt')
 
 # pretty picture plots for background signal corrections
 # plots of all averaged images and profile coordinates
@@ -151,7 +147,7 @@ im_fcala = axcal[0].pcolormesh(Corrected_CO2, cmap='gray')
 divider_cala = make_axes_locatable(axcal[0])
 cax_cala = divider_cala.append_axes("right", size="5%", pad=0.05)
 fcal.colorbar(im_fcala, cax=cax_cala)
-axcal[0].set_title('Carbon Dioxide Rayleigh Scattering')
+axcal[0].set_title('Carbon Dioxide Rayleigh Scattering \nHelium Subtracted')
 im_fcalb = axcal[1].pcolormesh(Corrected_CO2, cmap='gray')
 axcal[1].plot(cols_array, top, ls='-', color='lawngreen')
 axcal[1].plot(cols_array, mid, ls='-', color='red')
@@ -162,10 +158,33 @@ axcal[1].plot(cols_array, bot, ls='-', color='lawngreen')
 divider_calb = make_axes_locatable(axcal[1])
 cax_calb = divider_calb.append_axes("right", size="5%", pad=0.05)
 fcal.colorbar(im_fcalb, cax=cax_calb)
-axcal[1].set_title('Carbon Dioxide Rayleigh Scattering')
+axcal[1].set_title('Carbon Dioxide Rayleigh Scattering \nHelium Subtracted')
 plt.savefig(Path_Save + '/CO2.png', format='png')
 #plt.savefig(Path_Save + '/Sample.pdf', format='pdf')
 plt.show()
+
+'''
+fcal, axcal = plt.subplots(2, 1, figsize=(12, 12))
+im_fcala = axcal[0].pcolormesh(Corrected_N2, cmap='gray')
+divider_cala = make_axes_locatable(axcal[0])
+cax_cala = divider_cala.append_axes("right", size="5%", pad=0.05)
+fcal.colorbar(im_fcala, cax=cax_cala)
+axcal[0].set_title('Nitrogen Rayleigh Scattering \nHelium Subtracted')
+im_fcalb = axcal[1].pcolormesh(Corrected_N2, cmap='gray')
+axcal[1].plot(cols_array, top, ls='-', color='lawngreen')
+axcal[1].plot(cols_array, mid, ls='-', color='red')
+axcal[1].plot(cols_array, row_max_index_array, ls='-', color='purple')
+axcal[1].plot(cols_array, bot, ls='-', color='lawngreen')
+# create an axes on the right side of ax. The width of cax will be 5%
+# of ax and the padding between cax and ax will be fixed at 0.05 inch.
+divider_calb = make_axes_locatable(axcal[1])
+cax_calb = divider_calb.append_axes("right", size="5%", pad=0.05)
+fcal.colorbar(im_fcalb, cax=cax_calb)
+axcal[1].set_title('Nitrogen Rayleigh Scattering \nHelium Subtracted')
+plt.savefig(Path_Save + '/N2.png', format='png')
+#plt.savefig(Path_Save + '/Sample.pdf', format='pdf')
+plt.show()
+'''
 
 
 f0, ax0 = plt.subplots(2, 1, figsize=(12, 12))
@@ -186,7 +205,6 @@ cax_b = divider_b.append_axes("right", size="5%", pad=0.05)
 f0.colorbar(im_f0b, cax=cax_b)
 ax0[1].set_title('Background: Helium Rayleigh Scattering')
 plt.savefig(Path_Save + '/He.png', format='png')
-#plt.savefig(Path_Save + '/N2.pdf', format='pdf')
 plt.show()
 
 '''
@@ -204,7 +222,7 @@ SD_N2_gfit = []
 SD_N2_gfit_bkg_corr = []
 for counter, element in enumerate(cols_array):
     arr = np.arange(top[counter], bot[counter], 1).astype(int)
-    bound_transect = np.array(Raw_N2[arr, element]).astype('int')
+    bound_transect = np.array(Corrected_N2[arr, element]).astype('int')
     if np.amax(bound_transect) < 4095:
         idx_max = np.argmax(bound_transect)
         N2_PN.append(element)
@@ -300,7 +318,7 @@ SD_CO2_gfit = []
 SD_CO2_gfit_bkg_corr = []
 for counter, element in enumerate(cols_array):
     arr = np.arange(top[counter], bot[counter], 1).astype(int)
-    bound_transect = np.array(Raw_CO2[arr, element]).astype('int')
+    bound_transect = np.array(Corrected_CO2[arr, element]).astype('int')
     if np.amax(bound_transect) < 4095:
         idx_max = np.argmax(bound_transect)
         CO2_PN.append(element)
@@ -332,17 +350,27 @@ for counter, element in enumerate(cols_array):
             gfit_sum_bc_CO2 = np.nan
             SD_CO2_gfit_bkg_corr.append(gfit_sum_bc_CO2)
 
+SD_He = np.array(SD_He)
+SD_He_gfit = np.array(SD_He_gfit)
+SD_He_gfit_bkg_corr = np.array(SD_He_gfit_bkg_corr)
+#SD_N2 = np.array(SD_N2)
+#SD_N2_gfit = np.array(SD_N2_gfit)
+#SD_N2_gfit_bkg_corr = np.array(SD_N2_gfit_bkg_corr)
+SD_CO2 = np.array(SD_CO2)
+SD_CO2_gfit = np.array(SD_CO2_gfit)
+SD_CO2_gfit_bkg_corr = np.array(SD_CO2_gfit_bkg_corr)
+
 
 # plot of the Sample nitrogen subtracted data with bounds
 f4, ax4 = plt.subplots(2, 2, figsize=(12, 6))
-im_f4 = ax4[0, 0].pcolormesh(Raw_CO2, cmap='gray')
+im_f4 = ax4[0, 0].pcolormesh(Corrected_CO2, cmap='gray')
 # create an axes on the right side of ax. The width of cax will be 5%
 # of ax and the padding between cax and ax will be fixed at 0.05 inch.
 divider = make_axes_locatable(ax4[0, 0])
 cax = divider.append_axes("right", size="5%", pad=0.05)
 f4.colorbar(im_f4, cax=cax)
 ax4[0, 0].set_title('Averaged CO2 Image')
-ax4[0, 1].pcolormesh(Raw_CO2, cmap='gray')
+ax4[0, 1].pcolormesh(Corrected_CO2, cmap='gray')
 ax4[0, 1].plot(cols_array, top, marker='.', ms=0.1, color='lawngreen')
 ax4[0, 1].plot(cols_array, mid, marker='.', ms=0.1, color='red')
 ax4[0, 1].plot(cols_array, bot, marker='.', ms=0.1, color='lawngreen')
@@ -355,9 +383,9 @@ ax4[1, 0].set_xlabel('Rows')
 ax4[1, 0].set_ylabel('Intensity (DN)')
 ax4[1, 0].set_title('Profiles Taken Along Vertical \n Bounded Transects')
 ax4[1, 0].grid(True)
-ax4[1, 1].plot(CO2_PN, SD_CO2, linestyle='-', color='red', label='SD: Raw CO2')
-ax4[1, 1].plot(CO2_PN, SD_CO2_gfit, linestyle='-', color='blue', label='SD: CO2 Gaussian Fit')
-ax4[1, 1].plot(cols_array, SD_CO2_gfit_bkg_corr, linestyle='-', color='green', label='SD: CO2 Gaussian Fit -  Bkg Constant')
+ax4[1, 1].plot(CO2_PN, SD_CO2, linestyle='-', color='red', label='SD: CO2 - He (Riemann)')
+ax4[1, 1].plot(CO2_PN, SD_CO2_gfit, linestyle='-', color='blue', label='SD: CO2 - He (Gaussian Fit)')
+ax4[1, 1].plot(CO2_PN, SD_CO2_gfit_bkg_corr, linestyle='-', color='green', label='SD: CO2 - He (Gaussian Fit -  Bkg Constant)')
 ax4[1, 1].set_xlabel('Profile Numbers (column numbers)')
 ax4[1, 1].set_ylabel('Summed Profile Intensities (DN)')
 ax4[1, 1].set_title('Scattering Diagram')
@@ -368,18 +396,17 @@ plt.tight_layout()
 plt.savefig(Path_Save + '/CO2_PF.png', format='png')
 plt.show()
 
-
 '''
 # plot of the backgound subtracted data with bounds
 f5, ax5 = plt.subplots(2, 2, figsize=(12, 6))
-im_f5 = ax5[0, 0].pcolormesh(Raw_N2, cmap='gray')
+im_f5 = ax5[0, 0].pcolormesh(Corrected_N2, cmap='gray')
 # create an axes on the right side of ax. The width of cax will be 5%
 # of ax and the padding between cax and ax will be fixed at 0.05 inch.
 divider = make_axes_locatable(ax5[0, 0])
 cax = divider.append_axes("right", size="5%", pad=0.05)
 f5.colorbar(im_f5, cax=cax)
 ax5[0, 0].set_title('Averaged Nitrogen Image')
-ax5[0, 1].pcolormesh(Raw_N2, cmap='gray')
+ax5[0, 1].pcolormesh(Corrected_N2, cmap='gray')
 ax5[0, 1].plot(cols_array, top, marker='.', ms=0.1, color='lawngreen')
 ax5[0, 1].plot(cols_array, mid, marker='.', ms=0.1, color='red')
 ax5[0, 1].plot(cols_array, bot, marker='.', ms=0.1, color='lawngreen')
@@ -392,9 +419,9 @@ ax5[1, 0].set_xlabel('Rows')
 ax5[1, 0].set_ylabel('Intensity (DN)')
 ax5[1, 0].set_title('Profiles Taken Along Vertical \n Bounded Transects')
 ax5[1, 0].grid(True)
-ax5[1, 1].plot(N2_PN, SD_N2, linestyle='-', color='red', label='SD: N2')
-ax5[1, 1].plot(N2_PN, SD_N2_gfit_bkg_corr, linestyle='-', color='blue', label='SD: N2 BKG Correction')
-#ax5[1, 1].plot(cols_array, SD_N2_imsub_corrected, linestyle='-', color='green', label='SD: N2 - He - Edge Correction')
+ax5[1, 1].plot(N2_PN, SD_N2, linestyle='-', color='red', label='SD: N2 - He (Riemann)')
+ax5[1, 1].plot(N2_PN, SD_N2_gfit, linestyle='-', color='blue', label='SD: N2 - He (Gaussian Fit)')
+ax5[1, 1].plot(N2_PN, SD_N2_gfit_bkg_corr, linestyle='-', color='green', label='SD: N2 - He (Gaussian Fit - Bkg Constant)')
 ax5[1, 1].set_xlabel('Profile Numbers (column numbers)')
 ax5[1, 1].set_ylabel('Summed Profile Intensities (DN)')
 ax5[1, 1].set_title('Scattering Diagram')
@@ -405,6 +432,7 @@ plt.tight_layout()
 plt.savefig(Path_Save + '/N2_PF.png', format='png')
 plt.show()
 '''
+
 # columns to theta
 slope = 0.2046
 intercept = -43.8992
@@ -418,7 +446,7 @@ print('ROI range', [(slope * cols[0]) + intercept, (slope * cols[1]) + intercept
 # Save Phase Function, the data saved here has no subtractions/corrections applied to them, each is raw signal
 # note the CCD Noise cannot be backed out, as we would have to cover the lens to do it, if at some point we take
 # covered images we could do it...
-DF_Headers = ['CO2 Columns', 'He Columns', 'CO2 Theta', 'He Theta', 'CO2 Intensity', 'CO2 Intensity gfit', 'CO2 Intensity gfit corr', 'He Intensity', 'He Intensity gfit', 'He Intensity gfit corr']
+DF_Headers = ['CO2 Columns', 'He Columns', 'CO2 Theta', 'He Theta', 'CO2 Intensity', 'CO2 Intensity gfit', 'CO2 Intensity gfit corr', 'He Intensity', 'He Intensity gfit', 'He Intensity gfit corr', 'N2 Intensity', 'N2 Intensity gfit', 'N2 Intensity gfit corr']
 DF_CO2_C = pd.DataFrame(CO2_PN)
 DF_He_C = pd.DataFrame(He_PN)
 DF_CO2_Theta = pd.DataFrame([(x * slope) + intercept for x in CO2_PN])
@@ -429,7 +457,13 @@ DF_PF_CO2_gfit_bkg_corr = pd.DataFrame(SD_CO2_gfit_bkg_corr)
 DF_PF_He = pd.DataFrame(SD_He)
 DF_PF_He_gfit = pd.DataFrame(SD_He_gfit)
 DF_PF_He_gfit_bkg_corr = pd.DataFrame(SD_He_gfit_bkg_corr)
-PhaseFunctionDF = pd.concat([DF_CO2_C, DF_He_C, DF_CO2_Theta, DF_He_Theta, DF_PF_CO2, DF_PF_CO2_gfit, DF_PF_CO2_gfit_bkg_corr, DF_PF_He, DF_PF_He_gfit, DF_PF_He_gfit_bkg_corr], ignore_index=False, axis=1)
+#DF_PF_N2 = pd.DataFrame(SD_N2)
+#DF_PF_N2_gfit = pd.DataFrame(SD_N2_gfit)
+#DF_PF_N2_gfit_bkg_corr = pd.DataFrame(SD_N2_gfit_bkg_corr)
+DF_PF_N2 = pd.DataFrame(np.full(shape=len(SD_CO2), fill_value=np.nan))
+DF_PF_N2_gfit = pd.DataFrame(np.full(shape=len(SD_CO2_gfit), fill_value=np.nan))
+DF_PF_N2_gfit_bkg_corr = pd.DataFrame(np.full(shape=len(SD_CO2_gfit_bkg_corr), fill_value=np.nan))
+PhaseFunctionDF = pd.concat([DF_CO2_C, DF_He_C, DF_CO2_Theta, DF_He_Theta, DF_PF_CO2, DF_PF_CO2_gfit, DF_PF_CO2_gfit_bkg_corr, DF_PF_He, DF_PF_He_gfit, DF_PF_He_gfit_bkg_corr, DF_PF_N2, DF_PF_N2_gfit, DF_PF_N2_gfit_bkg_corr], ignore_index=False, axis=1)
 PhaseFunctionDF.columns = DF_Headers
 PhaseFunctionDF.to_csv(Path_Save + '/SD_Rayleigh.txt')
 

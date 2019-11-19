@@ -23,11 +23,13 @@ import os
 #Path_Bright_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
 
 # Sample images directory
-Path_Samp_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-09-28/PSL600/3s/PSL600_3s_0.5lamda_0_AVG_.txt'
+Path_Samp_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.18.19/Squalane/900nm/20s/Squalane900nm_20s_0.5lamda_0_AVG_.txt'
 # Rayleigh images directories
-Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-09-28/N2/3s/N2_3s_0.5lamda_0_AVG_.txt'
+Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.18.19/N2/20s/N2_20s_0.5lamda_0_AVG_.txt'
+# coordinate directory
+coords_Dir = '/home/austen/Desktop/Rayleigh_Analysis/T4/'
 # save directory
-Path_Save = '/home/austen/Desktop/2019-09-26_Analysis'
+Path_Save = '/home/austen/Desktop/2019-11-18_Analysis'
 
 
 
@@ -74,30 +76,16 @@ np.savetxt(Path_Save + '/' + 'Corrected_Sample.txt', Corrected_Sample)
 Corrected_Sample_im = np.loadtxt(Path_Save + '/' + 'Corrected_Sample.txt').astype(dtype=np.uint16)
 Raw_N2_im = np.loadtxt(Path_Save + '/' + 'Raw_N2.txt').astype(dtype=np.uint16)
 '''
-# cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-'''
-Raw_BKG_PNG = cv2.cvtColor(cv2.imread(Path_Save + '/' + 'Raw_BKG.png'), cv2.COLOR_BGR2GRAY)
-Corrected_Sample_PNG = cv2.cvtColor(cv2.imread(Path_Save + '/' + 'Corrected_Sample.jpg'), cv2.COLOR_BGR2GRAY)
-Corrected_Bright_CO2_PNG = cv2.cvtColor(cv2.imread(Path_Save + '/' + 'Corrected_Bright_CO2.png'), cv2.COLOR_BGR2GRAY)
-Corrected_CO2_PNG = cv2.cvtColor(cv2.imread(Path_Save + '/' + 'Corrected_CO2.png'), cv2.COLOR_BGR2GRAY)
-Corrected_N2_PNG = cv2.cvtColor(cv2.imread(Path_Save + '/' + 'Corrected_N2.png'), cv2.COLOR_BGR2GRAY)
-Corrected_Bright_N2_PNG = cv2.cvtColor(cv2.imread(Path_Save + '/' + 'Corrected_Bright_N2.png'), cv2.COLOR_BGR2GRAY)
-Corrected_He_PNG = cv2.cvtColor(cv2.imread(Path_Save + '/' + 'Corrected_He.png'), cv2.COLOR_BGR2GRAY)
-'''
-
 
 # Initial boundaries on the image , cols can be: [250, 1040], [300, 1040], [405, 887]
-rows = [400, 600]
-cols = [230, 1060]
+rows = [150, 215]
+cols = [50, 835]
 cols_array = (np.arange(cols[0], cols[1], 1)).astype(int)
 #ROI = im[rows[0]:rows[1], cols[0]:cols[1]]
 
 def gaussian(x, a, b, c, d):
     return d + (abs(a) * np.exp((-1 * (x - b) ** 2) / (2 * c ** 2)))
 
-
-def rayleigh_scattering (x, a, b):
-    return b + (a * np.square(np.cos(x)))
 
 # find coordinates based on sample - N2 scattering averaged image (without corrections)
 row_max_index_array = []
@@ -116,7 +104,7 @@ print(iterator)
 mid = []
 top = []
 bot = []
-sigma_pixels = 30
+sigma_pixels = 10
 for counter, element in enumerate(range(iterator)):
     if counter < iterator:
         print(counter)
@@ -141,14 +129,11 @@ for counter, element in enumerate(range(iterator)):
         [top.append(polynomial_fit(element) - sigma_pixels) for element in x]
         [bot.append(polynomial_fit(element) + sigma_pixels) for element in x]
 
-#print(len(mid))
-#print(mid)
-#top = np.array(top).ravel()
-#print(top.shape)
-#print(top)
-#bot = np.array(bot).ravel()
-#print(bot.shape)
-#print(bot)
+
+coords_DF = pd.read_csv(coords_Dir + 'image_coordinates.txt', sep=',', header=0)
+top = coords_DF['Top']
+mid = coords_DF['Middle']
+bot = coords_DF['Bottom']
 
 
 # pretty picture plots for background signal corrections
@@ -165,7 +150,7 @@ axcal.plot(cols_array, bot, ls='-', color='lawngreen')
 divider_a = make_axes_locatable(axcal)
 cax_a = divider_a.append_axes("right", size="5%", pad=0.05)
 fcal.colorbar(im_fcal, cax=cax_a)
-axcal.set_title('Sample: 900nm Polystyrene Latex Spheres \n at 0\u00b0 Retardance')
+axcal.set_title('Sample \n at Retardance \u03bb')
 plt.savefig(Path_Save + '/Sample.png', format='png')
 #plt.savefig(Path_Save + '/Sample.pdf', format='pdf')
 plt.show()
@@ -182,7 +167,7 @@ ax0.plot(cols_array, bot, ls='-', color='lawngreen')
 divider_a = make_axes_locatable(ax0)
 cax_a = divider_a.append_axes("right", size="5%", pad=0.05)
 f0.colorbar(im_f0a, cax=cax_a)
-ax0.set_title('Background: Nitrogen Rayleigh Scattering \n at 0\u00b0 Retardance')
+ax0.set_title('Background: Nitrogen Rayleigh Scattering \n at Retardance \u03bb')
 plt.savefig(Path_Save + '/N2.png', format='png')
 #plt.savefig(Path_Save + '/N2.pdf', format='pdf')
 plt.show()
@@ -303,9 +288,9 @@ ax4[1, 0].set_xlabel('Rows')
 ax4[1, 0].set_ylabel('Intensity (DN)')
 ax4[1, 0].set_title('Profiles Taken Along Vertical \n Bounded Transects')
 ax4[1, 0].grid(True)
-ax4[1, 1].plot(Samp_PN, SD_Samp, linestyle='-', color='red', label='SD: Sample')
-ax4[1, 1].plot(Samp_PN, SD_Samp_gfit_bkg_corr, linestyle='-', color='blue', label='SD: Sample - N2')
-#ax4[1, 1].plot(cols_array, SD_Samp_imsub_corrected, linestyle='-', color='green', label='SD: Sample - N2 - Edge Corrected')
+ax4[1, 1].plot(Samp_PN, SD_Samp, linestyle='-', color='red', label='Sample - N2 (Reimann)')
+ax4[1, 1].plot(Samp_PN, SD_Samp_gfit, linestyle='-', color='blue', label='Sample - N2 (Gaussian Fit)')
+ax4[1, 1].plot(Samp_PN, SD_Samp_gfit_bkg_corr, linestyle='-', color='green', label='Sample - N2 (Gaussian Fit - Bkg Constant)')
 ax4[1, 1].set_xlabel('Profile Numbers (column numbers)')
 ax4[1, 1].set_ylabel('Summed Profile Intensities (DN)')
 ax4[1, 1].set_title('Scattering Diagram')
@@ -340,9 +325,9 @@ ax5[1, 0].set_xlabel('Rows')
 ax5[1, 0].set_ylabel('Intensity (DN)')
 ax5[1, 0].set_title('Profiles Taken Along Vertical \n Bounded Transects')
 ax5[1, 0].grid(True)
-ax5[1, 1].plot(N2_PN, SD_N2, linestyle='-', color='red', label='SD: N2')
-ax5[1, 1].plot(N2_PN, SD_N2_gfit_bkg_corr, linestyle='-', color='blue', label='SD: N2 BKG Correction')
-#ax5[1, 1].plot(cols_array, SD_N2_imsub_corrected, linestyle='-', color='green', label='SD: N2 - He - Edge Correction')
+ax5[1, 1].plot(N2_PN, SD_N2, linestyle='-', color='red', label='N2 (Reimann)')
+#ax5[1, 1].plot(N2_PN, SD_N2_gfit, linestyle='-', color='blue', label='N2 (Gaussian Fit)')
+#ax5[1, 1].plot(N2_PN, SD_N2_gfit_bkg_corr, linestyle='-', color='green', label='N2 (Gaussian Fit - Bkg Constant)')
 ax5[1, 1].set_xlabel('Profile Numbers (column numbers)')
 ax5[1, 1].set_ylabel('Summed Profile Intensities (DN)')
 ax5[1, 1].set_title('Scattering Diagram')
@@ -366,13 +351,16 @@ print('ROI range', [(slope * cols[0]) + intercept, (slope * cols[1]) + intercept
 # Save Phase Function, the data saved here has no subtractions/corrections applied to them, each is raw signal
 # note the CCD Noise cannot be backed out, as we would have to cover the lens to do it, if at some point we take
 # covered images we could do it...
-DF_Headers = ['Sample Columns', 'N2 Columns', 'Sample Intensity', 'N2 Intensity']
+DF_Headers = ['Sample Columns', 'N2 Columns', 'Sample Intensity','Sample Intensity gfit', 'Sample Intensity gfit bkg corr','N2 Intensity', 'N2 Intensity gfit', 'N2 Intensity gfit bkg corr']
 DF_S_C = pd.DataFrame(Samp_PN)
 DF_N2_C = pd.DataFrame(N2_PN)
-#DF_PF_S = pd.DataFrame(SD_Samp)
 DF_PF_S = pd.DataFrame(SD_Samp)
+DF_PF_S_G = pd.DataFrame(SD_Samp_gfit)
+DF_PF_S_G_C = pd.DataFrame(SD_Samp_gfit_bkg_corr)
 DF_PF_N2 = pd.DataFrame(SD_N2)
-PhaseFunctionDF = pd.concat([DF_S_C, DF_N2_C, DF_PF_S, DF_PF_N2], ignore_index=False, axis=1)
+DF_PF_N2_G = pd.DataFrame(SD_N2_gfit)
+DF_PF_N2_G_C = pd.DataFrame(SD_N2_gfit_bkg_corr)
+PhaseFunctionDF = pd.concat([DF_S_C, DF_N2_C, DF_PF_S, DF_PF_S_G, DF_PF_S_G_C, DF_PF_N2, DF_PF_N2_G, DF_PF_N2_G_C], ignore_index=False, axis=1)
 PhaseFunctionDF.columns = DF_Headers
 PhaseFunctionDF.to_csv(Path_Save + '/SD_Particle.txt')
 
