@@ -23,13 +23,13 @@ import os
 #Path_Bright_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
 
 # Sample images directory
-Path_Samp_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.18.19/Squalane/900nm/20s/Squalane900nm_20s_0.5lamda_0_AVG_.txt'
+Path_Samp_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.21.19/PSL900/1s/PSL900nm_1s_0.5lamda_0_AVG_.txt'
 # Rayleigh images directories
-Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.18.19/N2/20s/N2_20s_0.5lamda_0_AVG_.txt'
+Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.21.19/N2/1s/N2_1s_0.5lamda_0_AVG_.txt'
 # coordinate directory
-coords_Dir = '/home/austen/Desktop/Rayleigh_Analysis/T4/'
+#coords_Dir = '/home/austen/Desktop/Rayleigh_Analysis/T4/'
 # save directory
-Path_Save = '/home/austen/Desktop/2019-11-18_Analysis'
+Path_Save = '/home/austen/Desktop/2019-11-21_Analysis'
 
 
 
@@ -79,7 +79,7 @@ Raw_N2_im = np.loadtxt(Path_Save + '/' + 'Raw_N2.txt').astype(dtype=np.uint16)
 
 # Initial boundaries on the image , cols can be: [250, 1040], [300, 1040], [405, 887]
 rows = [150, 215]
-cols = [50, 835]
+cols = [30, 875]
 cols_array = (np.arange(cols[0], cols[1], 1)).astype(int)
 #ROI = im[rows[0]:rows[1], cols[0]:cols[1]]
 
@@ -104,7 +104,7 @@ print(iterator)
 mid = []
 top = []
 bot = []
-sigma_pixels = 10
+sigma_pixels = 20
 for counter, element in enumerate(range(iterator)):
     if counter < iterator:
         print(counter)
@@ -129,12 +129,12 @@ for counter, element in enumerate(range(iterator)):
         [top.append(polynomial_fit(element) - sigma_pixels) for element in x]
         [bot.append(polynomial_fit(element) + sigma_pixels) for element in x]
 
-
+'''
 coords_DF = pd.read_csv(coords_Dir + 'image_coordinates.txt', sep=',', header=0)
 top = coords_DF['Top']
 mid = coords_DF['Middle']
 bot = coords_DF['Bottom']
-
+'''
 
 # pretty picture plots for background signal corrections
 # plots of all averaged images and profile coordinates
@@ -218,6 +218,21 @@ for counter, element in enumerate(cols_array):
             bound_transect_ndarray_gfit_bc_N2.append(gfit)
             gfit_sum_N2_bc = np.nan
             SD_N2_gfit_bkg_corr.append(gfit_sum_N2_bc)
+    # catching any other saturation as a Nan value
+    else:
+        idx_max = np.argmax(bound_transect)
+        N2_PN.append(element)
+        # data wrangling
+        arr_ndarray_N2.append(arr)
+        bound_transect_ndarray_N2.append(bound_transect)
+        transect_summed = np.nan
+        SD_N2.append(transect_summed)
+        # gaussian fitting of raw data
+        gfit_sum_N2 = np.nan
+        SD_N2_gfit.append(gfit_sum_N2)
+        # gaussian fitting of raw data with background correction
+        gfit_sum_bc_N2 = np.nan
+        SD_N2_gfit_bkg_corr.append(gfit_sum_bc_N2)
 
 # this is important for evaluating profiles along transects between the bounds
 # loop through transects and acquire profiles and scattering diagram intensities vs profile numbers
@@ -264,7 +279,21 @@ for counter, element in enumerate(cols_array):
             bound_transect_ndarray_gfit_bc_Samp.append(gfit)
             gfit_sum_bc_Samp = np.nan
             SD_Samp_gfit_bkg_corr.append(gfit_sum_bc_Samp)
-
+    # catching any other saturation as a Nan value
+    else:
+        idx_max = np.argmax(bound_transect)
+        Samp_PN.append(element)
+        # data wrangling
+        arr_ndarray_Samp.append(arr)
+        bound_transect_ndarray_Samp.append(bound_transect)
+        transect_summed = np.nan
+        SD_Samp.append(transect_summed)
+        # gaussian fitting of raw data
+        gfit_sum_Samp = np.nan
+        SD_Samp_gfit.append(gfit_sum_Samp)
+        # gaussian fitting of raw data with background correction
+        gfit_sum_bc_Samp = np.nan
+        SD_Samp_gfit_bkg_corr.append(gfit_sum_bc_Samp)
 
 # plot of the Sample nitrogen subtracted data with bounds
 f4, ax4 = plt.subplots(2, 2, figsize=(12, 6))

@@ -22,11 +22,11 @@ import os
 # Beam finding images directories
 #Path_Bright_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
 # Rayleigh images directories
-Path_CO2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.19.19/CO2/400s/CO2_400s_0.5lamda_0_AVG_.txt'
+Path_CO2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.20.19/CO2/400s/CO2_400s_0.5lamda_0_AVG_.txt'
 #Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.19.19/N2/400s/N2_400s_0.5lamda_0_AVG_.txt'
-Path_He_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.19.19/He/400s/He_400s_0.5lamda_0_AVG_.txt'
+Path_He_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.20.19/He/400s/He_400s_0.5lamda_0_AVG_.txt'
 # save directory
-Path_Save = '/home/austen/Desktop/Rayleigh_Analysis/T4'
+Path_Save = '/home/austen/Desktop/Rayleigh_Analysis/'
 
 
 
@@ -108,7 +108,7 @@ print(iterator)
 mid = []
 top = []
 bot = []
-sigma_pixels = 15
+sigma_pixels = 20
 for counter, element in enumerate(range(iterator)):
     if counter < iterator:
         print(counter)

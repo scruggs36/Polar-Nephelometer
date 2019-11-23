@@ -22,7 +22,7 @@ from math import sqrt, log, pi
 from matplotlib.ticker import MultipleLocator
 
 # import N2 Rayleigh scattering data
-Save_Directory = '/home/austen/Desktop/2019-09-26_Analysis/'
+Save_Directory = '/home/austen/Desktop/2019-11-21_Analysis/'
 
 
 
@@ -444,10 +444,10 @@ plt.savefig(Save_Directory + 'Mie_SU.pdf', format='pdf')
 plt.show()
 
 
-'''
+
 # import experiment data for 900nm PSL
 #Exp_Directory = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/2019-09-06/2019-09-06_Analysis/90/SD_Particle.txt'
-Exp_Directory = '/home/austen/Desktop/2019-09-26_Analysis/PSL900nm/0lamda/SD_Particle.txt'
+Exp_Directory = '/home/austen/Desktop/2019-11-21_Analysis/PSL/900/1s/0lamda/SD_Particle.txt'
 Exp_Data = pd.read_csv(Exp_Directory, delimiter=',', header=0)
 Exp_Ray_PF = Exp_Data['N2 Intensity']
 Exp_Ray_PN = np.asarray(Exp_Data['N2 Columns'])
@@ -472,7 +472,7 @@ exp_minimum = np.argmin(Exp_Particle_PF_Savgol_Pchip, axis=0)
 exp_local_max = argrelmax(Exp_Particle_PF_Savgol_Pchip, axis=0, order=50)
 exp_local_min = argrelmin(Exp_Particle_PF_Savgol_Pchip, axis=0, order=50)
 exp_max_min_idx = np.sort(np.concatenate((exp_local_max, exp_local_min), axis=None))
-#exp_max_min_idx = np.delete(exp_max_min_idx, [0])
+exp_max_min_idx = np.delete(exp_max_min_idx, [0])
 exp_max_min_array = [Exp_Particle_PN[x] for x in exp_max_min_idx]
 print('Mie Local Features Index: ', theta_max_min_avg)
 print('Experiment Local Features Index: ', exp_max_min_array)
@@ -573,7 +573,7 @@ plt.tight_layout()
 plt.savefig(Save_Directory + 'Validation.pdf', format='pdf')
 plt.savefig(Save_Directory + 'Validation.png', format='png')
 plt.show()
-'''
+
 '''
 # Mie theory sample 2
 Mie_Directory_2 = '/home/austen/Desktop/2019-09-08_Analysis/800nm/Mie_Theory_DF.txt'
