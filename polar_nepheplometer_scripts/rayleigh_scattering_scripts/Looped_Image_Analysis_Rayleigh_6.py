@@ -22,9 +22,9 @@ import os
 # Beam finding images directories
 #Path_Bright_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
 # Rayleigh images directories
-Path_CO2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.20.19/CO2/400s/CO2_400s_0.5lamda_0_AVG_.txt'
+Path_CO2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.20.19/CO2/400s/CO2_400s_0lamda_0_AVG_.txt'
 #Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.19.19/N2/400s/N2_400s_0.5lamda_0_AVG_.txt'
-Path_He_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.20.19/He/400s/He_400s_0.5lamda_0_AVG_.txt'
+Path_He_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.20.19/He/400s/He_400s_0lamda_0_AVG_.txt'
 # save directory
 Path_Save = '/home/austen/Desktop/Rayleigh_Analysis/'
 
@@ -48,6 +48,7 @@ Raw_CO2 = np.loadtxt(Path_CO2_Dir, delimiter='\t')
 #Raw_N2 = np.loadtxt(Path_N2_Dir, delimiter='\t')
 Raw_He = np.loadtxt(Path_He_Dir, delimiter='\t')
 Corrected_CO2 = Raw_CO2 - Raw_He
+#Corrected_CO2 = Raw_CO2
 Corrected_CO2[Corrected_CO2 < 0] = 0
 #Corrected_N2 = Raw_N2 - Raw_He
 #Corrected_N2[Corrected_N2 < 0] = 0
@@ -434,8 +435,8 @@ plt.show()
 '''
 
 # columns to theta
-slope = 0.2046
-intercept = -43.8992
+slope = 0.2049
+intercept = -2.7594
 # columns to theta
 theta_N2 = (np.array(CO2_PN) * slope) + intercept
 print('N2 angular range:', [theta_N2[0], theta_N2[-1]])
