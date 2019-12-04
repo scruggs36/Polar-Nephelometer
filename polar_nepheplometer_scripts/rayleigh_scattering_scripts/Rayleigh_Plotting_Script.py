@@ -1,7 +1,7 @@
 '''
 Austen K. Scruggs
 10-23-2019
-Description: Looped plotting rayleigh scattering data at different polarizations
+Description: Looped plotting rayleigh scattering data at different polarizations, updated
 '''
 
 import pandas as pd
