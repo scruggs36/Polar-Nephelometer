@@ -11,15 +11,17 @@ from scipy.optimize import curve_fit
 
 def gaussian(x, a, b, c, d):
     return d + (abs(a) * np.exp((-1 * (x - b) ** 2) / (2 * c ** 2)))
-
+# Sun has changed this function slightly
 def Image_Analysis(im, row_i, row_f, col_i, col_f, sp):
     rows = [row_i, row_f]
     cols = [col_i, col_f]
-    cols_array = (np.arange(cols[0], cols[1], 1)).astype(int)
+    cols_array = np.arange(cols[0], cols[1], 1).astype(int)
     row_max_index_array = []
     for element in cols_array:
         arr = np.arange(rows[0], rows[1], 1).astype(int)
-        im_transect = im[arr, element]
+        arr0 = arr[0]
+        arrf = arr[-1]
+        im_transect = im[arr0:arrf, element]
         max_index = np.argmax(im_transect)
         row_max_index_array.append(max_index + rows[0])
     mid = []

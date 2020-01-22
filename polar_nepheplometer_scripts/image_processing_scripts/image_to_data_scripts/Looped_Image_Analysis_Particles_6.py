@@ -23,13 +23,13 @@ import os
 #Path_Bright_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
 
 # Sample images directory
-Path_Samp_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.21.19/PSL900/1s/PSL900nm_1s_0.5lamda_0_AVG_.txt'
+Path_Samp_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-01-21/PSL/900/2darray/PSL900nm_600E_12Avg_0R_Average_Tue Jan 21 2020 3_34_33 PM.txt'
 # Rayleigh images directories
-Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.21.19/N2/1s/N2_1s_0.5lamda_0_AVG_.txt'
+Path_N2_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-01-17/N2/2darray/N2_600E_3Avg_0Average_Fri Jan 17 2020 6_18_05 PM.txt'
 # coordinate directory
 #coords_Dir = '/home/austen/Desktop/Rayleigh_Analysis/T4/'
 # save directory
-Path_Save = '/home/austen/Desktop/2019-11-21_Analysis'
+Path_Save = '/home/sm3/Desktop'
 
 
 
@@ -56,26 +56,6 @@ Corrected_Sample[Corrected_Sample < 0] = 0
 # averaging sample, n2, he, bkg
 #Bright = Ndarray_Average(Path_Bright_Dir)
 #np.savetxt(Path_Save + '/' + 'Bright.txt', Bright)
-'''
-Raw_Sample = Ndarray_Average(Path_Samp_Dir)
-np.savetxt(Path_Save + '/' + 'Raw_Sample.txt', Raw_Sample, delimiter=',')
-
-Raw_N2 = Ndarray_Average(Path_N2_Dir)
-np.savetxt(Path_Save + '/' + 'Raw_N2.txt', Raw_N2, delimiter=',')
-
-
-# sample - n2 - bkg, and n2 - he - bkg
-#Corrected_Sample = np.subtract(Raw_Sample, Raw_N2)
-Corrected_Sample = Raw_Sample - Raw_N2
-Corrected_Sample[Corrected_Sample < 0] = 0
-np.savetxt(Path_Save + '/' + 'Corrected_Sample.txt', Corrected_Sample)
-'''
-
-'''
-# this saves the corrected ndarray as a txt file, and saves it as a jpg
-Corrected_Sample_im = np.loadtxt(Path_Save + '/' + 'Corrected_Sample.txt').astype(dtype=np.uint16)
-Raw_N2_im = np.loadtxt(Path_Save + '/' + 'Raw_N2.txt').astype(dtype=np.uint16)
-'''
 
 # Initial boundaries on the image , cols can be: [250, 1040], [300, 1040], [405, 887]
 rows = [150, 215]
