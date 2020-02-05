@@ -11,7 +11,7 @@ the rayleigh scattering data
 PSLs:
 Mean    Mean Uncertainty     Size Dist Sigma
 600nm     9nm                     10.0nm
-803nm     14nm                    5.6nm
+800nm     14nm                    5.6nm
 903nm     12nm                    4.1nm
 '''
 
@@ -28,7 +28,7 @@ from math import sqrt, log, pi
 
 
 # import N2 Rayleigh scattering data
-Save_Directory = '/home/sm3/Desktop/'
+Save_Directory = '/home/sm3/Desktop/Recent/'
 
 
 
@@ -258,11 +258,11 @@ print('Gienger 2017 RI: ', m9)
 concentration = 1000
 # geometric standard deviation
 sigma_g = 1.005
-sig = 4.1
+sig = 5.6
 # Particle diameter, geometric mean of the particle diameter
-d = 903
+d = 800
 # wavelength
-w_n = 632.8
+w_n = 663
 # CRI
 m_array = [m0[2], m1[2], m2[2], m3[2], m4[2], m5[2], m6[2], m7[2], m8[2], m9[2]]
 groups = ['Matheson 1952', 'Bateman 1959', 'Nikalov 2000', 'Ma 2003', 'Sultanova 2003', 'Kasarova 2006', 'Miles 2010', 'Jones 2013', 'Greenslade 2017', 'Gienger 2017']
@@ -462,17 +462,17 @@ plt.show()
 
 
 # import experiment data for 900nm PSL
-Exp_Directory = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-01-21/2020-01-21_Analysis/Measurement/SD_Particle.txt'
+Exp_Directory = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-04/2020-02-04_Analysis/Measurements/2s/0R/SD_Particle.txt'
 #Exp_Directory = '/home/austen/Desktop/2019-11-21_Analysis/PSL/900/1s/0lamda/SD_Particle.txt'
 Exp_Data = pd.read_csv(Exp_Directory, delimiter=',', header=0)
-Exp_Ray_PF = Exp_Data['N2 Intensity']
-Exp_Ray_PN = np.asarray(Exp_Data['N2 Columns'])
+Exp_Ray_PF = np.array(Exp_Data['N2 Intensity'])[50:-50]
+Exp_Ray_PN = np.array(Exp_Data['N2 Columns'])[50:-50]
 #Exp_Particle_PF = np.asarray(Exp_Data['Sample Intensity'] - Exp_Ray_PF)
 # if you don't want to perform a nitrogen/background gas subtraction use the below!
-Exp_Particle_PF = np.asarray(Exp_Data['Sample Intensity'])
-Exp_Particle_PF = Exp_Particle_PF[~np.isnan(Exp_Particle_PF)]
+Exp_Particle_PF = Exp_Data['Sample Intensity']
+Exp_Particle_PF = np.array(Exp_Particle_PF[~np.isnan(Exp_Particle_PF)])[50:-50]
 Exp_Particle_PN = Exp_Data['Sample Columns'] # the actual profile number needs to be added into the labview code, it is in the Python Offline Analysis!
-Exp_Particle_PN = Exp_Particle_PN[~np.isnan(Exp_Particle_PN)]
+Exp_Particle_PN = np.array(Exp_Particle_PN[~np.isnan(Exp_Particle_PN)])[50:-50]
 
 
 # smooth experimental scattering diagrams by savitzky golay to eliminate noise spikes!
@@ -487,8 +487,8 @@ exp_maximum = np.argmax(Exp_Particle_PF_Savgol_Pchip, axis=0)
 exp_minimum = np.argmin(Exp_Particle_PF_Savgol_Pchip, axis=0)
 exp_local_max = argrelmax(Exp_Particle_PF_Savgol_Pchip, axis=0, order=10)
 exp_local_min = argrelmin(Exp_Particle_PF_Savgol_Pchip, axis=0, order=10)
-exp_max_min_idx = np.sort(np.concatenate((exp_local_max, exp_local_min), axis=None))
-exp_max_min_idx = np.delete(exp_max_min_idx, [0, 8, 9])
+exp_max_min_idx = np.sort(np.concatenate((210, exp_local_max, exp_local_min), axis=None))
+exp_max_min_idx = np.delete(exp_max_min_idx, [0])
 exp_max_min_array = [Exp_Particle_PN[x] for x in exp_max_min_idx]
 print('Mie Local Features Index: ', theta_max_min_avg)
 print('Experiment Local Features Index: ', exp_max_min_array)
@@ -507,20 +507,20 @@ Exp_to_Mie_Ratio = ((Exp_Cal_Ints - Mie_Cal_Ints) / Mie_Cal_Ints) * 100
 
 # plot imported data
 f4, ax4 = plt.subplots(1, 3, figsize=(16, 6))
-ax4[0].semilogy(theta_mie, mie_data[9][2], 'r-', label='SL 903nm PSL')
+ax4[0].semilogy(theta_mie, mie_data[9][2], 'r-', label='SL 800nm PSL')
 ax4[0].semilogy([theta_mie[x] for x in mie_max_min_array[9]], [mie_data[9][2][x] for x in mie_max_min_array[9]], marker='x', color='black', linestyle='None', label='SL Local Max & Min')
-ax4[0].semilogy(theta_mie, mie_data[9][4], 'g-', label='SU 903nm PSL')
+ax4[0].semilogy(theta_mie, mie_data[9][4], 'g-', label='SU 800nm PSL')
 ax4[0].semilogy([theta_mie[x] for x in mie_max_min_array[9]], [mie_data[9][4][x] for x in mie_max_min_array[9]], marker='^', color='black', linestyle='None', label='SU Local Max & Min')
-ax4[0].set_title('Mie Theory Calculated Scattering Diagram\n Parallel Polarized 632.8nm Radiation')
+ax4[0].set_title('Mie Theory Calculated Scattering Diagram\n Parallel Polarized 663nm Radiation')
 ax4[0].set_xlabel('Angles (\u00B0)')
 ax4[0].set_ylabel('Intensity')
 ax4[0].legend(loc=1)
 ax4[0].grid(True)
 # adding the Rayleigh profile numbers will need to be removed after the real PNs are saved by the labview code
 # adding the Rayleigh profile numbers will need to be removed after the real PNs are saved by the labview code
-ax4[1].semilogy(Exp_Particle_PN, Exp_Particle_PF, 'b-', label='Measurement903nm PSL')
+ax4[1].semilogy(Exp_Particle_PN, Exp_Particle_PF, 'b-', label='Measurement 800nm PSL')
 ax4[1].semilogy(exp_max_min_array, [Exp_Particle_PF[x] for x in exp_max_min_idx], marker='o', color='black', linestyle='None', label='Meas. Local Max & Min')
-ax4[1].set_title('Measured Scattering Diagram\n Parallel Polarized 632.8nm Radiation')
+ax4[1].set_title('Measured Scattering Diagram\n Parallel Polarized 663nm Radiation')
 ax4[1].set_xlabel('Profile Number')
 ax4[1].set_ylabel('Intensity')
 ax4[1].legend(loc=1)
@@ -533,8 +533,8 @@ ax4[2].set_ylabel('Scattering Angle (\u00B0)')
 ax4[2].legend(loc=2)
 ax4[2].grid(True)
 plt.tight_layout()
-plt.savefig(Save_Directory + '900nm_Calibration.png', format='png')
-plt.savefig(Save_Directory + '900nm_Calibration.pdf', format='pdf')
+plt.savefig(Save_Directory + '800nm_Calibration.png', format='png')
+plt.savefig(Save_Directory + '800nm_Calibration.pdf', format='pdf')
 plt.show()
 
 Calibrated_Theta = np.array([(results1.params[1] * x) + results1.params[0] for x in Exp_Particle_PN])
