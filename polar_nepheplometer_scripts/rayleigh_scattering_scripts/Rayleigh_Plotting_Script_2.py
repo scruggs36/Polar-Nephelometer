@@ -15,11 +15,14 @@ from scipy.optimize import curve_fit
 from scipy.interpolate import pchip_interpolate
 
 # Rayleigh theory
-dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/Rayleigh_Analysis/'
-H_path = dir + 'T5/CO2/0.5lamda/PFs/SD_Rayleigh.txt'
-V_path = dir + 'T5/CO2/0lamda/PFs/SD_Rayleigh.txt'
+#dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/Rayleigh_Analysis/'
+file_directory = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-08/Rayleigh_Analysis/sigma_pixels_5/'
+H_path = file_directory + '/0.5R/SD_Rayleigh.txt'
+V_path = file_directory + '/0R/SD_Rayleigh.txt'
 Theory_path = dir + 'T3/Rayleigh_PF.txt'
-save_directory = '/home/sm3/Desktop/Correction_Attempt/'
+save_directory = '/home/sm3/Desktop/Recent/'
+
+
 def Cosine_Squared_Fit(theta, a, b):
     rads = (theta * pi) / 180.0
     f = a * (1 + b * (np.cos(rads)**2))

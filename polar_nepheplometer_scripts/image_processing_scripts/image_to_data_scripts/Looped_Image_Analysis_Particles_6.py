@@ -84,7 +84,7 @@ print(iterator)
 mid = []
 top = []
 bot = []
-sigma_pixels = 20
+sigma_pixels = 5
 for counter, element in enumerate(range(iterator)):
     if counter < iterator:
         print(counter)
