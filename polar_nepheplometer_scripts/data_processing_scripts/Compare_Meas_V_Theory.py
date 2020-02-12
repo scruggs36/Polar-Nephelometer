@@ -10,17 +10,17 @@ from scipy.interpolate import pchip_interpolate
 import matplotlib.pyplot as plt
 
 
-SL_EXP = np.array(pd.read_csv('/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-04/2020-02-04_Analysis/Measurements/2s/0R/SD_Particle.txt', header=0, sep=',')['Sample Intensity'])[50:-50]
-SL_X = np.array(pd.read_csv('/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-04/2020-02-04_Analysis/Measurements/2s/0R/SD_Particle.txt', header=0, sep=',')['Sample Columns'])[50:-50]
+SL_EXP = np.array(pd.read_csv('/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-10/2020-02-10_Analysis/Measurements/6s/0R/SD_Particle.txt', header=0, sep=',')['Sample Intensity'])[50:-50]
+SL_X = np.array(pd.read_csv('/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-10/2020-02-10_Analysis/Measurements/6s/0R/SD_Particle.txt', header=0, sep=',')['Sample Columns'])[50:-50]
 
-SR_EXP = np.array(pd.read_csv('/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-04/2020-02-04_Analysis/Measurements/2s/0.5R/SD_Particle.txt', header=0, sep=',')['Sample Intensity'])[50:-50]
-SR_X = np.array(pd.read_csv('/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-04/2020-02-04_Analysis/Measurements/2s/0.5R/SD_Particle.txt', header=0, sep=',')['Sample Columns'])[50:-50]
+SR_EXP = np.array(pd.read_csv('/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-10/2020-02-10_Analysis/Measurements/6s/0.5R/SD_Particle.txt', header=0, sep=',')['Sample Intensity'])[50:-50]
+SR_X = np.array(pd.read_csv('/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-10/2020-02-10_Analysis/Measurements/6s/0.5R/SD_Particle.txt', header=0, sep=',')['Sample Columns'])[50:-50]
 
-SU_EXP = np.array(pd.read_csv('/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-04/2020-02-04_Analysis/Measurements/2s/0.25R/SD_Particle.txt', header=0, sep=',')['Sample Intensity'])[50:-50]
-SU_X = np.array(pd.read_csv('/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-04/2020-02-04_Analysis/Measurements/2s/0.25R/SD_Particle.txt', header=0, sep=',')['Sample Columns'])[50:-50]
+SU_EXP = np.array(pd.read_csv('/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-10/2020-02-10_Analysis/Measurements/6s/0.25R/SD_Particle.txt', header=0, sep=',')['Sample Intensity'])[50:-50]
+SU_X = np.array(pd.read_csv('/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-10/2020-02-10_Analysis/Measurements/6s/0.25R/SD_Particle.txt', header=0, sep=',')['Sample Columns'])[50:-50]
 
-SU_QWP_EXP = np.array(pd.read_csv('/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-04/2020-02-04_Analysis/Measurements/2s/qw/SD_Particle.txt', header=0, sep=',')['Sample Intensity'])[50:-50]
-SU_QWP_X = np.array(pd.read_csv('/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-04/2020-02-04_Analysis/Measurements/2s/qw/SD_Particle.txt', header=0, sep=',')['Sample Columns'])[50:-50]
+SU_QWP_EXP = np.array(pd.read_csv('/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-10/2020-02-10_Analysis/Measurements/6s/0.25R/SD_Particle.txt', header=0, sep=',')['Sample Intensity'])[50:-50]
+SU_QWP_X = np.array(pd.read_csv('/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-10/2020-02-10_Analysis/Measurements/6s/0.25R/SD_Particle.txt', header=0, sep=',')['Sample Columns'])[50:-50]
 
 SL_MT = np.array(pd.read_csv('/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-04/2020-02-04_Analysis/MT800/Mie_Theory_DF.txt', header=0, sep=',')['Gienger SL'])
 SR_MT = np.array(pd.read_csv('/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-04/2020-02-04_Analysis/MT800/Mie_Theory_DF.txt', header=0, sep=',')['Gienger SR'])

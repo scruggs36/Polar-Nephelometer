@@ -22,11 +22,11 @@ import os
 # Beam finding images directories
 #Path_Bright_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
 # Rayleigh images directories
-Path_CO2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.20.19/CO2/400s/CO2_400s_0lamda_0_AVG_.txt'
+Path_CO2_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-08/CO2/300s/2darray/CO2_300s_0R_Average_Sat Feb 8 2020 3_57_03 PM.txt'
 #Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.19.19/N2/400s/N2_400s_0.5lamda_0_AVG_.txt'
-Path_He_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.20.19/He/400s/He_400s_0lamda_0_AVG_.txt'
+Path_He_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-08/He/300s/2darray/He_300s_0R_Average_Sat Feb 8 2020 5_00_15 PM.txt'
 # save directory
-Path_Save = '/home/austen/Desktop/Rayleigh_Analysis/'
+Path_Save = '/home/sm3/Desktop/Recent'
 
 
 
