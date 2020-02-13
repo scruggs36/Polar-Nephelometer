@@ -30,14 +30,25 @@ def Rayleigh_Linear_Polarized(theta, a, b):
     f = a * (np.cos(rads)**2) + b
     return f
 
+
 def Rayleigh_Residuals(x, theta, measurement):
     rads = (np.asarray(theta) * np.pi) / 180.0
     residuals = measurement - (x[0] * (np.cos(rads)**2) + x[1])
     return residuals
 
-rayleigh_theory_df = pd.read_csv(theory_path, sep=',', header=0)
-SL_gas_theory = rayleigh_theory_df['CO2 anisotropic']
-SL_gas_theory_theta = rayleigh_theory_df['Theta']
+
+
+def Power_v_Theta(x, measurement, rayleigh_cross_section_theory, power, concentration):
+    residual = power - (power * np.exp(measurement * x[0])) - (power - (power * (np.exp(rayleigh_cross_section_theory * concentration * 10**2 * -1))))
+    return residual
+
+
+def Power_v_Theta2(x, measurement, rayleigh_cross_section_theory, wavelength, e_ADU, QE, exposure_time, power):
+    c = 2.998E8
+    h = 6.626E-34
+    E = (h * c) / (wavelength * 10**-9)
+    residual = (E * ((measurement * e_ADU) / QE) * exposure_time * x[1]) - (power - (power * (np.exp(rayleigh_cross_section_theory * np.abs(x[0]) * 10**2 * -1))))
+    return residual
 
 
 SL_rayleigh_meas = pd.read_csv(SL_path, sep=',', header=0)
@@ -56,6 +67,10 @@ intercept = -3.1433
 SL_theta = [(slope * x) + intercept for x in SL_gas_columns]
 SR_theta = [(slope * x) + intercept for x in SR_gas_columns]
 
+rayleigh_theory_df = pd.read_csv(theory_path, sep=',', header=0)
+SL_gas_theory = rayleigh_theory_df['CO2 anisotropic']
+SL_gas_theory_theta = rayleigh_theory_df['Theta']
+SL_gas_theory_pchip = pchip_interpolate(SL_gas_theory_theta, SL_gas_theory, SL_theta)
 
 print(len(SL_theta))
 print(len(SL_gas_meas))
@@ -77,6 +92,23 @@ guess = np.array([np.amax(SL_gas_meas)/np.amin(SL_gas_meas), np.amin(SL_gas_meas
 SL_ls_result = least_squares(Rayleigh_Residuals, guess, method='lm', args=(SL_theta, SL_gas_meas))
 #SL_ls_percent_error = (SL_ls_result.fun / (SL_gas_meas)) * 100
 SL_ls_percent_error = (SL_ls_result.fun / (Rayleigh_Linear_Polarized(SL_theta, SL_ls_result.x[0], SL_ls_result.x[1]))) * 100
+# figure font parameters
+
+# parameters in function to play with
+# sony ccd specs came from webpage https://www.ximea.com/en/products/cameras-filtered-by-sensor-sizes/sony-icx285-cooled-mono-scientific-grade-camera
+power = .8
+wav_nm = 663
+quantum_efficiency = 57.5
+#gain_dB = 6 an expression of the dynamic range of the detector
+# FWC = 24000, full well capacity
+e_ADU = 1.5
+image_exposure_time = 300
+watt_guess = np.array([1.00E-8])
+conc = 2.54E19
+ls_watt_result = least_squares(Power_v_Theta, watt_guess, method='lm', args=(SL_gas_meas, SL_gas_theory_pchip, power, conc))
+
+
+
 # figure font parameters
 q = 20
 r = 14
@@ -163,4 +195,39 @@ ax2[1].legend(loc=1, fontsize=s)
 plt.tight_layout()
 plt.savefig(save_directory + 'CO2_lamda0.5_nlls.png', format='png')
 plt.savefig(save_directory + 'CO2_lamda0.5_nlls.pdf', format='pdf')
+plt.show()
+
+
+# SL nonlinear least squares minimization to the Rayleigh cross section data transformed to Watts? Might be irrelevant
+power = 0.8
+wavelength = 663
+gain = 1.5
+QE = 57.5
+exposure_time = 300
+c = 2.998E8
+h = 6.626E-34
+E = (h * c) / (wavelength * 10**-9)
+#meas_watt = (E * ((SL_gas_meas * gain) / QE) * exposure_time * ls_watt_result.x[1])
+#theory_watt = (power - (power * (np.exp(SL_gas_theory_pchip * np.abs(ls_watt_result.x[0]) * 10**2 * -1))))
+meas_watt = power - (power * (SL_gas_meas * ls_watt_result.x[0]))
+theory_watt = (power - (power * (np.exp(SL_gas_theory_pchip * conc * 10**2 * -1))))
+
+
+f3, ax3 = plt.subplots(2, 1, figsize=(20, 10))
+ax3[0].plot(SL_theta, meas_watt, label='$CO_2$ \u03bb = 0.5\n', ls='-', color='black')
+ax3[0].plot(SL_theta, theory_watt, ls='--', color='red', label='conversion: ' + str('{:.3e}'.format(ls_watt_result.x[0])))
+ax3[0].set_title('$CO_2$ Angular Scattering (\u03bb = 0.5)', fontsize=q)
+ax3[0].set_ylabel('Intensity', fontsize=r)
+ax3[0].set_xlabel('\u03b8', fontsize=r)
+ax3[0].grid(True)
+ax3[0].legend(loc=1, fontsize=s)
+ax3[1].plot(SL_theta, ls_watt_result.fun, color='black', ls='-', label='residuals')
+ax3[1].set_title('$CO_2$ Residual as a Function of \u03b8 at Retardance \u03bb = 0.5', fontsize=q)
+ax3[1].set_ylabel('Intensity', fontsize=r)
+ax3[1].set_xlabel('\u03b8', fontsize=r)
+ax3[1].grid(True)
+ax3[1].legend(loc=1, fontsize=s)
+plt.tight_layout()
+plt.savefig(save_directory + 'CO2_lamda0.5_nlls_watts.png', format='png')
+plt.savefig(save_directory + 'CO2_lamda0.5_nlls_watts.pdf', format='pdf')
 plt.show()
