@@ -73,3 +73,6 @@ plt.tight_layout()
 plt.savefig(save_directory + 'NLLS_PSL.png', format='png')
 plt.savefig(save_directory + 'NLLS_PSL.pdf', format='pdf')
 plt.show()
+
+
+# Do the polarization combination with the Rayleigh Scattering Theory and see if it matches our measurement!!!
