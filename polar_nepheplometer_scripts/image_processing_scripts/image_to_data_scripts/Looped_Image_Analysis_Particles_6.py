@@ -23,9 +23,9 @@ import os
 #Path_Bright_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
 
 # Sample images directory
-Path_Samp_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-10/PSL800/6s/2darray/PSL800_6s_0R_75Avg_Average_Mon Feb 10 2020 9_05_57 PM.txt'
+Path_Samp_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-08/PSL800/2s/2darray/PSL800_2s_0.5R_Average_Sat Feb 8 2020 5_50_57 PM.txt'
 # Rayleigh images directories
-Path_N2_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-10/N2/6s/2darray/N2_6s_0R_50Avg_Average_Mon Feb 10 2020 10_02_21 PM.txt'
+Path_N2_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-08/N2/2s/2darray/N2_2s_0.5R_Average_Sat Feb 8 2020 6_15_16 PM.txt'
 # coordinate directory
 #coords_Dir = '/home/austen/Desktop/Rayleigh_Analysis/T4/'
 # save directory
@@ -53,13 +53,14 @@ Corrected_Sample = Raw_Sample - Raw_N2
 Corrected_Sample[Corrected_Sample < 0] = 0
 
 
+
 # averaging sample, n2, he, bkg
 #Bright = Ndarray_Average(Path_Bright_Dir)
 #np.savetxt(Path_Save + '/' + 'Bright.txt', Bright)
 
 # Initial boundaries on the image , cols can be: [250, 1040], [300, 1040], [405, 887]
 rows = [150, 215]
-cols = [30, 875]
+cols = [50, 860]
 cols_array = (np.arange(cols[0], cols[1], 1)).astype(int)
 #ROI = im[rows[0]:rows[1], cols[0]:cols[1]]
 
@@ -84,7 +85,7 @@ print(iterator)
 mid = []
 top = []
 bot = []
-sigma_pixels = 5
+sigma_pixels = 15
 for counter, element in enumerate(range(iterator)):
     if counter < iterator:
         print(counter)
@@ -92,7 +93,7 @@ for counter, element in enumerate(range(iterator)):
         y = row_max_index_array[(counter) * tuner: (counter + 1) * tuner]
         print(x)
         #print(y)
-        polynomial_fit = np.poly1d(np.polyfit(x, y, deg=6))
+        polynomial_fit = np.poly1d(np.polyfit(x, y, deg=2))
         #sigma_pixels = 20
         [mid.append(polynomial_fit(element)) for element in x]
         [top.append(polynomial_fit(element) - sigma_pixels) for element in x]
@@ -155,6 +156,22 @@ plt.show()
 
 # this is important for evaluating profiles along transects between the bounds
 # loop through transects and acquire profiles and scattering diagram intensities vs profile numbers
+#'''
+# evaluate for saturation and create column array that eliminates saturated transects! Toggle on or off by removing quotes
+# note that the if else part of the image analysis for loop doesn't eliminate anything! its an artifact of something older
+Saturated_PN = []
+for counter, element in enumerate(cols_array):
+    arr = np.arange(top[counter], bot[counter], 1).astype(int)
+    bound_transect = np.array(Raw_Sample[arr, element]).astype(int)
+    if np.amax(bound_transect) >= 4095:
+        Saturated_PN.append(counter)
+
+cols_array = np.delete(cols_array, Saturated_PN)
+top = np.delete(top, Saturated_PN)
+mid = np.delete(mid, Saturated_PN)
+bot = np.delete(bot, Saturated_PN)
+#'''
+# evaluate nitrogen background image
 N2_PN = []
 SD_N2 = []
 arr_ndarray_N2 = []
@@ -167,7 +184,7 @@ SD_N2_gfit = []
 SD_N2_gfit_bkg_corr = []
 for counter, element in enumerate(cols_array):
     arr = np.arange(top[counter], bot[counter], 1).astype(int)
-    bound_transect = np.array(Raw_N2[arr, element]).astype('int')
+    bound_transect = np.array(Raw_N2[arr, element]).astype(int)
     if np.amax(bound_transect) < 4095:
         idx_max = np.argmax(bound_transect)
         N2_PN.append(element)
@@ -228,8 +245,9 @@ SD_Samp_gfit = []
 SD_Samp_gfit_bkg_corr = []
 for counter, element in enumerate(cols_array):
     arr = np.arange(top[counter], bot[counter], 1).astype(int)
-    bound_transect = np.array(Corrected_Sample[arr, element]).astype('int')
+    bound_transect = np.array(Corrected_Sample[arr, element]).astype(int)
     if np.amax(bound_transect) < 4095:
+        #print(np.amax(bound_transect))
         idx_max = np.argmax(bound_transect)
         Samp_PN.append(element)
         # data wrangling

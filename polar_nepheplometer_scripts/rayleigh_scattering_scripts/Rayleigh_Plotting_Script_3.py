@@ -39,7 +39,7 @@ def Rayleigh_Residuals(x, theta, measurement):
 
 
 def Power_v_Theta(x, measurement, rayleigh_cross_section_theory, power, concentration):
-    residual = power - (power * np.exp(measurement * x[0])) - (power - (power * (np.exp(rayleigh_cross_section_theory * concentration * 10**2 * -1))))
+    residual = ((measurement * x[0]) + x[1]) - (power - (power * (np.exp(rayleigh_cross_section_theory * concentration * 10**2 * -1))))
     return residual
 
 
@@ -103,7 +103,7 @@ quantum_efficiency = 57.5
 # FWC = 24000, full well capacity
 e_ADU = 1.5
 image_exposure_time = 300
-watt_guess = np.array([1.00E-8])
+watt_guess = np.array([1.00E-8, 0.000005])
 conc = 2.54E19
 ls_watt_result = least_squares(Power_v_Theta, watt_guess, method='lm', args=(SL_gas_meas, SL_gas_theory_pchip, power, conc))
 
@@ -209,13 +209,13 @@ h = 6.626E-34
 E = (h * c) / (wavelength * 10**-9)
 #meas_watt = (E * ((SL_gas_meas * gain) / QE) * exposure_time * ls_watt_result.x[1])
 #theory_watt = (power - (power * (np.exp(SL_gas_theory_pchip * np.abs(ls_watt_result.x[0]) * 10**2 * -1))))
-meas_watt = power - (power * (SL_gas_meas * ls_watt_result.x[0]))
-theory_watt = (power - (power * (np.exp(SL_gas_theory_pchip * conc * 10**2 * -1))))
+meas_watt =  (SL_gas_meas * ls_watt_result.x[0]) + ls_watt_result.x[1]
+theory_watt = (power - (power * np.exp((SL_gas_theory_pchip * conc * 10**2 * -1))))
 
 
 f3, ax3 = plt.subplots(2, 1, figsize=(20, 10))
 ax3[0].plot(SL_theta, meas_watt, label='$CO_2$ \u03bb = 0.5\n', ls='-', color='black')
-ax3[0].plot(SL_theta, theory_watt, ls='--', color='red', label='conversion: ' + str('{:.3e}'.format(ls_watt_result.x[0])))
+ax3[0].plot(SL_theta, theory_watt, ls='--', color='red', label='measurement conversion: y = ' + str('{:.3e}'.format(ls_watt_result.x[0])) + 'meas. + ' + str('{:.3e}'.format(ls_watt_result.x[1])))
 ax3[0].set_title('$CO_2$ Angular Scattering (\u03bb = 0.5)', fontsize=q)
 ax3[0].set_ylabel('Intensity', fontsize=r)
 ax3[0].set_xlabel('\u03b8', fontsize=r)
