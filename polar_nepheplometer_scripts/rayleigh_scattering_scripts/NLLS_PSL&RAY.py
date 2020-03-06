@@ -12,16 +12,16 @@ from scipy.optimize import least_squares
 from scipy.signal import savgol_filter
 
 # this tool is for finding non-idealities in the images!
-'''
-directory = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-08/CO2/300s/2darray/CO2_300s_0R_Average_Sat Feb 8 2020 3_57_03 PM.txt'
+
+directory = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-05/PSL600/3s/2darray/PSL600_3s_0.25R_200avg_Average_Thu Mar 5 2020 8_04_09 PM.txt'
 im = np.array(pd.read_csv(directory, sep='\t'))
 print(im)
 
-plt.pcolormesh(im, cmap='gray', vmax=4095, vmin=0)
+plt.pcolormesh(im, cmap='gray', vmax=1000, vmin=0)
 plt.colorbar()
 plt.show()
 
-
+'''
 directory2 = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/CO2_100s_0R_5AVG_Average_Mon Feb 17 2020 12_27_45 PM.txt'
 im2 = np.array(pd.read_csv(directory, sep='\t'))
 print(im)
@@ -30,7 +30,7 @@ plt.pcolormesh(im2, cmap='gray', vmax=4095, vmin=0)
 plt.colorbar()
 plt.show()
 '''
-
+'''
 def SL_SR_NLLS(x, SL_theory, SR_theory, measurement):
     residuals = measurement - (x[0] * SL_theory + x[1] * SR_theory)
     return residuals
@@ -126,4 +126,4 @@ plt.tight_layout()
 plt.savefig(save_directory + 'SR_v_Retardance.png', format='png')
 plt.savefig(save_directory + 'SR_v_Retardance.pdf', format='pdf')
 plt.show()
-
+'''

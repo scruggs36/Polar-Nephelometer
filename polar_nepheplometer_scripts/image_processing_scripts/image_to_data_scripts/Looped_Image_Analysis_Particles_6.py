@@ -23,9 +23,9 @@ import os
 #Path_Bright_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
 
 # Sample images directory
-Path_Samp_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-19/PSL800/2s/2darray/PSL800_2E_60Avg_0.5R_Average_Wed Feb 19 2020 11_37_58 AM.txt'
+Path_Samp_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-05/PSL600/3s/2darray/PSL600_3s_0.25R_200avg_Average_Thu Mar 5 2020 8_04_09 PM.txt'
 # Rayleigh images directories
-Path_N2_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-19/N2/2s/2darray/N2_2E_60Avg_0R_Average_Wed Feb 19 2020 1_30_51 PM.txt'
+Path_N2_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-05/N2/3s/2darray/N2_3s_0.25R_200avg_Average_Thu Mar 5 2020 9_15_57 PM.txt'
 # coordinate directory
 #coords_Dir = '/home/austen/Desktop/Rayleigh_Analysis/T4/'
 # save directory
@@ -59,8 +59,8 @@ Corrected_Sample[Corrected_Sample < 0] = 0
 #np.savetxt(Path_Save + '/' + 'Bright.txt', Bright)
 
 # Initial boundaries on the image , cols can be: [250, 1040], [300, 1040], [405, 887]
-rows = [150, 215]
-cols = [50, 860]
+rows = [200, 300]
+cols = [30, 860]
 cols_array = (np.arange(cols[0], cols[1], 1)).astype(int)
 #ROI = im[rows[0]:rows[1], cols[0]:cols[1]]
 

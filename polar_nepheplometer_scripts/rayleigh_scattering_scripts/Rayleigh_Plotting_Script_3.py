@@ -12,10 +12,11 @@ from scipy.optimize import curve_fit, least_squares
 from scipy.interpolate import pchip_interpolate
 
 # Rayleigh theory
-file_directory = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-08/Rayleigh_Analysis'
-SL_path = file_directory + '/sigma_pixels_5/0.5R/SD_Rayleigh.txt'
-SR_path = file_directory + '/sigma_pixels_5/0R/SD_Rayleigh.txt'
-theory_path = file_directory + '/Rayleigh Theory/Rayleigh_PF.txt'
+file_directory = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-02/Rayleigh_Analysis'
+SL_path = file_directory + '/CO2/0.5R/SD_Rayleigh.txt'
+SR_path = file_directory + '/CO2/0R/SD_Rayleigh.txt'
+SU_path = file_directory + '/CO2/0.25R/SD_Rayleigh.txt'
+theory_path = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-08/Rayleigh_Analysis' + '/Rayleigh Theory/Rayleigh_PF.txt'
 save_directory = '/home/sm3/Desktop/Recent/'
 
 # Cosine Squared Fit Function
@@ -53,19 +54,25 @@ def Power_v_Theta2(x, measurement, rayleigh_cross_section_theory, wavelength, e_
 
 SL_rayleigh_meas = pd.read_csv(SL_path, sep=',', header=0)
 SL_rayleigh_meas = SL_rayleigh_meas.dropna(axis=1, how='any')
-SL_gas_meas = np.array(SL_rayleigh_meas['CO2 Intensity'])
-SL_gas_columns = np.array(SL_rayleigh_meas['CO2 Columns'])
+SL_gas_meas = np.array(SL_rayleigh_meas['CO2 Intensity gfit corr'])[100:-150]
+SL_gas_columns = np.array(SL_rayleigh_meas['CO2 Columns'])[100:-150]
 
 SR_rayleigh_meas = pd.read_csv(SR_path, sep=',', header=0)
 SR_rayleigh_meas = SR_rayleigh_meas.dropna(axis=1, how='any')
-SR_gas_meas = np.array(SR_rayleigh_meas['CO2 Intensity'])
-SR_gas_columns = np.array(SR_rayleigh_meas['CO2 Columns'])
+SR_gas_meas = np.array(SR_rayleigh_meas['CO2 Intensity gfit corr'])[100:-150]
+SR_gas_columns = np.array(SR_rayleigh_meas['CO2 Columns'])[100:-150]
+
+SU_rayleigh_meas = pd.read_csv(SU_path, sep=',', header=0)
+SU_rayleigh_meas = SU_rayleigh_meas.dropna(axis=1, how='any')
+SU_gas_meas = np.array(SU_rayleigh_meas['CO2 Intensity'])[100:-150]
+SU_gas_columns = np.array(SU_rayleigh_meas['CO2 Columns'])[100:-150]
 
 slope = 0.2095
 intercept = -3.1433
 
 SL_theta = [(slope * x) + intercept for x in SL_gas_columns]
 SR_theta = [(slope * x) + intercept for x in SR_gas_columns]
+SU_theta = [(slope * x) + intercept for x in SU_gas_columns]
 
 rayleigh_theory_df = pd.read_csv(theory_path, sep=',', header=0)
 SL_gas_theory = rayleigh_theory_df['CO2 anisotropic']
@@ -85,7 +92,7 @@ SL_gas_error = (SL_gas_residuals / Rayleigh_Linear_Polarized(SL_theta, *popt_SL_
 
 
 popt_SR_gas, pcov_SR_gas = curve_fit(Rayleigh_Circular_Polarized, SR_theta, SR_gas_meas, p0=[np.amin(SR_gas_meas), np.amax(SR_gas_meas)/np.amin(SR_gas_meas)])
-SR_gas_residuals = SR_gas_meas - Rayleigh_Circular_Polarized(SL_theta, *popt_SR_gas)
+SR_gas_residuals = SR_gas_meas - Rayleigh_Circular_Polarized(SR_theta, *popt_SR_gas)
 SR_gas_error = (SR_gas_residuals / Rayleigh_Circular_Polarized(SR_theta, *popt_SR_gas)) * 100
 
 guess = np.array([np.amax(SL_gas_meas)/np.amin(SL_gas_meas), np.amin(SL_gas_meas)])
@@ -118,6 +125,7 @@ s = 14
 f, ax = plt.subplots(1, 2, figsize=(12, 6))
 ax[0].semilogy(SL_theta, SL_gas_meas, 'b-', label='SL Measurement')
 ax[0].semilogy(SR_theta, SR_gas_meas, 'r-', label='SR Measurement')
+ax[0].semilogy(SU_theta, SU_gas_meas, 'g-', label='SU Measurement')
 ax[0].set_xlabel('\u03b8', fontsize=r)
 ax[0].set_ylabel('$Log_{10}$(Intensity)', fontsize=r)
 ax[0].set_title('Rayleigh Gas Angular Scattering SL & SR \n Semi-Log Scale', fontsize=q)
@@ -125,6 +133,7 @@ ax[0].grid(True, which='both')
 ax[0].legend(loc=1, fontsize=s)
 ax[1].plot(SL_theta, SL_gas_meas, 'b-', label='SL Measurement')
 ax[1].plot(SR_theta, SR_gas_meas, 'r-', label='SR Measurement')
+ax[0].plot(SU_theta, SU_gas_meas, 'g-', label='SU Measurement')
 ax[1].set_xlabel('\u03b8', fontsize=r)
 ax[1].set_ylabel('Intensity', fontsize=r)
 ax[1].set_title('$CO_2$ Gas Angular Scattering SL & SR \n Linear Scale', fontsize=q)
@@ -197,7 +206,7 @@ plt.savefig(save_directory + 'CO2_lamda0.5_nlls.png', format='png')
 plt.savefig(save_directory + 'CO2_lamda0.5_nlls.pdf', format='pdf')
 plt.show()
 
-
+'''
 # SL nonlinear least squares minimization to the Rayleigh cross section data transformed to Watts? Might be irrelevant
 power = 0.8
 wavelength = 663
@@ -231,3 +240,5 @@ plt.tight_layout()
 plt.savefig(save_directory + 'CO2_lamda0.5_nlls_watts.png', format='png')
 plt.savefig(save_directory + 'CO2_lamda0.5_nlls_watts.pdf', format='pdf')
 plt.show()
+'''
+

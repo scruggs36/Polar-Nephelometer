@@ -22,9 +22,9 @@ import os
 # Beam finding images directories
 #Path_Bright_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
 # Rayleigh images directories
-Path_CO2_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-08/CO2/300s/2darray/CO2_300s_0.5R_Average_Sat Feb 8 2020 4_31_12 PM.txt'
+Path_CO2_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-02/CO2/100s/2darray/CO2_100s_0.5R_Average_Mon Mar 2 2020 12_53_33 PM.txt'
 #Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.19.19/N2/400s/N2_400s_0.5lamda_0_AVG_.txt'
-Path_He_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-08/He/300s/2darray/He_300s_0.5R_Average_Sat Feb 8 2020 5_00_15 PM.txt'
+Path_He_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-02/He/100s/2darray/He_100s_0.5R_Average_Mon Mar 2 2020 1_35_09 PM.txt'
 # save directory
 Path_Save = '/home/sm3/Desktop/Recent'
 
@@ -56,32 +56,12 @@ Corrected_CO2[Corrected_CO2 < 0] = 0
 # averaging sample, n2, he, bkg
 #Bright = Ndarray_Average(Path_Bright_Dir)
 #np.savetxt(Path_Save + '/' + 'Bright.txt', Bright)
-'''
-Raw_Sample = Ndarray_Average(Path_Samp_Dir)
-np.savetxt(Path_Save + '/' + 'Raw_Sample.txt', Raw_Sample, delimiter=',')
-
-Raw_N2 = Ndarray_Average(Path_N2_Dir)
-np.savetxt(Path_Save + '/' + 'Raw_N2.txt', Raw_N2, delimiter=',')
-
-
-# sample - n2 - bkg, and n2 - he - bkg
-#Corrected_Sample = np.subtract(Raw_Sample, Raw_N2)
-Corrected_Sample = Raw_Sample - Raw_N2
-Corrected_Sample[Corrected_Sample < 0] = 0
-np.savetxt(Path_Save + '/' + 'Corrected_Sample.txt', Corrected_Sample)
-'''
-
-'''
-# this saves the corrected ndarray as a txt file, and saves it as a jpg
-Corrected_Sample_im = np.loadtxt(Path_Save + '/' + 'Corrected_Sample.txt').astype(dtype=np.uint16)
-Raw_N2_im = np.loadtxt(Path_Save + '/' + 'Raw_N2.txt').astype(dtype=np.uint16)
-'''
 
 
 
 # Initial boundaries on the image , cols can be: [250, 1040], [300, 1040], [405, 887]
-rows = [150, 225]
-cols = [50, 800]
+rows = [150, 230]
+cols = [35, 860]
 cols_array = (np.arange(cols[0], cols[1], 1)).astype(int)
 #ROI = im[rows[0]:rows[1], cols[0]:cols[1]]
 
@@ -109,7 +89,7 @@ print(iterator)
 mid = []
 top = []
 bot = []
-sigma_pixels = 5
+sigma_pixels = 10
 for counter, element in enumerate(range(iterator)):
     if counter < iterator:
         print(counter)
@@ -117,7 +97,7 @@ for counter, element in enumerate(range(iterator)):
         y = row_max_index_array[(counter) * tuner: (counter + 1) * tuner]
         print(x)
         #print(y)
-        polynomial_fit = np.poly1d(np.polyfit(x, y, deg=6))
+        polynomial_fit = np.poly1d(np.polyfit(x, y, deg=4))
         #sigma_pixels = 20
         [mid.append(polynomial_fit(element)) for element in x]
         [top.append(polynomial_fit(element) - sigma_pixels) for element in x]
@@ -128,17 +108,13 @@ for counter, element in enumerate(range(iterator)):
         y = row_max_index_array[(counter) * tuner: len(row_max_index_array)]
         print(x)
         # print(y)
-        polynomial_fit = np.poly1d(np.polyfit(x, y, deg=6))
+        polynomial_fit = np.poly1d(np.polyfit(x, y, deg=4))
         #sigma_pixels = 20
         [mid.append(polynomial_fit(element)) for element in x]
         [top.append(polynomial_fit(element) - sigma_pixels) for element in x]
         [bot.append(polynomial_fit(element) + sigma_pixels) for element in x]
 
-coords_df = pd.DataFrame()
-coords_df['Top'] = top
-coords_df['Middle'] = mid
-coords_df['Bottom'] = bot
-coords_df.to_csv(Path_Save + '/image_coordinates.txt')
+
 
 # pretty picture plots for background signal corrections
 # plots of all averaged images and profile coordinates
@@ -207,6 +183,27 @@ f0.colorbar(im_f0b, cax=cax_b)
 ax0[1].set_title('Background: Helium Rayleigh Scattering')
 plt.savefig(Path_Save + '/He.png', format='png')
 plt.show()
+
+
+Saturated_PN = []
+for counter, element in enumerate(cols_array):
+    arr = np.arange(top[counter], bot[counter], 1).astype(int)
+    bound_transect = np.array(Raw_CO2[arr, element]).astype(int)
+    if np.amax(bound_transect) >= 4095:
+        Saturated_PN.append(counter)
+
+cols_array = np.delete(cols_array, Saturated_PN)
+top = np.delete(top, Saturated_PN)
+mid = np.delete(mid, Saturated_PN)
+bot = np.delete(bot, Saturated_PN)
+
+
+coords_df = pd.DataFrame()
+coords_df['Top'] = top
+coords_df['Middle'] = mid
+coords_df['Bottom'] = bot
+coords_df.to_csv(Path_Save + '/image_coordinates.txt')
+
 
 '''
 # this is important for evaluating profiles along transects between the bounds
@@ -435,8 +432,8 @@ plt.show()
 '''
 
 # columns to theta
-slope = 0.2049
-intercept = -2.7594
+slope = 0.2095
+intercept = -3.1433
 # columns to theta
 theta_N2 = (np.array(CO2_PN) * slope) + intercept
 print('N2 angular range:', [theta_N2[0], theta_N2[-1]])
@@ -502,108 +499,3 @@ ax6[1, 1].legend(loc=1)
 plt.tight_layout()
 plt.savefig(Path_Save + '/Profiles.png', format='png')
 plt.show()
-
-
-'''
-f7, ax7 = plt.subplots(1, 3, figsize=(36, 7))
-ax7[0].plot(Samp_PN, SD_Samp, linestyle='-', color='black', label='Raw 900nm PSL Scattering')
-ax7[0].plot(N2_PN, SD_N2, linestyle='-', color='blue', label='N2 Scattering')
-ax7[0].set_title('Scattering Contributions to Raw Sample Scattering Diagram')
-ax7[0].set_ylabel('Intensity (DN)')
-ax7[0].set_xlabel('Profile Number (Column Number)')
-ax7[0].grid(True)
-ax7[0].legend(loc=1)
-ax7[1].plot(Samp_PN, SD_Samp_gfit, linestyle='-', color='black', label='Raw 900nm PSL Scattering')
-ax7[1].plot(N2_PN, SD_N2_gfit, linestyle='-', color='blue', label='N2 Scattering')
-ax7[1].set_title('Scattering Contributions to Sample Scattering Diagram via Gaussian Fitting')
-ax7[1].set_ylabel('Intensity (DN)')
-ax7[1].set_xlabel('Profile Number (Column Number)')
-ax7[1].grid(True)
-ax7[1].legend(loc=1)
-ax7[2].plot(Samp_PN, SD_Samp_gfit_bkg_corr, linestyle='-', color='black', label='PSL Scattering - N2 Scattering')
-ax7[2].plot(N2_PN, SD_N2_gfit_bkg_corr, linestyle='-', color='blue', label='$N_2$ Scattering - He Scattering')
-ax7[2].set_title('Scattering Contributions to Sample \n Scattering Diagram via Gaussian Fitting and Edge Correction ')
-ax7[2].set_ylabel('Intensity (DN)')
-ax7[2].set_xlabel('Profile Number (Column Number)')
-ax7[2].grid(True)
-ax7[2].legend(loc=1)
-plt.tight_layout()
-plt.savefig(Path_Save + '/Contributions.png', format='png')
-plt.show()
-'''
-
-'''
-vertical_path = '/home/austen/Desktop/2019-10-11_Analysis/CO2/60s/lamda_0/SD_Rayleigh.txt'
-horizontal_path = '/home/austen/Desktop/2019-10-11_Analysis/CO2/60s/lamda_0.5/SD_Rayleigh.txt'
-
-CO2_V_DF = pd.read_csv(vertical_path, delimiter=',', header=0)
-CO2_H_DF = pd.read_csv(horizontal_path, delimiter=',', header=0)
-CO2_V_Theta = np.array(CO2_V_DF['CO2 Theta'])
-CO2_H_Theta = np.array(CO2_H_DF['CO2 Theta'])
-He_V_Theta = np.array(CO2_V_DF['He Theta'])
-He_H_Theta = np.array(CO2_H_DF['He Theta'])
-CO2_V_PF = np.array(CO2_V_DF['CO2 Intensity'])
-CO2_H_PF = np.array(CO2_H_DF['CO2 Intensity'])
-He_V_PF = np.array(CO2_V_DF['He Intensity'])
-He_H_PF = np.array(CO2_H_DF['He Intensity'])
-
-del_array_He = []
-for counter, element in enumerate(np.isnan(He_H_PF)):
-    if element == True:
-        del_array_He.append(counter)
-
-
-del_array_CO2 = []
-for counter, element in enumerate(np.isnan(CO2_H_PF)):
-    if element == True:
-        del_array_CO2.append(counter)
-
-He_H_PF2 = np.delete(He_H_PF, del_array_He, axis=0)
-He_H_Theta2 = np.delete(He_H_Theta, del_array_He, axis=0)
-CO2_H_PF2 = np.delete(CO2_H_PF, del_array_CO2, axis=0)
-CO2_H_Theta2 = np.delete(CO2_H_Theta, del_array_CO2, axis=0)
-
-del_array_He = []
-for counter, element in enumerate(np.isnan(He_V_PF)):
-    if element == True:
-        del_array_He.append(counter)
-
-
-del_array_CO2 = []
-for counter, element in enumerate(np.isnan(CO2_V_PF)):
-    if element == True:
-        del_array_CO2.append(counter)
-
-He_V_PF2 = np.delete(He_V_PF, del_array_He, axis=0)
-He_V_Theta2 = np.delete(He_V_Theta, del_array_He, axis=0)
-CO2_V_PF2 = np.delete(CO2_V_PF, del_array_CO2, axis=0)
-CO2_V_Theta2 = np.delete(CO2_V_Theta, del_array_CO2, axis=0)
-
-f8, ax8 = plt.subplots(1, 3, figsize=(12, 6))
-ax8[0].plot(CO2_H_Theta2, CO2_H_PF2, label='Horizontal: Raw PF')
-ax8[0].plot(CO2_V_Theta2, CO2_V_PF2, label='Vertical: Raw PF')
-ax8[0].set_title('Raw Phase Functions')
-ax8[0].set_xlabel('\u00b0')
-ax8[0].set_ylabel('Intensity')
-ax8[0].legend(loc=1)
-ax8[0].grid(True)
-
-ax8[1].plot(CO2_H_Theta, CO2_H_PF - He_H_PF, label='Horizontal: CO2 - He')
-ax8[1].plot(CO2_V_Theta, CO2_V_PF - He_V_PF, label='Vertical: CO2 - He')
-ax8[1].set_title('Corrected Phase Functions')
-ax8[1].set_xlabel('\u00b0')
-ax8[1].set_ylabel('Intensity')
-ax8[1].legend(loc=1)
-ax8[1].grid(True)
-
-ax8[2].plot(He_H_Theta2,  He_H_PF2, label='Horizontal: Helium')
-ax8[2].plot(He_V_Theta2,  He_V_PF2, label='Vertical: Helium')
-ax8[2].set_title('Helium Phase Functions')
-ax8[2].set_xlabel('\u00b0')
-ax8[2].set_ylabel('Intensity')
-ax8[2].legend(loc=1)
-ax8[2].grid(True)
-
-plt.tight_layout()
-plt.show()
-'''
