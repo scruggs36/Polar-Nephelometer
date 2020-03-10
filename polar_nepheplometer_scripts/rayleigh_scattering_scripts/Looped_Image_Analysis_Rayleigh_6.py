@@ -22,9 +22,9 @@ import os
 # Beam finding images directories
 #Path_Bright_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
 # Rayleigh images directories
-Path_CO2_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-04/CO2/200s/2darray/CO2_200s_0.25R_Average_Wed Mar 4 2020 3_24_04 PM.txt'
+Path_CO2_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-09/CO2/100s/2darray/CO2_100E_0.25Rflat_Avg3_Average_Mon Mar 9 2020 9_04_17 PM.txt'
 #Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.19.19/N2/400s/N2_400s_0.5lamda_0_AVG_.txt'
-Path_He_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-04/He/200s/2darray/He_200s_0.5R_Average_Wed Mar 4 2020 2_06_56 PM.txt'
+Path_He_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-09/He/100s/2darray/He_100E_0.25RR_Avg3_Average_Mon Mar 9 2020 7_49_41 PM.txt'
 # save directory
 Path_Save = '/home/sm3/Desktop/Recent'
 
@@ -458,9 +458,9 @@ DF_PF_He_gfit_bkg_corr = pd.DataFrame(SD_He_gfit_bkg_corr)
 #DF_PF_N2 = pd.DataFrame(SD_N2)
 #DF_PF_N2_gfit = pd.DataFrame(SD_N2_gfit)
 #DF_PF_N2_gfit_bkg_corr = pd.DataFrame(SD_N2_gfit_bkg_corr)
-DF_PF_N2 = pd.DataFrame(np.full(shape=len(SD_CO2), fill_value=np.nan))
-DF_PF_N2_gfit = pd.DataFrame(np.full(shape=len(SD_CO2_gfit), fill_value=np.nan))
-DF_PF_N2_gfit_bkg_corr = pd.DataFrame(np.full(shape=len(SD_CO2_gfit_bkg_corr), fill_value=np.nan))
+DF_PF_N2 = pd.DataFrame(np.full(shape=len(SD_CO2), fill_value=0))
+DF_PF_N2_gfit = pd.DataFrame(np.full(shape=len(SD_CO2_gfit), fill_value=0))
+DF_PF_N2_gfit_bkg_corr = pd.DataFrame(np.full(shape=len(SD_CO2_gfit_bkg_corr), fill_value=0))
 PhaseFunctionDF = pd.concat([DF_CO2_C, DF_He_C, DF_CO2_Theta, DF_He_Theta, DF_PF_CO2, DF_PF_CO2_gfit, DF_PF_CO2_gfit_bkg_corr, DF_PF_He, DF_PF_He_gfit, DF_PF_He_gfit_bkg_corr, DF_PF_N2, DF_PF_N2_gfit, DF_PF_N2_gfit_bkg_corr], ignore_index=False, axis=1)
 PhaseFunctionDF.columns = DF_Headers
 PhaseFunctionDF.to_csv(Path_Save + '/SD_Rayleigh.txt')

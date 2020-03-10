@@ -12,10 +12,13 @@ from scipy.optimize import curve_fit, least_squares
 from scipy.interpolate import pchip_interpolate
 
 # Rayleigh theory
-file_directory = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-02/Rayleigh_Analysis'
-SL_path = file_directory + '/CO2/0.5R/SD_Rayleigh.txt'
-SR_path = file_directory + '/CO2/0R/SD_Rayleigh.txt'
-SU_path = file_directory + '/CO2/0.25R/SD_Rayleigh.txt'
+file_directory = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-08/Analysis/Rayleigh/200s/CO2/plot_directory/'
+# 0.5 retardance Cosine case
+SL_path = file_directory + 'SD_Rayleigh.txt'
+# 0 retardance flat case
+SR_path = file_directory + 'SD_Rayleigh.txt'
+# 0.25 retardance
+SU_path = file_directory + 'SD_Rayleigh.txt'
 theory_path = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-08/Rayleigh_Analysis' + '/Rayleigh Theory/Rayleigh_PF.txt'
 save_directory = '/home/sm3/Desktop/Recent/'
 
@@ -53,19 +56,21 @@ def Power_v_Theta2(x, measurement, rayleigh_cross_section_theory, wavelength, e_
 
 
 SL_rayleigh_meas = pd.read_csv(SL_path, sep=',', header=0)
-SL_rayleigh_meas = SL_rayleigh_meas.dropna(axis=1, how='any')
-SL_gas_meas = np.array(SL_rayleigh_meas['CO2 Intensity gfit corr'])[100:-150]
-SL_gas_columns = np.array(SL_rayleigh_meas['CO2 Columns'])[100:-150]
+# drops rows with any nan value present
+SL_rayleigh_meas = SL_rayleigh_meas.dropna()
+SL_gas_meas = np.array(SL_rayleigh_meas['CO2 Intensity gfit corr'])
+SL_gas_columns = np.array(SL_rayleigh_meas['CO2 Columns'])
+print(SL_gas_columns)
 
 SR_rayleigh_meas = pd.read_csv(SR_path, sep=',', header=0)
-SR_rayleigh_meas = SR_rayleigh_meas.dropna(axis=1, how='any')
-SR_gas_meas = np.array(SR_rayleigh_meas['CO2 Intensity gfit corr'])[100:-150]
-SR_gas_columns = np.array(SR_rayleigh_meas['CO2 Columns'])[100:-150]
+SR_rayleigh_meas = SR_rayleigh_meas.dropna()
+SR_gas_meas = np.array(SR_rayleigh_meas['CO2 Intensity gfit corr'])
+SR_gas_columns = np.array(SR_rayleigh_meas['CO2 Columns'])
 
 SU_rayleigh_meas = pd.read_csv(SU_path, sep=',', header=0)
-SU_rayleigh_meas = SU_rayleigh_meas.dropna(axis=1, how='any')
-SU_gas_meas = np.array(SU_rayleigh_meas['CO2 Intensity'])[100:-150]
-SU_gas_columns = np.array(SU_rayleigh_meas['CO2 Columns'])[100:-150]
+SU_rayleigh_meas = SU_rayleigh_meas.dropna()
+SU_gas_meas = np.array(SU_rayleigh_meas['CO2 Intensity gfit corr'])
+SU_gas_columns = np.array(SU_rayleigh_meas['CO2 Columns'])
 
 slope = 0.2095
 intercept = -3.1433
