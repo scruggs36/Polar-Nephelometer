@@ -22,9 +22,9 @@ import os
 # Beam finding images directories
 #Path_Bright_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
 # Rayleigh images directories
-Path_CO2_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-09/CO2/100s/2darray/CO2_100E_0.25Rflat_Avg3_Average_Mon Mar 9 2020 9_04_17 PM.txt'
+Path_CO2_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-10/CO2/100s/2darray/CO2_100E_3Avg_Average_Tue Mar 10 2020 12_53_11 PM.txt'
 #Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2019/11.19.19/N2/400s/N2_400s_0.5lamda_0_AVG_.txt'
-Path_He_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-09/He/100s/2darray/He_100E_0.25RR_Avg3_Average_Mon Mar 9 2020 7_49_41 PM.txt'
+Path_He_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-10/He/100s/2darray/He_100E_3Avg_Average_Tue Mar 10 2020 1_15_48 PM.txt'
 # save directory
 Path_Save = '/home/sm3/Desktop/Recent'
 

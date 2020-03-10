@@ -6,6 +6,7 @@ Description: Heatmap
 
 import pandas as pd
 import numpy as np
+import os
 import matplotlib.pyplot as plt
 from scipy.interpolate import pchip_interpolate
 from scipy.optimize import least_squares
@@ -30,6 +31,40 @@ plt.pcolormesh(im2, cmap='gray', vmax=4095, vmin=0)
 plt.colorbar()
 plt.show()
 '''
+directory3 = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-08/Analysis/Rayleigh/plot_directory/0.5R'
+file_list = os.listdir(directory3)
+#print(file_list)
+
+
+rayleigh = []
+theta = []
+f, ax = plt.subplots(2, 1, figsize=(12, 6))
+for file in file_list:
+    print(file)
+    data = pd.read_csv(directory3 + '/' + file, sep=',', header=0)
+    #data = data.dropna()
+    rayleigh = np.array(data['CO2 Intensity'])
+    theta = np.array(data['CO2 Theta'])
+    print(theta)
+    ax[0].semilogy(theta, rayleigh, label=file)
+    ax[1].plot(theta, rayleigh, label=file)
+
+
+
+ax[0].set_xlabel('\u03b8')
+ax[0].set_ylabel('Intensity(\u03a3(DN))')
+ax[0].set_title('Rayleigh Scattering Measurements')
+ax[0].grid(True)
+ax[0].legend(bbox_to_anchor=[1.0, 0.75])
+
+ax[1].set_xlabel('\u03b8')
+ax[1].set_ylabel('Intensity(\u03a3(DN))')
+ax[1].set_title('Rayleigh Scattering Measurements')
+ax[1].grid(True)
+ax[1].legend(bbox_to_anchor=[1.0, 0.75])
+plt.tight_layout()
+plt.savefig('/home/sm3/Desktop/Recent/All_CO2_Rayleigh_Cases_0R.png', format='png')
+plt.show()
 '''
 def SL_SR_NLLS(x, SL_theory, SR_theory, measurement):
     residuals = measurement - (x[0] * SL_theory + x[1] * SR_theory)
