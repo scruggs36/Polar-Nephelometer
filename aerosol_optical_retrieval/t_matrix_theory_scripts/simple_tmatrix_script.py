@@ -14,16 +14,20 @@ from pytmatrix.tmatrix import orientation
 from pytmatrix.psd import PSDIntegrator, GammaPSD, BinnedPSD
 import pytmatrix.tmatrix_aux as tmatrix_aux
 
-scatterer = Scatterer(radius=.900, wavelength=663.0, m=complex(1.59, 0) , axis_ratio=1.0, orient=orientation.orient_averaged_fixed, or_pdf=tmatrix.orientation.uniform_pdf(), psd=tmatrix.Scatterer.psd, psd_integrator=tmatrix.Scatterer.psd.PSDIntegrator).get_S()
-print(scatterer)
-''''
-#building a NLLS fitting function but we ain't here yet
-def NLLS_tmatrix(x, wavelength, meas_int, meas_theta, ):
-    tmat_theta = np.linspace(start=0.0, stop=180.0, num=181, endpoint=True)
-    for element in tmat_theta
-        scatterer = tmatrix.Scatterer(radius=x[0], wavelength=wavelength, m=x[1], axis_ratio=x[2], thet=element)
+# setting some constants
+diameter = 900
+radius = diameter / 2.0
+wavelength = 663
+m = complex(1.59, 0)
 
-        sca_intensity(scatterer, h_pol=True)
-    tmat_int_pchip = pchip_interpolate(tmat_theta, tmat_int, meas_theta)
-    residuals = meas_int - tmat_int_pchip
-'''
+# setting Scatterer class attributes
+scatterer = Scatterer(radius=radius, wavelength=wavelength, m=m, axis_ratio=1.0, or_pdf=orientation.uniform_pdf())
+
+
+# setting the psd class attributes
+scatterer.psd.BinnedPSD(bin_edges=1024, bin_psd=1025,  D=900)
+scatterer.PSDIntegrator(num_points=1024, m_func =None, axis_ratio_func=None, geometries=(90.0, 90.0, 0.0, 180.0, 0.0, 0.0))
+
+#
+print(scatterer.get_S())
+
