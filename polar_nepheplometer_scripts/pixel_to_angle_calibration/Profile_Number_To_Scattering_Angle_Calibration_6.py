@@ -28,7 +28,7 @@ from math import sqrt, log, pi
 
 
 # import N2 Rayleigh scattering data
-Save_Directory = '/home/sm3/Desktop/Recent/'
+Save_Directory = '/home/austen/Desktop/Recent/'
 
 
 
@@ -258,9 +258,9 @@ print('Gienger 2017 RI: ', m9)
 concentration = 1000
 # geometric standard deviation
 sigma_g = 1.005
-sig = 5.6
+sig = 4.1
 # Particle diameter, geometric mean of the particle diameter
-d = 800
+d = 900
 # wavelength
 w_n = 663
 # CRI
@@ -462,7 +462,7 @@ plt.show()
 
 
 # import experiment data for 900nm PSL
-Exp_Directory = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-04/2020-02-04_Analysis/Measurements/2s/0R/SD_Particle.txt'
+Exp_Directory = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-09/2020-03-09_Analysis/PSL/900 CAL/0R/SD_Particle.txt'
 #Exp_Directory = '/home/austen/Desktop/2019-11-21_Analysis/PSL/900/1s/0lamda/SD_Particle.txt'
 Exp_Data = pd.read_csv(Exp_Directory, delimiter=',', header=0)
 Exp_Ray_PF = np.array(Exp_Data['N2 Intensity'])[50:-50]
@@ -488,7 +488,7 @@ exp_minimum = np.argmin(Exp_Particle_PF_Savgol_Pchip, axis=0)
 exp_local_max = argrelmax(Exp_Particle_PF_Savgol_Pchip, axis=0, order=10)
 exp_local_min = argrelmin(Exp_Particle_PF_Savgol_Pchip, axis=0, order=10)
 exp_max_min_idx = np.sort(np.concatenate((210, exp_local_max, exp_local_min), axis=None))
-exp_max_min_idx = np.delete(exp_max_min_idx, [0])
+exp_max_min_idx = np.delete(exp_max_min_idx, [0,2,6])
 exp_max_min_array = [Exp_Particle_PN[x] for x in exp_max_min_idx]
 print('Mie Local Features Index: ', theta_max_min_avg)
 print('Experiment Local Features Index: ', exp_max_min_array)

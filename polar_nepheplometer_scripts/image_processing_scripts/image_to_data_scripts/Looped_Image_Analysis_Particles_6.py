@@ -23,13 +23,13 @@ import os
 #Path_Bright_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
 
 # Sample images directory
-Path_Samp_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-08/PSL600/3s/2darray/PSL600_3E_0.25R_150Avg_Average_Sun Mar 8 2020 5_24_54 PM.txt'
+Path_Samp_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-09/PSL900/3s/2darray/PSL900_3E_0R_Avg100_Average_Mon Mar 9 2020 11_39_38 AM.txt'
 # Rayleigh images directories
-Path_N2_Dir = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-08/N2/3s/2darray/N2_3E_0.25R_Avg100_Average_Sun Mar 8 2020 6_39_23 PM.txt'
+Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-08/N2/3s/2darray/N2_3E_0.5R_Avg100_Average_Sun Mar 8 2020 6_32_55 PM.txt'
 # coordinate directory
 #coords_Dir = '/home/austen/Desktop/Rayleigh_Analysis/T4/'
 # save directory
-Path_Save = '/home/sm3/Desktop/Recent'
+Path_Save = '/home/austen/Desktop/Recent'
 
 
 
@@ -86,6 +86,7 @@ mid = []
 top = []
 bot = []
 sigma_pixels = 15
+degree = 2
 for counter, element in enumerate(range(iterator)):
     if counter < iterator:
         print(counter)
@@ -93,7 +94,7 @@ for counter, element in enumerate(range(iterator)):
         y = row_max_index_array[(counter) * tuner: (counter + 1) * tuner]
         print(x)
         #print(y)
-        polynomial_fit = np.poly1d(np.polyfit(x, y, deg=2))
+        polynomial_fit = np.poly1d(np.polyfit(x, y, deg=degree))
         #sigma_pixels = 20
         [mid.append(polynomial_fit(element)) for element in x]
         [top.append(polynomial_fit(element) - sigma_pixels) for element in x]
@@ -104,7 +105,7 @@ for counter, element in enumerate(range(iterator)):
         y = row_max_index_array[(counter) * tuner: len(row_max_index_array)]
         print(x)
         # print(y)
-        polynomial_fit = np.poly1d(np.polyfit(x, y, deg=6))
+        polynomial_fit = np.poly1d(np.polyfit(x, y, deg=degree))
         #sigma_pixels = 20
         [mid.append(polynomial_fit(element)) for element in x]
         [top.append(polynomial_fit(element) - sigma_pixels) for element in x]
@@ -116,6 +117,21 @@ top = coords_DF['Top']
 mid = coords_DF['Middle']
 bot = coords_DF['Bottom']
 '''
+fcal, axcal = plt.subplots(figsize=(12, 7))
+im_fcal = axcal.pcolormesh(Corrected_Sample, cmap='gray', vmin=0, vmax=2000)
+#axcal.plot(cols_array, top, ls='-', color='lawngreen')
+#axcal.plot(cols_array, mid, ls='-', color='red')
+#axcal.plot(cols_array, row_max_index_array, ls='-', color='purple')
+#axcal.plot(cols_array, bot, ls='-', color='lawngreen')
+# create an axes on the right side of ax. The width of cax will be 5%
+# of ax and the padding between cax and ax will be fixed at 0.05 inch.
+divider_a = make_axes_locatable(axcal)
+cax_a = divider_a.append_axes("right", size="5%", pad=0.05)
+fcal.colorbar(im_fcal, cax=cax_a)
+axcal.set_title('Sample \n at Retardance \u03bb')
+plt.savefig(Path_Save + '/Sample_NB2.png', format='png')
+#plt.savefig(Path_Save + '/Sample.pdf', format='pdf')
+plt.show()
 
 # pretty picture plots for background signal corrections
 # plots of all averaged images and profile coordinates
@@ -136,6 +152,21 @@ plt.savefig(Path_Save + '/Sample.png', format='png')
 #plt.savefig(Path_Save + '/Sample.pdf', format='pdf')
 plt.show()
 
+f0, ax0 = plt.subplots(figsize=(12, 7))
+im_f0a = ax0.pcolormesh(Raw_N2, cmap='gray')
+#ax0.plot(cols_array, top, ls='-', color='lawngreen')
+#ax0.plot(cols_array, mid, ls='-', color='red')
+#ax0.plot(cols_array, row_max_index_array, ls='-', color='purple')
+#ax0.plot(cols_array, bot, ls='-', color='lawngreen')
+# create an axes on the right side of ax. The width of cax will be 5%
+# of ax and the padding between cax and ax will be fixed at 0.05 inch.
+divider_a = make_axes_locatable(ax0)
+cax_a = divider_a.append_axes("right", size="5%", pad=0.05)
+f0.colorbar(im_f0a, cax=cax_a)
+ax0.set_title('Background: Nitrogen Rayleigh Scattering \n at Retardance \u03bb')
+plt.savefig(Path_Save + '/N2_NB.png', format='png')
+#plt.savefig(Path_Save + '/N2.pdf', format='pdf')
+plt.show()
 
 f0, ax0 = plt.subplots(figsize=(12, 7))
 im_f0a = ax0.pcolormesh(Raw_N2, cmap='gray')
@@ -156,7 +187,7 @@ plt.show()
 
 # this is important for evaluating profiles along transects between the bounds
 # loop through transects and acquire profiles and scattering diagram intensities vs profile numbers
-#'''
+'''
 # evaluate for saturation and create column array that eliminates saturated transects! Toggle on or off by removing quotes
 # note that the if else part of the image analysis for loop doesn't eliminate anything! its an artifact of something older
 Saturated_PN = []

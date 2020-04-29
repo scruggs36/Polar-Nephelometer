@@ -12,15 +12,14 @@ from scipy.optimize import curve_fit, least_squares
 from scipy.interpolate import pchip_interpolate
 
 # Rayleigh theory
-file_directory = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-08/Analysis/Rayleigh/200s/CO2/plot_directory/'
-# 0.5 retardance Cosine case
-SL_path = file_directory + 'SD_Rayleigh.txt'
-# 0 retardance flat case
-SR_path = file_directory + 'SD_Rayleigh.txt'
-# 0.25 retardance
-SU_path = file_directory + 'SD_Rayleigh.txt'
-theory_path = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-08/Rayleigh_Analysis' + '/Rayleigh Theory/Rayleigh_PF.txt'
-save_directory = '/home/sm3/Desktop/Recent/'
+# 0 retardance flat case perpendicular SR
+sr_path = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-08/Analysis/Rayleigh/plot_directory/0R/SD_Rayleigh_Straigh_From_Laser_NoRetarders.txt'
+sr_path_retarded = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-08/Analysis/Rayleigh/plot_directory/0R/SD_Rayleigh_RR_Exact_Dolgos_QWP_S0.txt'
+# 0.5 retardance parallel case SL
+sl_path = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-08/Analysis/Rayleigh/plot_directory/0.5R/SD_Rayleigh_LCVR@0.5R+QWP@F0.txt'
+# theory directory
+theory_path = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-02-08/Rayleigh_Analysis' + '/Rayleigh Theory/Rayleigh_PF.txt'
+save_directory = '/home/austen/Desktop/Recent/Rayleigh Validation/'
 
 # Cosine Squared Fit Function
 def Rayleigh_Circular_Polarized(theta, a, b):
@@ -42,60 +41,58 @@ def Rayleigh_Residuals(x, theta, measurement):
 
 
 
-def Power_v_Theta(x, measurement, rayleigh_cross_section_theory, power, concentration):
-    residual = ((measurement * x[0]) + x[1]) - (power - (power * (np.exp(rayleigh_cross_section_theory * concentration * 10**2 * -1))))
-    return residual
-
-
-def Power_v_Theta2(x, measurement, rayleigh_cross_section_theory, wavelength, e_ADU, QE, exposure_time, power):
-    c = 2.998E8
-    h = 6.626E-34
-    E = (h * c) / (wavelength * 10**-9)
-    residual = (E * ((measurement * e_ADU) / QE) * exposure_time * x[1]) - (power - (power * (np.exp(rayleigh_cross_section_theory * np.abs(x[0]) * 10**2 * -1))))
-    return residual
-
-
-SL_rayleigh_meas = pd.read_csv(SL_path, sep=',', header=0)
+# SL Measurements
+sl_rayleigh_meas = pd.read_csv(sl_path, sep=',', header=0)
 # drops rows with any nan value present
-SL_rayleigh_meas = SL_rayleigh_meas.dropna()
-SL_gas_meas = np.array(SL_rayleigh_meas['CO2 Intensity gfit corr'])
-SL_gas_columns = np.array(SL_rayleigh_meas['CO2 Columns'])
-print(SL_gas_columns)
+#SL_rayleigh_meas = SL_rayleigh_meas.dropna()
+sl_gas_meas = np.array(sl_rayleigh_meas['CO2 Intensity gfit corr'])
+sl_gas_meas = np.array(sl_gas_meas[~np.isnan(sl_gas_meas)])
+sl_gas_theta = np.array(sl_rayleigh_meas['CO2 Theta'])
+sl_gas_theta = np.array(sl_gas_theta[~np.isnan(sl_gas_theta)])
 
-SR_rayleigh_meas = pd.read_csv(SR_path, sep=',', header=0)
-SR_rayleigh_meas = SR_rayleigh_meas.dropna()
-SR_gas_meas = np.array(SR_rayleigh_meas['CO2 Intensity gfit corr'])
-SR_gas_columns = np.array(SR_rayleigh_meas['CO2 Columns'])
+# SR measurement
+sr_rayleigh_meas = pd.read_csv(sr_path, sep=',', header=0)
+#SR_rayleigh_meas = SR_rayleigh_meas.dropna()
+sr_gas_meas = np.array(sr_rayleigh_meas['CO2 Intensity gfit corr'])
+sr_gas_meas = np.array(sr_gas_meas[~np.isnan(sr_gas_meas)])
+sr_gas_theta = np.array(sr_rayleigh_meas['CO2 Theta'])
+sr_gas_theta = np.array(sr_gas_theta[~np.isnan(sr_gas_theta)])
 
-SU_rayleigh_meas = pd.read_csv(SU_path, sep=',', header=0)
-SU_rayleigh_meas = SU_rayleigh_meas.dropna()
-SU_gas_meas = np.array(SU_rayleigh_meas['CO2 Intensity gfit corr'])
-SU_gas_columns = np.array(SU_rayleigh_meas['CO2 Columns'])
+# SR measuerement retarded
+sr_rayleigh_meas_retarded = pd.read_csv(sr_path_retarded, sep=',', header=0)
+#SR_rayleigh_meas = SR_rayleigh_meas.dropna()
+sr_gas_meas_retarded = np.array(sr_rayleigh_meas_retarded['CO2 Intensity gfit corr'])
+sr_gas_theta_retarded = np.array(sr_rayleigh_meas_retarded['CO2 Theta'])
+sr_gas_theta_retarded = np.array(sr_gas_theta_retarded[~np.isnan(sr_gas_meas_retarded)])
+sr_gas_meas_retarded = np.array(sr_gas_meas_retarded[~np.isnan(sr_gas_meas_retarded)])
 
+
+'''
+# conversion profile numbers to angle
 slope = 0.2095
 intercept = -3.1433
-
-SL_theta = [(slope * x) + intercept for x in SL_gas_columns]
-SR_theta = [(slope * x) + intercept for x in SR_gas_columns]
-SU_theta = [(slope * x) + intercept for x in SU_gas_columns]
+SL_theta = [(slope * x) + intercept for x in sl_gas_columns]
+SR_theta = [(slope * x) + intercept for x in sr_gas_columns]
+SR_theta_retarded = [(slope * x) + intercept for x in sr_gas_columns_retarded]
+'''
 
 rayleigh_theory_df = pd.read_csv(theory_path, sep=',', header=0)
 SL_gas_theory = rayleigh_theory_df['CO2 anisotropic']
 SL_gas_theory_theta = rayleigh_theory_df['Theta']
-SL_gas_theory_pchip = pchip_interpolate(SL_gas_theory_theta, SL_gas_theory, SL_theta)
+SL_gas_theory_pchip = pchip_interpolate(SL_gas_theory_theta, SL_gas_theory, sl_gas_theta)
 
-print(len(SL_theta))
-print(len(SL_gas_meas))
+print(len(sl_gas_theta))
+print(len(sl_gas_meas))
+print(len(sr_gas_theta))
+print(len(sr_gas_meas))
+print(len(sr_gas_theta_retarded))
+print(len(sr_gas_meas_retarded))
 
-print(len(SR_theta))
-print(len(SR_gas_meas))
+popt_SL_gas, pcov_SL_gas = curve_fit(Rayleigh_Linear_Polarized, sl_gas_theta, sl_gas_meas, p0=[np.amax(sl_gas_meas)/np.amin(sl_gas_meas), np.amin(sl_gas_meas)])
+SL_gas_residuals = sl_gas_meas - Rayleigh_Linear_Polarized(sl_gas_theta, *popt_SL_gas)
+SL_gas_error = (SL_gas_residuals / Rayleigh_Linear_Polarized(sl_gas_theta, *popt_SL_gas)) * 100
 
-
-popt_SL_gas, pcov_SL_gas = curve_fit(Rayleigh_Linear_Polarized, SL_theta, SL_gas_meas, p0=[np.amax(SL_gas_meas)/np.amin(SL_gas_meas), np.amin(SL_gas_meas)])
-SL_gas_residuals = SL_gas_meas - Rayleigh_Linear_Polarized(SL_theta, *popt_SL_gas)
-SL_gas_error = (SL_gas_residuals / Rayleigh_Linear_Polarized(SL_theta, *popt_SL_gas)) * 100
-
-
+'''
 popt_SR_gas, pcov_SR_gas = curve_fit(Rayleigh_Circular_Polarized, SR_theta, SR_gas_meas, p0=[np.amin(SR_gas_meas), np.amax(SR_gas_meas)/np.amin(SR_gas_meas)])
 SR_gas_residuals = SR_gas_meas - Rayleigh_Circular_Polarized(SR_theta, *popt_SR_gas)
 SR_gas_error = (SR_gas_residuals / Rayleigh_Circular_Polarized(SR_theta, *popt_SR_gas)) * 100
@@ -118,7 +115,7 @@ image_exposure_time = 300
 watt_guess = np.array([1.00E-8, 0.000005])
 conc = 2.54E19
 ls_watt_result = least_squares(Power_v_Theta, watt_guess, method='lm', args=(SL_gas_meas, SL_gas_theory_pchip, power, conc))
-
+'''
 
 
 # figure font parameters
@@ -128,38 +125,38 @@ s = 14
 
 # measurement figure
 f, ax = plt.subplots(1, 2, figsize=(12, 6))
-ax[0].semilogy(SL_theta, SL_gas_meas, 'b-', label='SL Measurement')
-ax[0].semilogy(SR_theta, SR_gas_meas, 'r-', label='SR Measurement')
-ax[0].semilogy(SU_theta, SU_gas_meas, 'g-', label='SU Measurement')
+ax[0].plot(sl_gas_theta, sl_gas_meas, 'r-', label='SL Meas.')
+#ax[0].plot(sl_gas_theta, (np.amin(sl_gas_meas)/np.amin(SL_gas_theory_pchip))*SL_gas_theory_pchip, color='blue', ls='-', label='SL Theory')
+ax[0].plot(sl_gas_theta, Rayleigh_Linear_Polarized(sl_gas_theta, *popt_SL_gas), color='blue', ls='-', label='SL Theory Fit')
 ax[0].set_xlabel('\u03b8', fontsize=r)
-ax[0].set_ylabel('$Log_{10}$(Intensity)', fontsize=r)
-ax[0].set_title('Rayleigh Gas Angular Scattering SL & SR \n Semi-Log Scale', fontsize=q)
-ax[0].grid(True, which='both')
+ax[0].set_ylabel('Intensity', fontsize=r)
+ax[0].set_title('$CO_2$ Gas Angular Scattering SL', fontsize=q)
+ax[0].grid(True)
 ax[0].legend(loc=1, fontsize=s)
-ax[1].plot(SL_theta, SL_gas_meas, 'b-', label='SL Measurement')
-ax[1].plot(SR_theta, SR_gas_meas, 'r-', label='SR Measurement')
-ax[0].plot(SU_theta, SU_gas_meas, 'g-', label='SU Measurement')
+ax[1].plot(sr_gas_theta, sr_gas_meas, color='black', ls='-', label='SR Meas.')
+ax[1].plot(sr_gas_theta_retarded, sr_gas_meas_retarded, color='green', ls='-', label='SR Meas. + QWP')
+ax[1].plot(sr_gas_theta, (6.0/7.0)*sr_gas_meas[425]*np.ones(len(sr_gas_theta)), color='red', ls='-', label='SR Theory')
 ax[1].set_xlabel('\u03b8', fontsize=r)
 ax[1].set_ylabel('Intensity', fontsize=r)
-ax[1].set_title('$CO_2$ Gas Angular Scattering SL & SR \n Linear Scale', fontsize=q)
-ax[1].grid(True)
+ax[1].set_title('Rayleigh Gas Angular Scattering SR', fontsize=q)
+ax[1].grid(True, which='both')
 ax[1].legend(loc=1, fontsize=s)
 plt.tight_layout()
-plt.savefig(save_directory + 'CO2_lamda0&05.png', format='png')
-plt.savefig(save_directory + 'CO2_lamda0&05.pdf', format='pdf')
+plt.savefig(save_directory + 'CO2_lamda0&05_NEW.png', format='png')
+plt.savefig(save_directory + 'CO2_lamda0&05_NEW.pdf', format='pdf')
 plt.show()
 
-
+'''
 # SL curve_fit figure
 f0, ax0 = plt.subplots(2, 1, figsize=(20, 10))
 ax0[0].plot(SL_theta, SL_gas_meas, label='$CO_2$ \u03bb = 0.5\n', ls='-', color='black')
-ax0[0].plot(SL_theta, Rayleigh_Linear_Polarized(SL_theta, *popt_SL_gas), ls='--', color='red', label='Fit: ' + str('{:.3f}'.format(popt_SL_gas[0])) + '*$cos^2(\u03b8)$) + '  + str('{:.3f}'.format(popt_SL_gas[1])))
+#ax0[0].plot(SL_theta, Rayleigh_Linear_Polarized(SL_theta, *popt_SL_gas), ls='--', color='red', label='Fit: ' + str('{:.3f}'.format(popt_SL_gas[0])) + '*$cos^2(\u03b8)$) + '  + str('{:.3f}'.format(popt_SL_gas[1])))
 ax0[0].set_title('$CO_2$ Angular Scattering (\u03bb = 0.5)', fontsize=q)
 ax0[0].set_ylabel('Intensity', fontsize=r)
 ax0[0].set_xlabel('\u03b8', fontsize=r)
 ax0[0].grid(True)
 ax0[0].legend(loc=1, fontsize=s)
-ax0[1].plot(SL_theta, SL_gas_error, color='black', ls='-', label='residuals')
+#ax0[1].plot(SL_theta, SL_gas_error, color='black', ls='-', label='residuals')
 ax0[1].set_title('$CO_2$ Percent Error as a Function of \u03b8 at Retardance \u03bb = 0.5', fontsize=q)
 ax0[1].set_ylabel('Intensity', fontsize=r)
 ax0[1].set_xlabel('\u03b8', fontsize=r)
@@ -173,13 +170,13 @@ plt.show()
 # SR curve_fit figure
 f1, ax1 = plt.subplots(2, 1, figsize=(20, 10))
 ax1[0].plot(SR_theta, SR_gas_meas, label='$CO_2$ \u03bb = 0.0\n', ls='-', color='black')
-ax1[0].plot(SR_theta, Rayleigh_Circular_Polarized(SR_theta, *popt_SR_gas), ls='--', color='red', label='Fit: ' + str('{:.3f}'.format(popt_SR_gas[0])) + '(1 + ' + str('{:.3f}'.format(popt_SR_gas[1])) + '$cos^2(\u03b8)$)\n')
+#ax1[0].plot(SR_theta, Rayleigh_Circular_Polarized(SR_theta, *popt_SR_gas), ls='--', color='red', label='Fit: ' + str('{:.3f}'.format(popt_SR_gas[0])) + '(1 + ' + str('{:.3f}'.format(popt_SR_gas[1])) + '$cos^2(\u03b8)$)\n')
 ax1[0].set_title('$CO_2$ Angular Scattering (\u03bb = 0.0)', fontsize=q)
 ax1[0].set_ylabel('Intensity', fontsize=r)
 ax1[0].set_xlabel('\u03b8', fontsize=r)
 ax1[0].grid(True)
 ax1[0].legend(loc=1, fontsize=s)
-ax1[1].plot(SR_theta, SR_gas_error, color='black', ls='-', label='residuals')
+#ax1[1].plot(SR_theta, SR_gas_error, color='black', ls='-', label='residuals')
 ax1[1].set_title('$CO_2$ Percent Error as a Function of \u03b8 at Retardance \u03bb = 0.0', fontsize=q)
 ax1[1].set_ylabel('Intensity', fontsize=r)
 ax1[1].set_xlabel('\u03b8', fontsize=r)
@@ -212,38 +209,5 @@ plt.savefig(save_directory + 'CO2_lamda0.5_nlls.pdf', format='pdf')
 plt.show()
 
 '''
-# SL nonlinear least squares minimization to the Rayleigh cross section data transformed to Watts? Might be irrelevant
-power = 0.8
-wavelength = 663
-gain = 1.5
-QE = 57.5
-exposure_time = 300
-c = 2.998E8
-h = 6.626E-34
-E = (h * c) / (wavelength * 10**-9)
-#meas_watt = (E * ((SL_gas_meas * gain) / QE) * exposure_time * ls_watt_result.x[1])
-#theory_watt = (power - (power * (np.exp(SL_gas_theory_pchip * np.abs(ls_watt_result.x[0]) * 10**2 * -1))))
-meas_watt =  (SL_gas_meas * ls_watt_result.x[0]) + ls_watt_result.x[1]
-theory_watt = (power - (power * np.exp((SL_gas_theory_pchip * conc * 10**2 * -1))))
 
-
-f3, ax3 = plt.subplots(2, 1, figsize=(20, 10))
-ax3[0].plot(SL_theta, meas_watt, label='$CO_2$ \u03bb = 0.5\n', ls='-', color='black')
-ax3[0].plot(SL_theta, theory_watt, ls='--', color='red', label='measurement conversion: y = ' + str('{:.3e}'.format(ls_watt_result.x[0])) + 'meas. + ' + str('{:.3e}'.format(ls_watt_result.x[1])))
-ax3[0].set_title('$CO_2$ Angular Scattering (\u03bb = 0.5)', fontsize=q)
-ax3[0].set_ylabel('Intensity', fontsize=r)
-ax3[0].set_xlabel('\u03b8', fontsize=r)
-ax3[0].grid(True)
-ax3[0].legend(loc=1, fontsize=s)
-ax3[1].plot(SL_theta, ls_watt_result.fun, color='black', ls='-', label='residuals')
-ax3[1].set_title('$CO_2$ Residual as a Function of \u03b8 at Retardance \u03bb = 0.5', fontsize=q)
-ax3[1].set_ylabel('Intensity', fontsize=r)
-ax3[1].set_xlabel('\u03b8', fontsize=r)
-ax3[1].grid(True)
-ax3[1].legend(loc=1, fontsize=s)
-plt.tight_layout()
-plt.savefig(save_directory + 'CO2_lamda0.5_nlls_watts.png', format='png')
-plt.savefig(save_directory + 'CO2_lamda0.5_nlls_watts.pdf', format='pdf')
-plt.show()
-'''
 

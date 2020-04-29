@@ -89,20 +89,25 @@ n2_sigma_anisotropic_theta = np.array([Angular_Scattering_Cross_Section(theta=x,
 n2_sigma_isotropic_theta = np.array([Angular_Scattering_Cross_Section(theta=x, wav=micron, ns=ns_n2, Ns=N, pn=pn_n2)[1] for x in angles])
 
 print(air_sigma_anisotropic_theta)
-
+# font sizes for figures
+f_title = 24
+f_axes = 18
+plt.rcParams['font.family'] = ['serif']
+plt.rcParams['font.serif'] = ['Times New Roman']
 f0, ax0 = plt.subplots(figsize=(12, 6))
-ax0.plot(angles, air_sigma_isotropic_theta, color='aqua', ls='-', label='Air Isotropic')
-ax0.plot(angles, air_sigma_anisotropic_theta, color='blue', label='Air Anisotropic')
-ax0.plot(angles, n2_sigma_isotropic_theta, color='lawngreen', ls='-', label='$N_2$ Isotropic')
-ax0.plot(angles, n2_sigma_anisotropic_theta, color='green', label='$N_2$ Anisotropic')
-ax0.plot(angles, co2_sigma_isotropic_theta, color='pink', ls='-', label='$CO_2$ Isotropic')
-ax0.plot(angles, co2_sigma_anisotropic_theta, color='red', label='$CO_2$ Anisotropic')
+#ax0.plot(angles, air_sigma_isotropic_theta, color='aqua', ls='-', label='Air Isotropic')
+#ax0.plot(angles, air_sigma_anisotropic_theta, color='blue', label='Air Anisotropic')
+#ax0.plot(angles, n2_sigma_isotropic_theta, color='lawngreen', ls='-', label='$N_2$ Isotropic')
+#ax0.plot(angles, n2_sigma_anisotropic_theta, color='green', label='$N_2$ Anisotropic')
+#ax0.plot(angles, co2_sigma_isotropic_theta, color='blue', ls='-', label='$CO_2$ Isotropic')
+ax0.plot(angles, np.repeat(co2_sigma_anisotropic_theta[0], len(co2_sigma_anisotropic_theta)), color='red', ls='-', label='$CO_2$ Isotropic')
+ax0.plot(angles, co2_sigma_anisotropic_theta, color='blue', label='$CO_2$ SL')
 ax0.set_xlabel('\u0398')
 ax0.set_ylabel('$\u03c3_\u0398$')
 ax0.set_title('Gas Scattering Cross-Section as a Function of Light Scattering Angle')
 ax0.grid(True)
 ax0.legend(loc=1)
-f0.savefig('/home/austen/Documents/Rayleigh_PF.png', format='png')
+f0.savefig('/home/austen/Desktop/Recent/Rayleigh_PF.png', format='png')
 plt.show()
 
 
@@ -114,4 +119,4 @@ DF['N2 isotropic'] = n2_sigma_isotropic_theta
 DF['N2 anisotropic'] = n2_sigma_anisotropic_theta
 DF['Air isotropic'] = air_sigma_isotropic_theta
 DF['Air anisotropic'] = air_sigma_anisotropic_theta
-DF.to_csv('/home/austen/Documents/Rayleigh_PF.txt', sep=',')
+DF.to_csv('/home/austen/Desktop/Recent/Rayleigh_PF.txt', sep=',')
