@@ -30,8 +30,8 @@ sigma = 4.1
 N = 1000.0
 # complex refractive index parameters
 #n_array = [1.0] # used as a test value, all values must be in an array for the code to work
-n_array = np.linspace(1.00, 2.00, 100E1, endpoint=True)
-k_array = np.linspace(0.00, 1.00, 100E1, endpoint=True)
+n_array = np.linspace(1.00, 2.00, 10E1, endpoint=True)
+k_array = np.linspace(0.00, 1.00, 10E1, endpoint=True)
 n_N2 = 1.00029739
 # wavelength
 w_n = 663.0
