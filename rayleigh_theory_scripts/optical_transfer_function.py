@@ -14,7 +14,7 @@ from math import pi, cos
 from scipy.interpolate import pchip_interpolate
 from scipy.optimize import curve_fit
 
-save_directory = '/home/austen/Desktop/Recent/'
+save_directory = '/home/sm3/Desktop/Recent/'
 
 def optical_transfer_function(x, a, b, c, d):
     # gaussian doesnt fit well
@@ -44,6 +44,7 @@ def Angular_Scattering_Cross_Section(theta, wav, ns, Ns, pn):
 # other constants
 wav = 663
 theta_array = np.arange(0, 180.5, 0.5)
+chamber_length = 182.88 #cm
 chamber_volume = pi * (0.5/2)**2 * 182.88
 N = 2.54743E19
 # wavelength for some reason on penndorf given in microns, it has to be converted to cm in the calculation
@@ -134,31 +135,43 @@ plt.tight_layout()
 plt.show()
 
 # using CO2 measurements find the optical transfer functions G_p, G_s, and G_u G = I_theory / I measured
-directory_CO2_p= '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-08/Analysis/Rayleigh/plot_directory/0.5R/SD_Rayleigh_LCVR@0.5R+QWP@F0.txt'
-directory_CO2_s= '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-08/Analysis/Rayleigh/plot_directory/0R/SD_Rayleigh_RR_Exact_Dolgos_QWP_S0.txt'
+directory_CO2_p= '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-08/Analysis/Rayleigh/plot_directory/0.5R/SD_Rayleigh_LCVR@0.5R+QWP@F0.txt'
+directory_CO2_s= '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-08/Analysis/Rayleigh/plot_directory/0R/SD_Rayleigh_RR_Exact_Dolgos_QWP_S0.txt'
+directory_CO2_u= '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-08/Analysis/Rayleigh/plot_directory/0.25R/SD_Rayleigh_LCVR@0.25R+QWP@F0.txt'
 data_CO2_p = pd.read_csv(directory_CO2_p, sep=',', header=0)
 data_CO2_s = pd.read_csv(directory_CO2_s, sep=',', header=0)
+data_CO2_u = pd.read_csv(directory_CO2_u, sep=',', header=0)
 CO2_p_pf = np.array(data_CO2_p['CO2 Intensity gfit'])
 CO2_s_pf = np.array(data_CO2_s['CO2 Intensity gfit'])
+CO2_u_pf = np.array(data_CO2_u['CO2 Intensity gfit'])
 theta_CO2_p = np.array(data_CO2_p['CO2 Theta'])
 theta_CO2_s = np.array(data_CO2_s['CO2 Theta'])
+theta_CO2_u = np.array(data_CO2_u['CO2 Theta'])
 theta_CO2_p = np.array(theta_CO2_p[~np.isnan(CO2_p_pf)])
 theta_CO2_s = np.array(theta_CO2_s[~np.isnan(CO2_s_pf)])
+theta_CO2_u = np.array(theta_CO2_u[~np.isnan(CO2_u_pf)])
+# raw measurement
 CO2_p_pf = np.array(CO2_p_pf[~np.isnan(CO2_p_pf)])
 CO2_s_pf = np.array(CO2_s_pf[~np.isnan(CO2_s_pf)])
+CO2_u_pf = np.array(CO2_u_pf[~np.isnan(CO2_u_pf)])
+# take natural logarithm of measurement
+#CO2_p_pf = np.log(np.array(CO2_p_pf[~np.isnan(CO2_p_pf)]))
+#CO2_s_pf = np.log(np.array(CO2_s_pf[~np.isnan(CO2_s_pf)]))
+#CO2_u_pf = np.log(np.array(CO2_u_pf[~np.isnan(CO2_u_pf)]))
 
-
-#[print(i) for i in CO2_s_pf]
 
 # pchip differential cross-section data
 CO2_p_diffxsca = np.array(pchip_interpolate(xi=theta_array, yi=np.array(CO2_xsections_p), x=theta_CO2_p))
 CO2_s_diffxsca = np.array(pchip_interpolate(xi=theta_array, yi=np.array(CO2_xsections_s), x=theta_CO2_s))
+CO2_u_diffxsca = np.array(pchip_interpolate(xi=theta_array, yi=np.array(CO2_xsections_u), x=theta_CO2_u))
 CO2_p_diffbsca = CO2_p_diffxsca * N
 CO2_s_diffbsca = CO2_s_diffxsca * N
+CO2_u_diffbsca = CO2_u_diffxsca * N
 
 # optical transfer function this is in units of Mm^-1/DN, if we are right on the differential scattering cross section for CO2, the phase function y axis should be in Mm^-1 as well!
 G_p = np.divide(CO2_p_diffbsca, CO2_p_pf)
 G_s = np.divide(CO2_s_diffbsca, CO2_s_pf)
+G_u = np.divide(CO2_u_diffbsca, CO2_u_pf)
 
 # fit optical transfer function parallel (p)
 popt_G_p, pcov_G_p = curve_fit(optical_transfer_function, theta_CO2_p, G_p, p0=[1E-9, 1, 90, .2E-9])
@@ -169,24 +182,37 @@ popt_G_p, pcov_G_p = curve_fit(optical_transfer_function, theta_CO2_p, G_p, p0=[
 #G_p_coeffs = np.polyfit(theta_CO2_p, G_p, deg=18)
 #G_p_fit = np.poly1d(G_p_coeffs)
 
-# poly fit for s polarization: fits a 4th order polynomial pretty well
+# fit optical transfer function for perpendicular (S), poly fit for s polarization: fits a 4th order polynomial pretty well
 G_s_coeffs = np.polyfit(theta_CO2_s, G_s, deg=4)
 G_s_fit = np.poly1d(G_s_coeffs)
+
+# fit optical transfer function for circular
+popt_G_u, pcov_G_u = curve_fit(optical_transfer_function, theta_CO2_u, G_u, p0=[1E-9, 1, 90, .2E-9])
 
 # correcting measured data
 CO2_p_corrected = optical_transfer_function(theta_CO2_p, *popt_G_p) * CO2_p_pf
 CO2_s_corrected = G_s_fit(theta_CO2_s) * CO2_s_pf
+CO2_u_corrected = optical_transfer_function(theta_CO2_u, *popt_G_u) * CO2_u_pf
 what_if_1 = G_s_fit(theta_CO2_p) * CO2_p_pf
 what_if_2 = optical_transfer_function(theta_CO2_s, *popt_G_p) * CO2_s_pf
 
+# Residuals
+R_p = ((CO2_p_pf/np.sum(CO2_p_pf)) - (CO2_p_diffbsca/np.sum(CO2_p_diffbsca)))
+R_s = ((CO2_s_pf/np.sum(CO2_s_pf)) - (CO2_s_diffbsca/np.sum(CO2_s_diffbsca)))
+R_u = ((CO2_u_pf/np.sum(CO2_u_pf)) - (CO2_u_diffbsca/np.sum(CO2_u_diffbsca)))
+percent_R_p = (R_p / (CO2_p_diffbsca/np.sum(CO2_p_diffbsca))) * 100
+percent_R_s = (R_s / (CO2_s_diffbsca/np.sum(CO2_s_diffbsca))) * 100
+percent_R_u = (R_u / (CO2_u_diffbsca/np.sum(CO2_u_diffbsca))) * 100
 # create figure
 f1, ax1 = plt.subplots(1, 2, figsize=(18, 6))
 ax1[0].plot(theta_CO2_p, CO2_p_corrected, color='red', ls='-', label='\u2225 CO2 PF Corrected')
-ax1[0].plot(theta_CO2_p, what_if_1, color='black', ls='-', label='⊥ Correction on \u2225 CO2 PF')
-ax1[0].plot(theta_CO2_p, CO2_p_diffbsca, color='lawngreen', ls='-', label='\u2225 CO2 PF Theory')
-ax1[0].plot(theta_CO2_s, CO2_s_corrected, color='blue', ls='-', label='⊥ CO2 PF Corrected')
-ax1[0].plot(theta_CO2_s, what_if_2, color='purple', ls='-', label='\u2225 Correction on ⊥ CO2 PF')
-ax1[0].plot(theta_CO2_s, CO2_s_diffbsca, color='magenta', ls='-', label='⊥ CO2 PF Theory')
+#ax1[0].plot(theta_CO2_p, what_if_1, color='black', ls='-', label='⊥ Correction on \u2225 CO2 PF')
+ax1[0].plot(theta_CO2_p, CO2_p_diffbsca, color='orange', ls='-', label='\u2225 CO2 PF Theory')
+ax1[0].plot(theta_CO2_s, CO2_s_corrected, color='green', ls='-', label='⊥ CO2 PF Corrected')
+#ax1[0].plot(theta_CO2_s, what_if_2, color='purple', ls='-', label='\u2225 Correction on ⊥ CO2 PF')
+ax1[0].plot(theta_CO2_s, CO2_s_diffbsca, color='lawngreen', ls='-', label='⊥ CO2 PF Theory')
+ax1[0].plot(theta_CO2_u, CO2_u_corrected, color='blue', ls='-', label='\u27f3 CO2 PF Corrected')
+ax1[0].plot(theta_CO2_u, CO2_u_diffbsca, color='cyan', ls='-', label='\u27f3 CO2 PF Theory')
 ax1[0].set_xlabel('\u03B8')
 ax1[0].set_ylabel('$db_{sca}/d\u03B8$')
 ax1[0].set_title('Corrected $CO_2$ Rayleigh Scattering Phase Functions')
@@ -194,11 +220,13 @@ ax1[0].grid(True)
 ax1[0].legend(loc=1)
 ax1[0].ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
 ax1[1].plot(theta_CO2_p, G_p, color='red', ls='-', label='\u2225 Optical Transfer Function (Gp)')
-ax1[1].plot(theta_CO2_p, optical_transfer_function(theta_CO2_p, *popt_G_p), color='lawngreen', ls='-', label='Gp Lorentzian: a=' + str('{:.3e}'.format(popt_G_p[0])) + ' b=' + str('{:.3e}'.format(popt_G_p[1])) + '\nc=' + str('{:.3e}'.format(popt_G_p[2])) + ' d=' + str('{:.3e}'.format(popt_G_p[3])))
+ax1[1].plot(theta_CO2_p, optical_transfer_function(theta_CO2_p, *popt_G_p), color='orange', ls='-', label='Gp fit: Lorentzian\n coefficients: a=' + str('{:.3e}'.format(popt_G_p[0])) + ' b=' + str('{:.3e}'.format(popt_G_p[1])) + '\nc=' + str('{:.3e}'.format(popt_G_p[2])) + ' d=' + str('{:.3e}'.format(popt_G_p[3])))
 #ax1[1].plot(theta_CO2_p, G_p_fit(theta_CO2_p), color='orange', ls='-', label='Parallel Optical Transfer Function Fit')
-ax1[1].plot(theta_CO2_s, G_s, color='blue', ls='-', label='⊥ Optical Transfer Function (Gs)')
+ax1[1].plot(theta_CO2_s, G_s, color='green', ls='-', label='⊥ Optical Transfer Function (Gs)')
 #ax1[1].plot(theta_CO2_s, optical_transfer_function(theta_CO2_s, *popt_G_s), color='gold', ls='-', label='G fit: a=' + str('{:.3e}'.format(popt_G_s[0])) + ' b=' + str('{:.3e}'.format(popt_G_s[1])))
-ax1[1].plot(theta_CO2_s, G_s_fit(theta_CO2_s), color='magenta', ls='-', label='Gs Quartic Polynomial Coeffs: a=' + str('{:.3e}'.format(G_s_coeffs[0])) + ' b=' + str('{:.3e}'.format(G_s_coeffs[1])) + '\nc=' + str('{:.3e}'.format(G_s_coeffs[2])) + ' d=' + str('{:.3e}'.format(G_s_coeffs[3])) + ' e=' + str('{:.3e}'.format(G_s_coeffs[4])))
+ax1[1].plot(theta_CO2_s, G_s_fit(theta_CO2_s), color='lawngreen', ls='-', label='Gs fit: Quartic Polynomial\n coefficients: a=' + str('{:.3e}'.format(G_s_coeffs[0])) + ' b=' + str('{:.3e}'.format(G_s_coeffs[1])) + '\nc=' + str('{:.3e}'.format(G_s_coeffs[2])) + ' d=' + str('{:.3e}'.format(G_s_coeffs[3])) + ' e=' + str('{:.3e}'.format(G_s_coeffs[4])))
+ax1[1].plot(theta_CO2_u, G_u, color='blue', ls='-', label='\u27f3 Optical Transfer Function (Gu)')
+ax1[1].plot(theta_CO2_u, optical_transfer_function(theta_CO2_u, *popt_G_u), color='cyan', ls='-', label='Gu fit: Lorentzian\n coefficients: a=' + str('{:.3e}'.format(popt_G_u[0])) + ' b=' + str('{:.3e}'.format(popt_G_u[1])) + '\nc=' + str('{:.3e}'.format(popt_G_u[2])) + ' d=' + str('{:.3e}'.format(popt_G_u[3])))
 ax1[1].set_xlabel('\u03B8')
 ax1[1].set_ylabel('$Mm^{-1}$/DN')
 ax1[1].set_title('$CO_2$ Optical Transfer Function')
@@ -212,7 +240,8 @@ plt.show()
 
 f2, ax2 = plt.subplots(figsize=(8, 6))
 ax2.plot(theta_CO2_p, CO2_p_pf, color='red', ls='-', label='\u2225 CO2 PF Original')
-ax2.plot(theta_CO2_s, CO2_s_pf, color='blue', ls='-', label='⊥ CO2 PF Original')
+ax2.plot(theta_CO2_s, CO2_s_pf, color='green', ls='-', label='⊥ CO2 PF Original')
+ax2.plot(theta_CO2_u, CO2_u_pf, color='blue', ls='-', label='\u27f3 CO2 PF Original')
 ax2.set_xlabel('\u03B8')
 ax2.set_ylabel('DN')
 ax2.set_title('Original $CO_2$ Rayleigh Scattering Phase Functions')
@@ -224,32 +253,63 @@ plt.tight_layout()
 plt.show()
 
 
-f3, ax3 = plt.subplots(1, 2, figsize=(18, 6))
-ax3[0].plot(theta_CO2_p, CO2_p_pf/np.sum(CO2_p_pf), color='red', ls='-', label='\u2225 CO2 PF Meas. Normalized')
-ax3[0].plot(theta_CO2_p, CO2_p_diffbsca/np.sum(CO2_p_diffbsca), color='lawngreen', ls='-', label='\u2225 CO2 PF Theory Normalized')
-ax3[0].set_xlabel('\u03B8')
-ax3[0].set_ylabel('Normalized Intensity')
-ax3[0].set_title('Parallel Polarization')
-ax3[0].grid(True)
-ax3[0].legend(loc=1)
-ax3[1].plot(theta_CO2_s, CO2_s_pf/np.sum(CO2_s_pf), color='blue', ls='-', label='⊥ CO2 PF Meas. Normalized')
-ax3[1].plot(theta_CO2_s, CO2_s_diffbsca/np.sum(CO2_s_diffbsca), color='magenta', ls='-', label='⊥ CO2 PF Theory Normalized')
-ax3[1].set_xlabel('\u03B8')
-ax3[1].set_ylabel('Normalized Intensity')
-ax3[1].set_title('Perpendicular Polarization')
-ax3[1].grid(True)
-ax3[1].legend(loc=1)
+f3 = plt.figure( figsize=(30, 12))
+gs = f3.add_gridspec(2, 3)
+axa = f3.add_subplot(gs[0, 0])
+axb = f3.add_subplot(gs[0, 1])
+axc = f3.add_subplot(gs[0, 2])
+axd = f3.add_subplot(gs[1, :])
+axa.plot(theta_CO2_p, CO2_p_pf/np.sum(CO2_p_pf), color='black', ls='-', label='\u2225 CO2 PF Raw Meas. Normalized')
+axa.plot(theta_CO2_p, CO2_p_corrected/np.sum(CO2_p_corrected), color='red', ls='-', label='\u2225 CO2 PF Corr. Meas. Normalized')
+axa.plot(theta_CO2_p, CO2_p_diffbsca/np.sum(CO2_p_diffbsca), color='orange', ls='-', label='\u2225 CO2 PF Theory Normalized')
+axa.set_xlabel('\u03B8')
+axa.set_ylabel('Normalized Intensity')
+axa.set_title('Parallel Polarization')
+axa.grid(True)
+axa.legend(loc=1)
+axb.plot(theta_CO2_s, CO2_s_pf/np.sum(CO2_s_pf), color='black', ls='-', label='⊥ CO2 PF Raw Meas. Normalized')
+axb.plot(theta_CO2_s, CO2_s_corrected/np.sum(CO2_s_corrected), color='green', ls='-', label='⊥ CO2 PF Corr. Meas. Normalized')
+axb.plot(theta_CO2_s, CO2_s_diffbsca/np.sum(CO2_s_diffbsca), color='lawngreen', ls='-', label='⊥ CO2 PF Theory Normalized')
+axb.set_xlabel('\u03B8')
+axb.set_ylabel('Normalized Intensity')
+axb.set_title('Perpendicular Polarization')
+axb.grid(True)
+axb.legend(loc=1)
+axc.plot(theta_CO2_u, CO2_u_pf/np.sum(CO2_u_pf), color='black', ls='-', label='\u27f3 CO2 PF Raw Meas. Normalized')
+axc.plot(theta_CO2_u, CO2_u_corrected/np.sum(CO2_u_corrected), color='blue', ls='-', label='\u27f3 CO2 PF Corr. Meas. Normalized')
+axc.plot(theta_CO2_u, CO2_u_diffbsca/np.sum(CO2_u_diffbsca), color='cyan', ls='-', label='\u27f3 CO2 PF Theory Normalized')
+axc.set_xlabel('\u03B8')
+axc.set_ylabel('Normalized Intensity')
+axc.set_title('Perpendicular Polarization')
+axc.grid(True)
+axc.legend(loc=1)
+axd.plot(theta_CO2_p, percent_R_p, color='red', label='\u2225 Residuals')
+axd.plot(theta_CO2_s, percent_R_s, color='green', label='⊥ Residuals')
+axd.plot(theta_CO2_u, percent_R_u, color='blue', label='\u27f3 Residuals')
+axd.set_xlabel('\u03B8')
+axd.set_ylabel('Residuals')
+axd.set_title('Percent Error as a Function of Scattering Angle')
+axd.grid(True)
+axd.legend(loc=1)
 plt.suptitle('Normalized Measured and Theoretical $CO_2$ Rayleigh Scattering Phase Functions')
+#plt.tight_layout()
 plt.savefig(save_directory + 'CO2_Meas+Theory_Normalized.png', format='png')
 plt.savefig(save_directory + 'CO2_Meas+Theory_Normalized.pdf', format='pdf')
-plt.tight_layout()
 plt.show()
 
 # Things to do:
-# 2. Apply the fit correction to the original data
-# 3. Apply the fit correction to more Rayleigh data
 # 4. Apply the fit correction to PSL data
 # 5. Compare the corrected PSL data to Mie theory
+
+
+# Import and play with PSL data
+PSL_p_directory = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-09/2020-03-09_Analysis/PSL/900 CAL/0R/SD_Particle.txt'
+#PSL_s_directory =
+#PSL_u_directory =
+
+PSL_p_df = pd.read_csv(PSL_p_directory, sep=',', header=0)
+PSL_p_pf = PSL_p_df['Sample Intensity gfit']
+PSL_p_theta = PSL_p_df['Sample Theta']
 
 
 
