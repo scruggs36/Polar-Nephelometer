@@ -23,9 +23,9 @@ import os
 #Path_Bright_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
 
 # Sample images directory
-Path_Samp_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-07-21/AS/500nm/2darray/AS500nm_5E_180deg_30mW_120Average_Tue Jul 21 2020 1_38_19 PM.txt'
+Path_Samp_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-09/PSL900/3s/2darray/PSL900_3E_0R_Avg100_Average_Mon Mar 9 2020 11_39_38 AM.txt'
 # Rayleigh images directories
-Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-07-21/N2/2darray/N2_5E_180deg_30mW_120Average_Tue Jul 21 2020 4_51_30 PM.txt'
+Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-08/N2/3s/2darray/N2_3E_0.5R_Avg100_Average_Sun Mar 8 2020 6_32_55 PM.txt'
 # coordinate directory
 #coords_Dir = '/home/austen/Desktop/Rayleigh_Analysis/T4/'
 # save directory
@@ -348,7 +348,7 @@ ax4[1, 0].set_title('Profiles Taken Along Vertical \n Bounded Transects')
 ax4[1, 0].grid(True)
 ax4[1, 1].plot(Samp_PN, SD_Samp, linestyle='-', color='red', label='Sample - N2 (Reimann)')
 ax4[1, 1].plot(Samp_PN, SD_Samp_gfit, linestyle='-', color='blue', label='Sample - N2 (Gaussian Fit)')
-#ax4[1, 1].plot(Samp_PN, SD_Samp_gfit_bkg_corr, linestyle='-', color='green', label='Sample - N2 (Gaussian Fit - Bkg Constant)')
+ax4[1, 1].plot(Samp_PN, SD_Samp_gfit_bkg_corr, linestyle='-', color='green', label='Sample - N2 (Gaussian Fit - Bkg Constant)')
 ax4[1, 1].set_xlabel('Profile Numbers (column numbers)')
 ax4[1, 1].set_ylabel('Summed Profile Intensities (DN)')
 ax4[1, 1].set_title('Scattering Diagram')

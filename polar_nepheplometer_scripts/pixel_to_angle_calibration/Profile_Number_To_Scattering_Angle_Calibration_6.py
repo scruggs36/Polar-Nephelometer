@@ -25,12 +25,13 @@ from scipy.interpolate import interp1d, pchip_interpolate
 from scipy.signal import savgol_filter, argrelmax, argrelmin
 from scipy.optimize import curve_fit
 from math import sqrt, log, pi
-
+from datetime import date
 
 # import N2 Rayleigh scattering data
-Save_Directory = '/home/austen/Desktop/Recent/'
+Save_Directory = '/home/sm3/Desktop/Recent/'
 
-
+today = date.today()
+today_string = str(today.strftime("%b-%d-%Y"))
 
 # refractive index for PSL calculated for each group (literally until line 240 skip!)
 # wavelength in centimeters
@@ -462,9 +463,10 @@ plt.show()
 
 
 # import experiment data for 900nm PSL
-Exp_Directory = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-03-09/2020-03-09_Analysis/PSL/900 CAL/0R/SD_Particle.txt'
+Exp_Directory = '/home/sm3/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-06-23/Analysis/Uncalibrated_PF/SD_Particle_900nm_1mW.txt'
 #Exp_Directory = '/home/austen/Desktop/2019-11-21_Analysis/PSL/900/1s/0lamda/SD_Particle.txt'
 Exp_Data = pd.read_csv(Exp_Directory, delimiter=',', header=0)
+
 Exp_Ray_PF = np.array(Exp_Data['N2 Intensity'])[50:-50]
 Exp_Ray_PN = np.array(Exp_Data['N2 Columns'])[50:-50]
 #Exp_Particle_PF = np.asarray(Exp_Data['Sample Intensity'] - Exp_Ray_PF)
@@ -488,7 +490,7 @@ exp_minimum = np.argmin(Exp_Particle_PF_Savgol_Pchip, axis=0)
 exp_local_max = argrelmax(Exp_Particle_PF_Savgol_Pchip, axis=0, order=10)
 exp_local_min = argrelmin(Exp_Particle_PF_Savgol_Pchip, axis=0, order=10)
 exp_max_min_idx = np.sort(np.concatenate((210, exp_local_max, exp_local_min), axis=None))
-exp_max_min_idx = np.delete(exp_max_min_idx, [0,2,6])
+exp_max_min_idx = np.delete(exp_max_min_idx, [1])
 exp_max_min_array = [Exp_Particle_PN[x] for x in exp_max_min_idx]
 print('Mie Local Features Index: ', theta_max_min_avg)
 print('Experiment Local Features Index: ', exp_max_min_array)
@@ -537,7 +539,11 @@ plt.savefig(Save_Directory + '800nm_Calibration.png', format='png')
 plt.savefig(Save_Directory + '800nm_Calibration.pdf', format='pdf')
 plt.show()
 
-Calibrated_Theta = np.array([(results1.params[1] * x) + results1.params[0] for x in Exp_Particle_PN])
+# add theta to dataframe
+Calibrated_Theta = np.array([(results1.params[1] * x) + results1.params[0] for x in np.array(Exp_Data['Sample Columns'])])
+Exp_Data['Sample Theta'] = Calibrated_Theta
+Exp_Data.to_csv('/home/sm3/Desktop/Recent/Calibration ' + today_string + '.txt')
+# theta array insights
 print('Angular Range: ', [Calibrated_Theta[0], Calibrated_Theta[-1]])
 print('Angles: ', [(results1.params[1] * x) + results1.params[0] for x in Exp_Particle_PN])
 print('Max Index: ', np.argmax(Exp_Particle_PF))
@@ -564,9 +570,9 @@ Mie_SU_Miles = pchip_interpolate(xi=theta_mie, yi=Mie_Theory_DF['Miles SU'], x=C
 Mie_SU_Jones = pchip_interpolate(xi=theta_mie, yi=Mie_Theory_DF['Jones SU'], x=Calibrated_Theta, der=0, axis=0)
 Mie_SU_Greenslade = pchip_interpolate(xi=theta_mie, yi=Mie_Theory_DF['Greenslade SU'], x=Calibrated_Theta, der=0, axis=0)
 Mie_SU_Gienger = pchip_interpolate(xi=theta_mie, yi=Mie_Theory_DF['Gienger SU'], x=Calibrated_Theta, der=0, axis=0)
-
-residual_SL = (Exp_Particle_PF * 0.0050) - Mie_SL_Gienger
-residual_SU = (Exp_Particle_PF * 0.0050) - Mie_SU_Gienger
+'''
+#residual_SL = (Exp_Particle_PF * 0.0050) - Mie_SL_Gienger
+#residual_SU = (Exp_Particle_PF * 0.0050) - Mie_SU_Gienger
 
 # make a plot of the 900 spline data and the experimental data overlayed
 f5, ax5 = plt.subplots(1, 3, figsize=(16, 6))
@@ -601,7 +607,7 @@ plt.tight_layout()
 plt.savefig(Save_Directory + 'Validation.pdf', format='pdf')
 plt.savefig(Save_Directory + 'Validation.png', format='png')
 plt.show()
-
+'''
 '''
 # Mie theory sample 2
 Mie_Directory_2 = '/home/austen/Desktop/2019-09-08_Analysis/800nm/Mie_Theory_DF.txt'

@@ -18,8 +18,8 @@ import PyMieScatt as PMS
 from pytmatrix.psd import PSDIntegrator, BinnedPSD
 import pytmatrix.tmatrix_aux as tmatrix_aux
 
-save_dir = '/home/austen/Desktop/Recent/'
-mie_dir = '/home/austen/Desktop/pandas_data.txt'
+save_dir = '/home/sm3/Desktop/Recent/'
+#mie_dir = '/home/sm3/Desktop/AS_Mie.txt'
 
 # defining functions
 # log normal distribution function, we might want it normalized, check if the equation is right...
@@ -252,12 +252,13 @@ def Residuals_SR(x, w_n, SR_M, SR_Theta, bin_edges):
 
 # setting some constants for an individual spheroidal calculation
 # diameter, radius, and  wavelength in nanometers
-diameter_val = 903.00
-gsd_val = 1.005
-wavelength_val = 663.00
-m_val = complex(1.59, 0.00)
+diameter_val = 250.00
+# DMA = 1.05, PSL = 1.005
+gsd_val = 1.05
+wavelength_val = 405.00
+m_val = complex(1.52, 0.00)
 n_medium_val = 1.0
-size_bins = np.linspace(850.0, 950.0, 101)
+size_bins = np.linspace(450.0, 550.0, 101)
 bin_counts = np.array([LogNormal(i, diameter_val, gsd_val) for i in size_bins])
 #print('Particle Count/bin: ', bin_counts)
 
@@ -400,7 +401,7 @@ for counter, ax_r_val in enumerate(ax_r_array):
 
 
     # NLLS SLSR
-    result_SL = least_squares(Residuals_SLSR, x0=[903.0, 1.005, 1.59, 0.001], method='trf', args=(wavelength_val, params_sl["SL Norm"], params_sr["SR Norm"], theta_scattered, theta_scattered, size_bins), bounds=([1.0, 1.000, 1.00, 0.000], [1000.0, 1.500, 2.00, 1.000]))
+    result_SL = least_squares(Residuals_SLSR, x0=[diameter_val, 1.05, 1.52, 0.001], method='trf', args=(wavelength_val, params_sl["SL Norm"], params_sr["SR Norm"], theta_scattered, theta_scattered, size_bins), bounds=([1.0, 1.000, 1.00, 0.000], [1000.0, 1.500, 2.00, 1.000]))
     # append solutions
     SLSR_mu_list.append(result_SL.x[0])
     SLSR_sigma_list.append(result_SL.x[1])
@@ -572,8 +573,8 @@ ax1[2, 2].grid(True)
 ax1[2, 2].legend(loc=1, fontsize=l_font)
 f1.suptitle('Optical Parameters vs. Axis Ratio', fontsize=f_font)
 #plt.tight_layout()
-plt.savefig(save_dir + 'NLLS_tmat_mie_params_SL.pdf', format='pdf')
-plt.savefig(save_dir + 'NLLS_tmat_mie_params_SL.png', format='png')
+plt.savefig(save_dir + 'NLLS_tmat_mie_params_SLSR.pdf', format='pdf')
+plt.savefig(save_dir + 'NLLS_tmat_mie_params_SLSR.png', format='png')
 #plt.show()
 plt.clf()
 plt.close()
