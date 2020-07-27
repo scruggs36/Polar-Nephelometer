@@ -23,9 +23,9 @@ import os
 #Path_Bright_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/04-08-2019/CO2/txt'
 
 # Sample images directory
-Path_Samp_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-06-18/PSL900/2darray/2s/PSL900nm_2E_150Avg_0.5R_Average_Thu Jun 18 2020 2_20_12 PM.txt'
+Path_Samp_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-07-21/AS/500nm/2darray/AS500nm_5E_180deg_30mW_120Average_Tue Jul 21 2020 1_38_19 PM.txt'
 # Rayleigh images directories
-Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-06-18/N2/2darray/1s/N2_1E_300Avg_180deg_Average_Thu Jun 18 2020 3_57_25 PM.txt'
+Path_N2_Dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-07-21/N2/2darray/N2_5E_180deg_30mW_120Average_Tue Jul 21 2020 4_51_30 PM.txt'
 # coordinate directory
 #coords_Dir = '/home/austen/Desktop/Rayleigh_Analysis/T4/'
 # save directory
