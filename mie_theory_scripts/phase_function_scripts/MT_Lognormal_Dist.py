@@ -15,7 +15,7 @@ from scipy.interpolate import pchip_interpolate
 from scipy.signal import savgol_filter
 
 
-Save_Directory = '/home/austen/Desktop/2019-11-18_Analysis/MT/'
+Save_Directory = '/home/austen/Desktop/Recent/'
 #Save_Mie = Save_Directory + '/Squalane900nm_MieTheory.txt'
 #Data_Directory = '/home/austen/Documents/04-16-2019 Analysis/SD_Particle_803nmPSL.txt'
 
@@ -35,7 +35,7 @@ def cauchy_4term(wav, A_4term, B_4term, C_4term):
 # import experimental data
 #Data = pd.read_csv(Data_Directory, sep=',', header=0)
 # Particle diameter, geometric mean of the particle diameter
-d = 100
+d = 900.0
 # particle size standard deviation
 sigma_s = 1.05
 # define Gaussian function
@@ -45,7 +45,8 @@ w_n = 663
 A = 1.43694
 B = 3677.64
 C = 8.28899E7
-m = cauchy_4term(663, A, B, C) + 0.00j
+#m = cauchy_4term(663, A, B, C) + 0.00j
+m = 1.525
 print('Refractive Index: ', m)
 # number density
 N = 300
@@ -63,7 +64,7 @@ ax.set_ylabel('Normalized $dN/Log_{10}(D)$')
 ax.set_title('Distributions Used for Mie Theory Calculations')
 ax.grid(True)
 plt.legend(loc=1)
-plt.savefig(Save_Directory + 'Mie_Distributions.png', format='png')
+plt.savefig(Save_Directory + 'Mie_Distributions_' + str(int(d)) + '.png', format='png')
 plt.show()
 
 
@@ -94,7 +95,7 @@ DF['Theta'] = theta
 DF['SL'] = SL
 DF['SR'] = SR
 DF['SU'] = SU
-DF.to_csv(Save_Directory + 'MT_Squalane_900nm.txt')
+DF.to_csv(Save_Directory + 'MT_AS_' + str(int(d)) + '.txt')
 
 fig3, ax3 = plt.subplots(figsize=(20, 7))
 ax3.semilogy(theta, SL, ls='-', lw=1, label="SL")
@@ -106,5 +107,5 @@ ax3.set_title('Phase Functions at Various Incident Polarizations of Light', font
 ax3.grid(True)
 ax3.legend(loc=1)
 plt.tight_layout()
-plt.savefig(Save_Directory + 'MT.png', format='png')
+plt.savefig(Save_Directory + 'MT' + str(int(d)) + '.png', format='png')
 plt.show()
