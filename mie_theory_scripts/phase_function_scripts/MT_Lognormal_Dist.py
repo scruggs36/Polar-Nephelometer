@@ -35,7 +35,7 @@ def cauchy_4term(wav, A_4term, B_4term, C_4term):
 # import experimental data
 #Data = pd.read_csv(Data_Directory, sep=',', header=0)
 # Particle diameter, geometric mean of the particle diameter
-d = 900.0
+d = 700.0
 # particle size standard deviation
 sigma_s = 1.05
 # define Gaussian function

@@ -27,7 +27,7 @@ for counter, file in enumerate(file_list):
     # print file name
     print(file)
     # header created
-    header = ['Sample', 'Size (nm)', 'Exposure Time (s)', 'Polarization', 'Laser Power (mW)', 'Number of Averages','Date', 'Time', 'Calibration Slope', 'Calibration Intercept']
+    header = ['Sample', 'Size (nm)', 'Exposure Time (s)', 'Polarization', 'Laser Power (mW)', 'Number of Averages', 'Concentration (p/cc)', 'Date', 'Time', 'Calibration Slope', 'Calibration Intercept']
     conditions = file.split('_')
     sample_str = conditions[0]
     size_str = conditions[1]
@@ -38,13 +38,14 @@ for counter, file in enumerate(file_list):
     # use spaces to collect the date and time all in once, then use datetime package to format it in python right
     date_str = conditions[6]
     time_str = conditions[7]
+    conc_str = conditions[8]
     # datetime wrangling...
     date_list = date_str.split(' ')
     meas_date = datetime.date(year=int(date_list[0]), month=int(date_list[1]), day=int(date_list[2].split('.')[0]))
     time_list = time_str.split(' ')
     meas_time = datetime.time(hour=int(time_list[0]), minute=int(time_list[1]), second=int(time_list[2].split('.')[0]))
     # create df
-    conditions_df = pd.DataFrame([[sample_str, size_str, exposure_str, polarization_str, power_str, averages_str, meas_date, meas_time, slope, intercept]], columns=header)
+    conditions_df = pd.DataFrame([[sample_str, size_str, exposure_str, polarization_str, power_str, averages_str, conc_str, meas_date, meas_time, slope, intercept]], columns=header)
     # read in the data
 
 
@@ -82,8 +83,15 @@ for counter, file in enumerate(file_list):
         # concatenate dataframes side by side
         row_riemann_df = pd.concat([conditions_df, meas_riemann_df], axis=1)
         row_gfit_df = pd.concat([conditions_df, meas_gfit_df], axis=1)
-
-
+    #'''
+    #run this if its not the first time your creating a file, I am throwing everything into one csv
+    row_riemann_df.to_csv(save_file_riemann, sep=',', mode='a', header=False)
+    row_gfit_df.to_csv(save_file_gfit, sep=',', mode='a', header=False)
+    # moves a file that has been evaluated into the sorted
+    shutil.move(unevaluated_directory + '/' + file, evaluated_directory + '/' + file)
+    #'''
+    '''
+    # run the if statements if your creating the file, for the first time
     # if you have all the files you wanna look at, this compiles them all at once
     if counter == 0:
         row_riemann_df.to_csv(save_file_riemann, sep=',', header=True)
@@ -97,7 +105,7 @@ for counter, file in enumerate(file_list):
         row_gfit_df.to_csv(save_file_gfit, sep=',', mode='a', header=False)
         # moves a file that has been evaluated into the sorted
         shutil.move(unevaluated_directory + '/' + file, evaluated_directory + '/' + file)
-
+    '''
 
 # read dataframe back in
 print('-------Data compiling completed data frames are now ready-------')

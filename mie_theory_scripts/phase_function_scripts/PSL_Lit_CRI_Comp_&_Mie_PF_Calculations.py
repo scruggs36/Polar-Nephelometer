@@ -11,6 +11,7 @@ the rayleigh scattering data
 PSLs:
 Mean    Mean Uncertainty     Size Dist Sigma
 600nm     9nm                     10.0nm
+700nm     6nm                     9.0nm
 800nm     14nm                    5.6nm
 903nm     12nm                    4.1nm
 '''
@@ -28,7 +29,7 @@ from math import sqrt, log, pi
 from datetime import date
 
 # import N2 Rayleigh scattering data
-Save_Directory = '/home/sm3/Desktop/Recent/'
+Save_Directory = '/home/austen/Desktop/Recent/'
 
 today = date.today()
 today_string = str(today.strftime("%b-%d-%Y"))
