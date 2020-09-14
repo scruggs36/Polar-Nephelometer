@@ -41,9 +41,12 @@ def LogNormal(size, mu, gsd, N):
 
 def M(meas_pf, mie_pf):
     a = np.sum(np.square(np.subtract(meas_pf, mie_pf)))
+    a_0 = np.square(np.subtract(meas_pf, mie_pf))
     b = np.sum(np.abs(np.subtract(meas_pf, mie_pf)))
+    b_0 = np.abs(np.subtract(meas_pf, mie_pf))
     c = np.sum(np.divide(np.abs(np.subtract(meas_pf, mie_pf)), mie_pf))
-    return a
+    c_0 = np.divide(np.abs(np.subtract(meas_pf, mie_pf)), mie_pf)
+    return c
 
 def Residuals_SLSRSU(x, w_n, SL_M, SR_M, SU_M, SL_Theta, SR_Theta, SU_Theta, bin_edges):
     # pre allocation
@@ -77,7 +80,7 @@ def Residuals_SLSRSU(x, w_n, SL_M, SR_M, SU_M, SL_Theta, SR_Theta, SU_Theta, bin
 
 
 # import data
-save_directory = '/home/austen/Desktop/Recent/AS_Temporary'
+save_directory = '/home/austen/Desktop/Recent'
 file_directory = '/home/austen/Desktop/Recent/Good_Data_Riemann.txt'
 df = pd.read_csv(file_directory, sep=',', header=0)
 
@@ -93,17 +96,17 @@ df.set_index(['Sample', 'Size (nm)', 'Polarization'], inplace=True)
 
 # pandas dataframe.xs returns a cross-section of the data, so basically I am filtering out data that isn't PSL, size 900, and pol = SL
 #xs_tuple = ('PSL', 900, 'SL')
-df_800_SL = df.xs(('AS', '800', 'SL')).reset_index()
-df_800_SU = df.xs(('AS', '800', 'SU')).reset_index()
-df_800_SR = df.xs(('AS', '800', 'SR')).reset_index()
+df_800_SL = df.xs(('AS', 800, 'SL')).reset_index()
+df_800_SU = df.xs(('AS', 800, 'SU')).reset_index()
+df_800_SR = df.xs(('AS', 800, 'SR')).reset_index()
 
-df_700_SL = df.xs(('AS', '700', 'SL')).reset_index()
-df_700_SU = df.xs(('AS', '700', 'SU')).reset_index()
-df_700_SR = df.xs(('AS', '700', 'SR')).reset_index()
+df_700_SL = df.xs(('AS', 700, 'SL')).reset_index()
+df_700_SU = df.xs(('AS', 700, 'SU')).reset_index()
+df_700_SR = df.xs(('AS', 700, 'SR')).reset_index()
 
-df_600_SL = df.xs(('AS', '600', 'SL')).reset_index()
-df_600_SU = df.xs(('AS', '600', 'SU')).reset_index()
-df_600_SR = df.xs(('AS', '600', 'SR')).reset_index()
+df_600_SL = df.xs(('AS', 600, 'SL')).reset_index()
+df_600_SU = df.xs(('AS', 600, 'SU')).reset_index()
+df_600_SR = df.xs(('AS', 600, 'SR')).reset_index()
 
 # view some of the data, use .loc if multiindexed,
 #print(df_900_SL.loc[:, 'Exposure Time (s)'], df_900_SL.loc[:, 'Laser Power (mW)'], df_900_SL.loc[:, 'Number of Averages'])
@@ -127,7 +130,10 @@ Mean    Mean Uncertainty     Size Dist Sigma
 m_AS = 1.525
 wavelength_red = 663
 dp_gaussian = np.arange(1.0, 1000.0, 2.0)
-theta_meas = np.arange(0.0, 180.2, 0.2)
+col_transects = np.arange(30, 860, 1)
+slope = .2095
+intercept = -3.1433
+theta_meas = [(slope * i) + intercept for i in col_transects]
 ndp_LN_800 = np.array([LogNormal(size=i, mu=800.0, gsd=1.05, N=260) for i in dp_gaussian])
 ndp_LN_700 = np.array([LogNormal(size=i, mu=700.0, gsd=1.05, N=433) for i in dp_gaussian])
 ndp_LN_600 = np.array([LogNormal(size=i, mu=600.0, gsd=1.05, N=1000) for i in dp_gaussian])
@@ -136,21 +142,34 @@ Rad800, SL800, SR800, SU800 = PMS.SF_SD(m=m_AS, wavelength=wavelength_red, dp=dp
 Rad700, SL700, SR700, SU700 = PMS.SF_SD(m=m_AS, wavelength=wavelength_red, dp=dp_gaussian, ndp=ndp_LN_700, nMedium=1.0, space='theta', normalization=None)
 Rad600, SL600, SR600, SU600 = PMS.SF_SD(m=m_AS, wavelength=wavelength_red, dp=dp_gaussian, ndp=ndp_LN_600, nMedium=1.0, space='theta', normalization=None)
 
-SL800_norm = SL800 / np.sum(SL800)
-SU800_norm = SU800 / np.sum(SU800)
-SR800_norm = SR800 / np.sum(SR800)
-
-SL700_norm = SL700 / np.sum(SL700)
-SU700_norm = SU700 / np.sum(SU700)
-SR700_norm = SR700 / np.sum(SR700)
-
-SL600_norm = SL600 / np.sum(SL600)
-SU600_norm = SU600 / np.sum(SU600)
-SR600_norm = SR600 / np.sum(SR600)
-
 Theta800 = np.array([(i * 180.0)/pi for i in Rad800])
 Theta700 = np.array([(i * 180.0)/pi for i in Rad700])
 Theta600 = np.array([(i * 180.0)/pi for i in Rad600])
+
+SL800_pchip = pchip_interpolate(xi=Theta800, yi=SL800, x=theta_meas)
+SU800_pchip = pchip_interpolate(xi=Theta800, yi=SU800, x=theta_meas)
+SR800_pchip = pchip_interpolate(xi=Theta800, yi=SR800, x=theta_meas)
+
+SL700_pchip = pchip_interpolate(xi=Theta700, yi=SL700, x=theta_meas)
+SU700_pchip = pchip_interpolate(xi=Theta700, yi=SU700, x=theta_meas)
+SR700_pchip = pchip_interpolate(xi=Theta700, yi=SR700, x=theta_meas)
+
+SL600_pchip = pchip_interpolate(xi=Theta600, yi=SL600, x=theta_meas)
+SU600_pchip = pchip_interpolate(xi=Theta600, yi=SU600, x=theta_meas)
+SR600_pchip = pchip_interpolate(xi=Theta600, yi=SR600, x=theta_meas)
+
+
+SL800_norm = SL800_pchip / np.sum(SL800_pchip)
+SU800_norm = SU800_pchip / np.sum(SU800_pchip)
+SR800_norm = SR800_pchip / np.sum(SR800_pchip)
+
+SL700_norm = SL700_pchip / np.sum(SL700_pchip)
+SU700_norm = SU700_pchip / np.sum(SU700_pchip)
+SR700_norm = SR700_pchip / np.sum(SR700_pchip)
+
+SL600_norm = SL600_pchip / np.sum(SL600_pchip)
+SU600_norm = SU600_pchip / np.sum(SU600_pchip)
+SR600_norm = SR600_pchip / np.sum(SR600_pchip)
 
 
 # alright compare each row to mie theory and log the sum of the squared error to the data frame
@@ -162,10 +181,9 @@ for index, row in df_800_SL.iterrows():
     avg_time = et * num_avg
     avg_time_list.append(avg_time)
     # for the purpose of troubleshooting things, we are just limiting ourselves to the first entry of the df
-    pf = np.array(row.loc['0.0':'180.0']).astype(float)
-    pf_pchip = pchip_interpolate(xi=theta_meas, yi=pf, x=Theta800)
-    pf_pchip_norm = pf_pchip / np.sum(pf_pchip)
-    m = M(pf_pchip_norm, SL800_norm)
+    pf = np.array(row.loc['30':'859']).astype(float)
+    pf_norm = pf / np.sum(pf)
+    m = M(pf_norm, SL800_norm)
     # the difference at each angle is small because the measurement and the theory are normalized!
     #error = np.divide(mag_diff, SL900_norm)
     #summed_error = np.sum(error)
@@ -182,10 +200,9 @@ for index, row in df_800_SU.iterrows():
     avg_time = et * num_avg
     avg_time_list.append(avg_time)
     # for the purpose of troubleshooting things, we are just limiting ourselves to the first entry of the df
-    pf = np.array(row.loc['0.0':'180.0']).astype(float)
-    pf_pchip = pchip_interpolate(xi=theta_meas, yi=pf, x=Theta800)
-    pf_pchip_norm = pf_pchip / np.sum(pf_pchip)
-    m = M(pf_pchip_norm, SU800_norm)
+    pf = np.array(row.loc['30':'859']).astype(float)
+    pf_norm = pf / np.sum(pf)
+    m = M(pf_norm, SU800_norm)
     summed_error_list.append(m)
 
 
@@ -199,10 +216,9 @@ for index, row in df_800_SR.iterrows():
     avg_time = et * num_avg
     avg_time_list.append(avg_time)
     # for the purpose of troubleshooting things, we are just limiting ourselves to the first entry of the df
-    pf = np.array(row.loc['0.0':'180.0']).astype(float)
-    pf_pchip = pchip_interpolate(xi=theta_meas, yi=pf, x=Theta800)
-    pf_pchip_norm = pf_pchip / np.sum(pf_pchip)
-    m = M(pf_pchip_norm, SR800_norm)
+    pf = np.array(row.loc['30':'859']).astype(float)
+    pf_norm = pf / np.sum(pf)
+    m = M(pf_norm, SR800_norm)
     summed_error_list.append(m)
 
 
@@ -216,10 +232,9 @@ for index, row in df_700_SL.iterrows():
     avg_time = et * num_avg
     avg_time_list.append(avg_time)
     # for the purpose of troubleshooting things, we are just limiting ourselves to the first entry of the df
-    pf = np.array(row.loc['0.0':'180.0']).astype(float)
-    pf_pchip = pchip_interpolate(xi=theta_meas, yi=pf, x=Theta700)
-    pf_pchip_norm = pf_pchip / np.sum(pf_pchip)
-    m = M(pf_pchip_norm, SL700_norm)
+    pf = np.array(row.loc['30':'859']).astype(float)
+    pf_norm = pf / np.sum(pf)
+    m = M(pf_norm, SL700_norm)
     summed_error_list.append(m)
 
 
@@ -233,10 +248,9 @@ for index, row in df_700_SU.iterrows():
     avg_time = et * num_avg
     avg_time_list.append(avg_time)
     # for the purpose of troubleshooting things, we are just limiting ourselves to the first entry of the df
-    pf = np.array(row.loc['0.0':'180.0']).astype(float)
-    pf_pchip = pchip_interpolate(xi=theta_meas, yi=pf, x=Theta700)
-    pf_pchip_norm = pf_pchip / np.sum(pf_pchip)
-    m = M(pf_pchip_norm, SU700_norm)
+    pf = np.array(row.loc['30':'859']).astype(float)
+    pf_norm = pf / np.sum(pf)
+    m = M(pf_norm, SU700_norm)
     summed_error_list.append(m)
 
 
@@ -250,10 +264,9 @@ for index, row in df_700_SR.iterrows():
     avg_time = et * num_avg
     avg_time_list.append(avg_time)
     # for the purpose of troubleshooting things, we are just limiting ourselves to the first entry of the df
-    pf = np.array(row.loc['0.0':'180.0']).astype(float)
-    pf_pchip = pchip_interpolate(xi=theta_meas, yi=pf, x=Theta700)
-    pf_pchip_norm = pf_pchip / np.sum(pf_pchip)
-    m = M(pf_pchip_norm, SR700_norm)
+    pf = np.array(row.loc['30':'859']).astype(float)
+    pf_norm = pf / np.sum(pf)
+    m = M(pf_norm, SR700_norm)
     summed_error_list.append(m)
 
 
@@ -267,10 +280,9 @@ for index, row in df_600_SL.iterrows():
     avg_time = et * num_avg
     avg_time_list.append(avg_time)
     # for the purpose of troubleshooting things, we are just limiting ourselves to the first entry of the df
-    pf = np.array(row.loc['0.0':'180.0']).astype(float)
-    pf_pchip = pchip_interpolate(xi=theta_meas, yi=pf, x=Theta600)
-    pf_pchip_norm = pf_pchip / np.sum(pf_pchip)
-    m = M(pf_pchip_norm, SL600_norm)
+    pf = np.array(row.loc['30':'859']).astype(float)
+    pf_norm = pf / np.sum(pf)
+    m = M(pf_norm, SL600_norm)
     summed_error_list.append(m)
 
 
@@ -284,10 +296,9 @@ for index, row in df_600_SU.iterrows():
     avg_time = et * num_avg
     avg_time_list.append(avg_time)
     # for the purpose of troubleshooting things, we are just limiting ourselves to the first entry of the df
-    pf = np.array(row.loc['0.0':'180.0']).astype(float)
-    pf_pchip = pchip_interpolate(xi=theta_meas, yi=pf, x=Theta600)
-    pf_pchip_norm = pf_pchip / np.sum(pf_pchip)
-    m = M(pf_pchip_norm, SU600_norm)
+    pf = np.array(row.loc['30':'859']).astype(float)
+    pf_norm = pf / np.sum(pf)
+    m = M(pf_norm, SU600_norm)
     summed_error_list.append(m)
 
 
@@ -301,9 +312,8 @@ for index, row in df_600_SR.iterrows():
     avg_time = et * num_avg
     avg_time_list.append(avg_time)
     # for the purpose of troubleshooting things, we are just limiting ourselves to the first entry of the df
-    pf = np.array(row.loc['0.0':'180.0']).astype(float)
-    pf_pchip = pchip_interpolate(xi=theta_meas, yi=pf, x=Theta600)
-    pf_pchip_norm = pf_pchip / np.sum(pf_pchip)
+    pf = np.array(row.loc['30':'859']).astype(float)
+    pf_pchip_norm = pf / np.sum(pf)
     m = M(pf_pchip_norm, SR600_norm)
     summed_error_list.append(m)
 
@@ -356,24 +366,24 @@ print('-------SR 600 Minimum Error-------')
 print('row: ', min_error_SR_600)
 print(df_600_SR.loc[min_error_SR_600, 'Exposure Time (s)':'Time'])
 
-best_SL_800 = Normalization(np.array(df_800_SL.loc[min_error_SL_800, '0.0':'180.0']))
-best_SU_800 = Normalization(np.array(df_800_SU.loc[min_error_SU_800, '0.0':'180.0']))
-best_SR_800 = Normalization(np.array(df_800_SR.loc[min_error_SR_800, '0.0':'180.0']))
+best_SL_800 = Normalization(np.array(df_800_SL.loc[min_error_SL_800, '30':'859']))
+best_SU_800 = Normalization(np.array(df_800_SU.loc[min_error_SU_800, '30':'859']))
+best_SR_800 = Normalization(np.array(df_800_SR.loc[min_error_SR_800, '30':'859']))
 
-best_SL_700 = Normalization(np.array(df_700_SL.loc[min_error_SL_700, '0.0':'180.0']))
-best_SU_700 = Normalization(np.array(df_700_SU.loc[min_error_SU_700, '0.0':'180.0']))
-best_SR_700 = Normalization(np.array(df_700_SR.loc[min_error_SR_700, '0.0':'180.0']))
+best_SL_700 = Normalization(np.array(df_700_SL.loc[min_error_SL_700, '30':'859']))
+best_SU_700 = Normalization(np.array(df_700_SU.loc[min_error_SU_700, '30':'859']))
+best_SR_700 = Normalization(np.array(df_700_SR.loc[min_error_SR_700, '30':'859']))
 
-best_SL_600 = Normalization(np.array(df_600_SL.loc[min_error_SL_600, '0.0':'180.0']))
-best_SU_600 = Normalization(np.array(df_600_SU.loc[min_error_SU_600, '0.0':'180.0']))
-best_SR_600 = Normalization(np.array(df_600_SR.loc[min_error_SR_600, '0.0':'180.0']))
+best_SL_600 = Normalization(np.array(df_600_SL.loc[min_error_SL_600, '30':'859']))
+best_SU_600 = Normalization(np.array(df_600_SU.loc[min_error_SU_600, '30':'859']))
+best_SR_600 = Normalization(np.array(df_600_SR.loc[min_error_SR_600, '30':'859']))
 
 f0 = plt.figure(constrained_layout=True, figsize=(18, 18))
 spec = GridSpec(ncols=4, nrows=3, figure=f0)
 # size 300nm data
 f0_ax00 = f0.add_subplot(spec[0, 0])
 f0_ax00.semilogy(theta_meas, best_SL_800, color='red', label='Meas. 800 SL\n' + str(df_800_SL.loc[min_error_SL_800, 'Exposure Time (s)':'Time']))
-f0_ax00.semilogy(Theta800, SL800_norm, color ='black', label='Theory 800 SL')
+f0_ax00.semilogy(theta_meas, SL800_norm, color ='black', label='Theory 800 SL')
 f0_ax00.set_title('AS 800 SL')
 f0_ax00.set_ylabel('Norm. Intensity')
 f0_ax00.set_xlabel('Degrees')
@@ -382,7 +392,7 @@ f0_ax00.legend(loc=1)
 
 f0_ax01 = f0.add_subplot(spec[0, 1])
 f0_ax01.semilogy(theta_meas, best_SU_800, color='green', label='Meas. 800 SU\n' + str(df_800_SU.loc[min_error_SU_800, 'Exposure Time (s)':'Time']))
-f0_ax01.semilogy(Theta800, SU800_norm, color='black', label='Theory 800 SU')
+f0_ax01.semilogy(theta_meas, SU800_norm, color='black', label='Theory 800 SU')
 f0_ax01.set_title('AS 800 SU')
 f0_ax01.set_ylabel('Norm. Intensity')
 f0_ax01.set_xlabel('Degrees')
@@ -391,7 +401,7 @@ f0_ax01.legend(loc=1)
 
 f0_ax02 = f0.add_subplot(spec[0, 2])
 f0_ax02.semilogy(theta_meas, best_SR_800, color='blue', label='Meas. 800 SR\n' + str(df_800_SR.loc[min_error_SR_800, 'Exposure Time (s)':'Time']))
-f0_ax02.semilogy(Theta800, SR800_norm, color='black', label='Theory 800 SR')
+f0_ax02.semilogy(theta_meas, SR800_norm, color='black', label='Theory 800 SR')
 f0_ax02.set_title('AS 800 SR')
 f0_ax02.set_ylabel('Norm. Intensity')
 f0_ax02.set_xlabel('Degrees')
@@ -408,7 +418,7 @@ f0_ax03.legend(loc=1)
 
 f0_ax10 = f0.add_subplot(spec[1, 0])
 f0_ax10.semilogy(theta_meas, best_SL_700, color='red', label='Meas. 700 SL\n' + str(df_700_SL.loc[min_error_SL_700, 'Exposure Time (s)':'Time']))
-f0_ax10.semilogy(Theta700, SL700_norm, color='black', label='Theory 700 SL')
+f0_ax10.semilogy(theta_meas, SL700_norm, color='black', label='Theory 700 SL')
 f0_ax10.set_title('AS 700 SL')
 f0_ax10.set_ylabel('Norm. Intensity')
 f0_ax10.set_xlabel('Degrees')
@@ -417,7 +427,7 @@ f0_ax10.legend(loc=1)
 
 f0_ax11 = f0.add_subplot(spec[1, 1])
 f0_ax11.semilogy(theta_meas, best_SU_700, color='green', label='Meas. 700 SU\n' + str(df_700_SU.loc[min_error_SU_700, 'Exposure Time (s)':'Time']))
-f0_ax11.semilogy(Theta700, SU700_norm, color='black', label='Theory 700 SU')
+f0_ax11.semilogy(theta_meas, SU700_norm, color='black', label='Theory 700 SU')
 f0_ax11.set_title('AS 700 SU')
 f0_ax11.set_ylabel('Norm. Intensity')
 f0_ax11.set_xlabel('Degrees')
@@ -426,7 +436,7 @@ f0_ax11.legend(loc=1)
 
 f0_ax12 = f0.add_subplot(spec[1, 2])
 f0_ax12.semilogy(theta_meas, best_SR_700, color='blue', label='Meas. 700 SR\n' + str(df_700_SR.loc[min_error_SR_700, 'Exposure Time (s)':'Time']))
-f0_ax12.semilogy(Theta700, SR700_norm, color='black', label='Theory 700 SR')
+f0_ax12.semilogy(theta_meas, SR700_norm, color='black', label='Theory 700 SR')
 f0_ax12.set_title('AS 700 SR')
 f0_ax12.set_ylabel('Norm. Intensity')
 f0_ax12.set_xlabel('Degrees')
@@ -443,7 +453,7 @@ f0_ax13.legend(loc=1)
 
 f0_ax20 = f0.add_subplot(spec[2, 0])
 f0_ax20.semilogy(theta_meas, best_SL_600, color='red', label='Meas. 600 SL\n' + str(df_600_SL.loc[min_error_SL_600, 'Exposure Time (s)':'Time']))
-f0_ax20.semilogy(Theta600, SL600_norm, color='black', label='Theory 600 SL')
+f0_ax20.semilogy(theta_meas, SL600_norm, color='black', label='Theory 600 SL')
 f0_ax20.set_title('AS 600 SL')
 f0_ax20.set_ylabel('Norm. Intensity')
 f0_ax20.set_xlabel('Degrees')
@@ -452,7 +462,7 @@ f0_ax20.legend(loc=1)
 
 f0_ax21 = f0.add_subplot(spec[2, 1])
 f0_ax21.semilogy(theta_meas, best_SU_600, color='green', label='Meas. 600 SU\n' + str(df_600_SU.loc[min_error_SU_600, 'Exposure Time (s)':'Time']))
-f0_ax21.semilogy(Theta600, SU600_norm, color='black', label='Theory 600 SU')
+f0_ax21.semilogy(theta_meas, SU600_norm, color='black', label='Theory 600 SU')
 f0_ax21.set_title('AS 600 SU')
 f0_ax21.set_ylabel('Norm. Intensity')
 f0_ax21.set_xlabel('Degrees')
@@ -461,7 +471,7 @@ f0_ax21.legend(loc=1)
 
 f0_ax22 = f0.add_subplot(spec[2, 2])
 f0_ax22.semilogy(theta_meas, best_SR_600, color='blue', label='Meas. 600 SR\n' + str(df_600_SR.loc[min_error_SR_600, 'Exposure Time (s)':'Time']))
-f0_ax22.semilogy(Theta600, SR600_norm, color='black', label='Theory 600 SR')
+f0_ax22.semilogy(theta_meas, SR600_norm, color='black', label='Theory 600 SR')
 f0_ax22.set_title('AS 600 SR')
 f0_ax22.set_ylabel('Norm. Intensity')
 f0_ax22.set_xlabel('Degrees')
@@ -476,10 +486,12 @@ f0_ax23.set_xlabel('Sizes (nm)')
 f0_ax23.grid(True)
 f0_ax23.legend(loc=1)
 
-plt.savefig(save_directory + '/PSL_Best_Agreement.png', format='png')
-plt.savefig(save_directory + '/PSL_Best_Agreement.pdf', format='pdf')
+plt.savefig(save_directory + '/AS_Best_Agreement.png', format='png')
+plt.savefig(save_directory + '/AS_Best_Agreement.pdf', format='pdf')
 plt.show()
 
+
+'''
 # retrieval using NLLS
 result_800 = least_squares(Residuals_SLSRSU, x0=[650.0, 1.05, 1.500, 500, 0.001], method='trf', args=(wavelength_red, best_SL_800, best_SR_800, best_SU_800, theta_meas, theta_meas, theta_meas, dp_gaussian), bounds=([1.0, 1.000, 1.00, 1, 0.000], [1000.0, 1.500, 2.000, 1000000, 1.000]))
 ndp_result_800 = np.array([LogNormal(size=i, mu=result_800.x[0], gsd=result_800.x[1], N=result_800.x[2]) for i in dp_gaussian])
@@ -630,7 +642,7 @@ f1_ax23.legend(loc=1)
 plt.savefig(save_directory + '/AS_Best_Retrieval.png', format='png')
 plt.savefig(save_directory + '/PSL_Best_Retrieval.pdf', format='pdf')
 plt.show()
-
+'''
 '''
 # how does data that is slightly saturated and not saturated compare to the theory?
 dir_5mW_900SL = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-06-23/Analysis/5mW/PSL_900_5_SL_5_120_2020 6 23_14 4 25.txt'

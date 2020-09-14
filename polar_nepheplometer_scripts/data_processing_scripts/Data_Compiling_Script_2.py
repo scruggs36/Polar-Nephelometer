@@ -55,13 +55,13 @@ for counter, file in enumerate(file_list):
         gfit = np.array(measurement['CO2 Intensity gfit'])
         columns = np.array(measurement['CO2 Columns'])
         # convert column number to angles through calibration
-        angles = [(slope * i) + intercept for i in columns]
+        #angles = [(slope * i) + intercept for i in columns]
         # set desired angles and pchip data, get values for these angles
-        angles_pchip = np.arange(0.0, 180.2, 0.2)
-        riemann_pchip = pchip_interpolate(xi=angles, yi=riemann, x=angles_pchip, der=0)
-        gfit_pchip = pchip_interpolate(xi=angles, yi=gfit, x=angles_pchip, der=0)
-        meas_riemann_df = pd.DataFrame([riemann_pchip], columns=angles_pchip)
-        meas_gfit_df = pd.DataFrame([gfit_pchip], columns=angles_pchip)
+        #angles_pchip = np.arange(0.0, 180.2, 0.2)
+        #riemann_pchip = pchip_interpolate(xi=angles, yi=riemann, x=angles_pchip, der=0)
+        #gfit_pchip = pchip_interpolate(xi=angles, yi=gfit, x=angles_pchip, der=0)
+        meas_riemann_df = pd.DataFrame([riemann], columns=columns)
+        meas_gfit_df = pd.DataFrame([gfit], columns=columns)
         # concatenate dataframes side by side
         row_riemann_df = pd.concat([conditions_df, meas_riemann_df], axis=1)
         row_gfit_df = pd.concat([conditions_df, meas_gfit_df], axis=1)
@@ -73,39 +73,39 @@ for counter, file in enumerate(file_list):
         gfit = np.array(measurement['Sample Intensity gfit'])
         columns = np.array(measurement['Sample Columns'])
         # convert column number to angles through calibration
-        angles = [(slope * i) + intercept for i in columns]
+        #angles = [(slope * i) + intercept for i in columns]
         # set desired angles and pchip data, get values for these angles
-        angles_pchip = np.arange(0.0, 180.2, 0.2)
-        riemann_pchip = pchip_interpolate(xi=angles, yi=riemann, x=angles_pchip, der=0)
-        gfit_pchip = pchip_interpolate(xi=angles, yi=gfit, x=angles_pchip, der=0)
-        meas_riemann_df = pd.DataFrame([riemann_pchip], columns=angles_pchip)
-        meas_gfit_df = pd.DataFrame([gfit_pchip], columns=angles_pchip)
+        #angles_pchip = np.arange(0.0, 180.2, 0.2)
+        #riemann_pchip = pchip_interpolate(xi=angles, yi=riemann, x=angles_pchip, der=0)
+        #gfit_pchip = pchip_interpolate(xi=angles, yi=gfit, x=angles_pchip, der=0)
+        meas_riemann_df = pd.DataFrame([riemann], columns=columns)
+        meas_gfit_df = pd.DataFrame([gfit], columns=columns)
         # concatenate dataframes side by side
         row_riemann_df = pd.concat([conditions_df, meas_riemann_df], axis=1)
         row_gfit_df = pd.concat([conditions_df, meas_gfit_df], axis=1)
-    #'''
+    '''
     #run this if its not the first time your creating a file, I am throwing everything into one csv
-    row_riemann_df.to_csv(save_file_riemann, sep=',', mode='a', header=False)
-    row_gfit_df.to_csv(save_file_gfit, sep=',', mode='a', header=False)
+    row_riemann_df.to_csv(save_file_riemann, sep=',', mode='a', header=False, index=False)
+    row_gfit_df.to_csv(save_file_gfit, sep=',', mode='a', header=False, index=False)
     # moves a file that has been evaluated into the sorted
     shutil.move(unevaluated_directory + '/' + file, evaluated_directory + '/' + file)
-    #'''
     '''
+    #'''
     # run the if statements if your creating the file, for the first time
     # if you have all the files you wanna look at, this compiles them all at once
     if counter == 0:
-        row_riemann_df.to_csv(save_file_riemann, sep=',', header=True)
-        row_gfit_df.to_csv(save_file_gfit, sep=',', header=True)
+        row_riemann_df.to_csv(save_file_riemann, sep=',', header=True, index=False)
+        row_gfit_df.to_csv(save_file_gfit, sep=',', header=True, index=False)
         # moves a file that has been evaluated into the sorted
         shutil.move(unevaluated_directory + '/' + file, evaluated_directory + '/' + file)
 
 
     if counter > 0:
-        row_riemann_df.to_csv(save_file_riemann, sep=',', mode='a', header=False)
-        row_gfit_df.to_csv(save_file_gfit, sep=',', mode='a', header=False)
+        row_riemann_df.to_csv(save_file_riemann, sep=',', mode='a', header=False, index=False)
+        row_gfit_df.to_csv(save_file_gfit, sep=',', mode='a', header=False, index=False)
         # moves a file that has been evaluated into the sorted
         shutil.move(unevaluated_directory + '/' + file, evaluated_directory + '/' + file)
-    '''
+    #'''
 
 # read dataframe back in
 print('-------Data compiling completed data frames are now ready-------')
