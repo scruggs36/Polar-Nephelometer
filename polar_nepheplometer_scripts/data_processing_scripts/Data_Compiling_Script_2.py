@@ -83,14 +83,14 @@ for counter, file in enumerate(file_list):
         # concatenate dataframes side by side
         row_riemann_df = pd.concat([conditions_df, meas_riemann_df], axis=1)
         row_gfit_df = pd.concat([conditions_df, meas_gfit_df], axis=1)
-    '''
+    #'''
     #run this if its not the first time your creating a file, I am throwing everything into one csv
     row_riemann_df.to_csv(save_file_riemann, sep=',', mode='a', header=False, index=False)
     row_gfit_df.to_csv(save_file_gfit, sep=',', mode='a', header=False, index=False)
     # moves a file that has been evaluated into the sorted
     shutil.move(unevaluated_directory + '/' + file, evaluated_directory + '/' + file)
-    '''
     #'''
+    '''
     # run the if statements if your creating the file, for the first time
     # if you have all the files you wanna look at, this compiles them all at once
     if counter == 0:
@@ -105,7 +105,7 @@ for counter, file in enumerate(file_list):
         row_gfit_df.to_csv(save_file_gfit, sep=',', mode='a', header=False, index=False)
         # moves a file that has been evaluated into the sorted
         shutil.move(unevaluated_directory + '/' + file, evaluated_directory + '/' + file)
-    #'''
+    '''
 
 # read dataframe back in
 print('-------Data compiling completed data frames are now ready-------')
