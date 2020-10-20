@@ -166,14 +166,14 @@ snr_df.set_index(['Sample', 'Size (nm)', 'Polarization', 'Date'], inplace=True)
 #print(df)
 
 # selecting sample, size, and date of measurement
-sample_string = 'AS'
+sample_string = 'PSL'
 sample_size = 600
 #2020-09-14
-sample_date_SL = '2020-10-17'
+sample_date_SL = '2020-09-30'
 #2020-09-20
-sample_date_SU = '2020-10-18'
+sample_date_SU = '2020-09-30'
 #2020-09-20
-sample_date_SR = '2020-10-18'
+sample_date_SR = '2020-09-29'
 
 # pandas dataframe.xs returns a cross-section of the data, so basically I am filtering out data that isn't PSL, size 900, and pol = SL
 #xs_tuple = ('PSL', 900, 'SL')
@@ -216,8 +216,10 @@ snr_SR = snr_SR_All[snr_SR_All.Date == sample_date_SR].reset_index()
 #print(df_900_SR.loc[:, 'Exposure Time (s)'], df_900_SR.loc[:, 'Laser Power (mW)'], df_900_SR.loc[:, 'Number of Averages'])
 
 # if not just reset the index of the multiindexed data and use as normal
+# printing the subset of data we want from the multiindex
 print(df_SL)
-
+print(df_SU)
+print(df_SR)
 # compute Mie theory for PSL
 
 '''
@@ -280,14 +282,128 @@ SL600_norm = SL600_pchip / np.sum(SL600_pchip)
 SU600_norm = SU600_pchip / np.sum(SU600_pchip)
 SR600_norm = SR600_pchip / np.sum(SR600_pchip)
 
-
-
-
+# plot font size
 SMALL_SIZE = 10
 MEDIUM_SIZE = 12
 BIGGER_SIZE = 18
 legend_properties = {'weight':'bold'}
 
+# non-stitched data evaluation
+pf_nonstitched_SL_norm_list = []
+m_nonstitch_list_SL = []
+corr_coeff_nonstitch_list_SL = []
+label_nonstitch_list_SL = []
+f_sl, ax_sl = plt.subplots(nrows=1, ncols=2, figsize=(18, 18))
+for idx, row in df_SL.iterrows():
+    pf_SL = np.array(row.loc['30':'826']).astype(float)
+    pf_SL_norm = Normalization(pf_SL)
+    m = M(pf_SL_norm, SL600_norm)
+    corr_coeff_nonstitch_SL = np.corrcoef(pf_SL_norm, SL600_norm)[0][1]
+    label_string_nonstitch_SL = str(np.array(df_SL.loc[idx, 'Date':'Time']))
+    pf_nonstitched_SL_norm_list.append(pf_SL_norm)
+    m_nonstitch_list_SL.append(m)
+    corr_coeff_nonstitch_list_SL.append(corr_coeff_nonstitch_SL)
+    label_nonstitch_list_SL.append(label_string_nonstitch_SL)
+    ax_sl[0].semilogy(theta_meas, pf_SL_norm, ls='-', label=label_string_nonstitch_SL)
+ax_sl[0].semilogy(theta_meas, SL600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
+ax_sl[0].set_title('SL Measurements', fontsize=BIGGER_SIZE, fontweight='bold')
+ax_sl[0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
+ax_sl[0].set_ylabel('Intensity (DN)', fontsize=MEDIUM_SIZE, fontweight='bold')
+ax_sl[0].grid(True)
+df_SL['Residuals'] = np.array(m_nonstitch_list_SL)
+df_SL['Correlation Coefficient'] = np.array(corr_coeff_nonstitch_list_SL)
+m_nonstitch_array_SL = np.array(m_nonstitch_list_SL)
+m_min_val_nonstitch_SL = np.amin(m_nonstitch_list_SL)
+m_min_idx_nonstitch_SL = np.argmin(m_nonstitch_list_SL)
+ax_sl[1].semilogy(theta_meas, pf_nonstitched_SL_norm_list[m_min_idx_nonstitch_SL], ls='-', color='red', label=str(label_nonstitch_list_SL[m_min_idx_nonstitch_SL]) + '\n correlation coefficient: ' + str(corr_coeff_nonstitch_list_SL[m_min_idx_nonstitch_SL]) + '\n minimum residual sum: ' + str(m_nonstitch_list_SL[m_min_idx_nonstitch_SL]))
+ax_sl[1].semilogy(theta_meas, SL600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
+ax_sl[1].set_title('Best SL Measurement', fontsize=BIGGER_SIZE, fontweight='bold')
+ax_sl[1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
+ax_sl[1].set_ylabel('Intensity (DN)', fontsize=MEDIUM_SIZE, fontweight='bold')
+ax_sl[1].grid(True)
+ax_sl[1].legend(loc=1, fontsize=SMALL_SIZE, prop=legend_properties)
+plt.savefig(save_directory + '/SL_nonstitch.pdf', format='pdf')
+plt.savefig(save_directory + '/SL_nonstitch.png', format='png')
+plt.show()
+
+
+pf_nonstitched_SU_norm_list = []
+m_nonstitch_list_SU = []
+corr_coeff_nonstitch_list_SU = []
+label_nonstitch_list_SU = []
+f_su, ax_su = plt.subplots(nrows=1, ncols=2, figsize=(18, 18))
+for idx, row in df_SU.iterrows():
+    pf_SU = np.array(row.loc['30':'826']).astype(float)
+    pf_SU_norm = Normalization(pf_SU)
+    m = M(pf_SU_norm, SU600_norm)
+    corr_coeff_nonstitch_SU = np.corrcoef(pf_SU_norm, SU600_norm)[0][1]
+    label_string_nonstitch_SU = str(np.array(df_SU.loc[idx, 'Date':'Time']))
+    pf_nonstitched_SU_norm_list.append(pf_SU_norm)
+    m_nonstitch_list_SU.append(m)
+    corr_coeff_nonstitch_list_SU.append(corr_coeff_nonstitch_SU)
+    label_nonstitch_list_SU.append(label_string_nonstitch_SU)
+    ax_su[0].semilogy(theta_meas, pf_SU_norm, ls='-', label=label_string_nonstitch_SU)
+ax_su[0].semilogy(theta_meas, SU600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
+ax_su[0].set_title('SU Measurements', fontsize=BIGGER_SIZE, fontweight='bold')
+ax_su[0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
+ax_su[0].set_ylabel('Intensity (DN)', fontsize=MEDIUM_SIZE, fontweight='bold')
+ax_su[0].grid(True)
+df_SU['Residuals'] = np.array(m_nonstitch_list_SU)
+df_SU['Correlation Coefficient'] = np.array(corr_coeff_nonstitch_list_SU)
+m_nonstitch_array_SU = np.array(m_nonstitch_list_SU)
+m_min_val_nonstitch_SU = np.amin(m_nonstitch_list_SU)
+m_min_idx_nonstitch_SU = np.argmin(m_nonstitch_list_SU)
+ax_su[1].semilogy(theta_meas, pf_nonstitched_SU_norm_list[m_min_idx_nonstitch_SU], ls='-', color='green', label=str(label_nonstitch_list_SU[m_min_idx_nonstitch_SU]) + '\n correlation coefficient: ' + str(corr_coeff_nonstitch_list_SU[m_min_idx_nonstitch_SU]) + '\n minimum residual sum: ' + str(m_nonstitch_list_SU[m_min_idx_nonstitch_SU]))
+ax_su[1].semilogy(theta_meas, SU600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
+ax_su[1].set_title('Best SL Measurement', fontsize=BIGGER_SIZE, fontweight='bold')
+ax_su[1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
+ax_su[1].set_ylabel('Intensity (DN)', fontsize=MEDIUM_SIZE, fontweight='bold')
+ax_su[1].grid(True)
+ax_su[1].legend(loc=1, fontsize=SMALL_SIZE, prop=legend_properties)
+plt.savefig(save_directory + '/SU_nonstitch.pdf', format='pdf')
+plt.savefig(save_directory + '/SU_nonstitch.png', format='png')
+plt.show()
+
+
+pf_nonstitched_SR_norm_list = []
+m_nonstitch_list_SR = []
+corr_coeff_nonstitch_list_SR = []
+label_nonstitch_list_SR = []
+f_sr, ax_sr = plt.subplots(nrows=1, ncols=2, figsize=(18, 18))
+for idx, row in df_SR.iterrows():
+    pf_SR = np.array(row.loc['30':'826']).astype(float)
+    pf_SR_norm = Normalization(pf_SR)
+    m = M(pf_SR_norm, SR600_norm)
+    corr_coeff_nonstitch_SR = np.corrcoef(pf_SR_norm, SR600_norm)[0][1]
+    label_string_nonstitch_SR = str(np.array(df_SR.loc[idx, 'Date':'Time']))
+    pf_nonstitched_SR_norm_list.append(pf_SR_norm)
+    m_nonstitch_list_SR.append(m)
+    corr_coeff_nonstitch_list_SR.append(corr_coeff_nonstitch_SR)
+    label_nonstitch_list_SR.append(label_string_nonstitch_SR)
+    ax_sr[0].semilogy(theta_meas, pf_SR_norm, ls='-', label=label_string_nonstitch_SR)
+ax_sr[0].semilogy(theta_meas, SR600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
+ax_sr[0].set_title('SR Measurements', fontsize=BIGGER_SIZE, fontweight='bold')
+ax_sr[0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
+ax_sr[0].set_ylabel('Intensity (DN)', fontsize=MEDIUM_SIZE, fontweight='bold')
+ax_sr[0].grid(True)
+df_SR['Residuals'] = np.array(m_nonstitch_list_SR)
+df_SR['Correlation Coefficient'] = np.array(corr_coeff_nonstitch_list_SR)
+m_nonstitch_array_SR = np.array(m_nonstitch_list_SR)
+m_min_val_nonstitch_SR = np.amin(m_nonstitch_list_SR)
+m_min_idx_nonstitch_SR = np.argmin(m_nonstitch_list_SR)
+ax_sr[1].semilogy(theta_meas, pf_nonstitched_SR_norm_list[m_min_idx_nonstitch_SR], ls='-', color='blue', label=str(label_nonstitch_list_SR[m_min_idx_nonstitch_SR]) + '\n correlation coefficient: ' + str(corr_coeff_nonstitch_list_SR[m_min_idx_nonstitch_SR]) + '\n minimum residual sum: ' + str(m_nonstitch_list_SR[m_min_idx_nonstitch_SR]))
+ax_sr[1].semilogy(theta_meas, SR600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
+ax_sr[1].set_title('Best SR Measurement', fontsize=BIGGER_SIZE, fontweight='bold')
+ax_sr[1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
+ax_sr[1].set_ylabel('Intensity (DN)', fontsize=MEDIUM_SIZE, fontweight='bold')
+ax_sr[1].grid(True)
+ax_sr[1].legend(loc=1, fontsize=SMALL_SIZE, prop=legend_properties)
+plt.savefig(save_directory + '/SR_nonstitch.pdf', format='pdf')
+plt.savefig(save_directory + '/SR_nonstitch.png', format='png')
+plt.show()
+
+
+# show image stitching threshold
 intensity_stitch = 5500
 intensity_stitch_array = np.repeat(intensity_stitch, repeats=len(theta_meas))
 intensity_stitch_array_norm = Normalization(intensity_stitch_array)
@@ -301,14 +417,14 @@ for index, row in df_SL.iterrows():
     pf_SL = np.array(row.loc['30':'826']).astype(float)
     ax[0].semilogy(theta_meas, pf_SL, ls='-', label=np.array(row.loc['Date':'Time']))
     ax[1].semilogy(theta_meas, Normalization(pf_SL), ls='-', label=np.array(row.loc['Date':'Time']))
-ax[0].semilogy(theta_meas, SL900_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm')
+ax[0].semilogy(theta_meas, SL600_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm')
 ax[0].semilogy(theta_meas, intensity_stitch_array, color='black', ls='-', label='Intensity Threshold')
 ax[0].set_title('Measurements & Theory', fontsize=BIGGER_SIZE, fontweight='bold')
 ax[0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax[0].set_ylabel('Intensity', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax[0].grid(True)
 #ax[0].legend(loc=1)
-ax[1].semilogy(theta_meas, SL900_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
+ax[1].semilogy(theta_meas, SL600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
 ax[1].semilogy(theta_meas, intensity_stitch_array_norm, color='black', ls='-', label='Intensity Threshold')
 ax[1].set_title('Normalized Measurements & Theory', fontsize=BIGGER_SIZE, fontweight='bold')
 ax[1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -326,14 +442,14 @@ for index, row in df_SU.iterrows():
     pf_SU = np.array(row.loc['30':'826']).astype(float)
     ax[0].semilogy(theta_meas, pf_SU, ls='-', label=np.array(row.loc['Date':'Time']))
     ax[1].semilogy(theta_meas, Normalization(pf_SU), ls='-', label=np.array(row.loc['Date':'Time']))
-ax[0].semilogy(theta_meas, SU900_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm')
+ax[0].semilogy(theta_meas, SU600_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm')
 ax[0].semilogy(theta_meas, intensity_stitch_array, color='black', ls='-', label='Intensity Threshold')
 ax[0].set_title('Measurements & Theory', fontsize=BIGGER_SIZE, fontweight='bold')
 ax[0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax[0].set_ylabel('Intensity', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax[0].grid(True)
 #ax[0].legend(loc=1)
-ax[1].semilogy(theta_meas, SU900_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
+ax[1].semilogy(theta_meas, SU600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
 ax[1].semilogy(theta_meas, intensity_stitch_array_norm, color='black', ls='-', label='Intensity Threshold')
 ax[1].set_title('Normalized Measurements & Theory', fontsize=BIGGER_SIZE, fontweight='bold')
 ax[1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -351,14 +467,14 @@ for index, row in df_SR.iterrows():
     pf_SR = np.array(row.loc['30':'826']).astype(float)
     ax[0].semilogy(theta_meas, pf_SR, ls='-', label=np.array(row.loc['Date':'Time']))
     ax[1].semilogy(theta_meas, Normalization(pf_SR), ls='-', label=np.array(row.loc['Date':'Time']))
-ax[0].semilogy(theta_meas, SR900_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm')
+ax[0].semilogy(theta_meas, SR600_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm')
 ax[0].semilogy(theta_meas, intensity_stitch_array, color='black', ls='-', label='Intensity Threshold')
 ax[0].set_title('Measurements & Theory', fontsize=BIGGER_SIZE, fontweight='bold')
 ax[0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax[0].set_ylabel('Intensity', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax[0].grid(True)
 #ax[0].legend(loc=1)
-ax[1].semilogy(theta_meas, SR900_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
+ax[1].semilogy(theta_meas, SR600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
 ax[1].semilogy(theta_meas, intensity_stitch_array_norm, color='black', ls='-', label='Intensity Threshold')
 ax[1].set_title('Normalized Measurements & Theory', fontsize=BIGGER_SIZE, fontweight='bold')
 ax[1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -549,12 +665,12 @@ for counter, element in enumerate(pf1_2dlist_SL):
             pf_combos_dropnan = np.delete(pf_combos_SL, drop_nan_idx_SL)
             snr_combos_dropnan = np.delete(snr_combos_SL, drop_nan_idx_SL)
             theta_meas_dropnan = np.delete(theta_meas, drop_nan_idx_SL)
-            SL_norm_dropnan = np.delete(SL900_norm, drop_nan_idx_SL)
+            SL_norm_dropnan = np.delete(SL600_norm, drop_nan_idx_SL)
         else:
             pf_combos_dropnan = pf_combos_SL
             snr_combos_dropnan = snr_combos_SL
             theta_meas_dropnan = theta_meas
-            SL_norm_dropnan = SL900_norm
+            SL_norm_dropnan = SL600_norm
         m = M(pf_combos_dropnan, SL_norm_dropnan)
         corr_coeff_SL = np.corrcoef(pf_combos_dropnan, SL_norm_dropnan)[0][1]
         label_string = str(np.array(df_SL.loc[counter, 'Date':'Time'])) + ' &\n' + str(np.array(df_SL.loc[counter2, 'Date':'Time']))
@@ -572,7 +688,7 @@ m_list_SL = np.array(m_list_SL)
 #print(m_list)
 m_min_val_SL = np.amin(m_list_SL)
 m_min_idx_SL = np.argmin(m_list_SL)
-ax1[0, 0].semilogy(theta_meas, SL900_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm')
+ax1[0, 0].semilogy(theta_meas, SL600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm')
 ax1[0, 0].semilogy(theta_meas, intensity_stitch_array_norm, color='black', ls='-', label='Intensity Threshold')
 ax1[0, 0].set_title('SL Normalized Stitched Measurements', fontsize=BIGGER_SIZE, fontweight='bold')
 ax1[0, 0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -585,7 +701,7 @@ ax1[1, 0].grid(True)
 ax1[0, 1].semilogy(theta_list_SL[m_min_idx_SL], pf_combos_norm_list_SL[m_min_idx_SL], ls='-', color='red', label=str(label_list_SL[m_min_idx_SL]) + '\n correlation coefficient: ' + str(corr_coeff_list_SL[m_min_idx_SL]) + '\n minimum residual sum: ' + str(m_list_SL[m_min_idx_SL]))
 #ax1[1].semilogy(theta_meas, T1, ls='-', color='green', label=T1_label)
 #ax1[1].semilogy(theta_meas, T2, ls='-', color='blue', label=T2_label)
-ax1[0, 1].semilogy(theta_meas, SL900_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
+ax1[0, 1].semilogy(theta_meas, SL600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
 ax1[0, 1].set_title('Best SL Normalized Stitched Measurement', fontsize=BIGGER_SIZE, fontweight='bold')
 ax1[0, 1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax1[0, 1].set_ylabel('Intensity', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -611,8 +727,8 @@ df_SL_stitched = pd.concat([df_labels_list_SL, df_pf_combos_norm_list_SL], axis=
 df_SL_stitched_theta = pd.concat([df_labels_list_SL, df_theta_list_SL], axis=1)
 df_SL_stitched['Residuals'] = m_list_SL
 df_SL_stitched['Correlation Coefficicent'] = corr_coeff_list_SL
-df_SL_stitched.to_csv('/home/austen/Desktop/Recent/stitched_PSL_SL900.txt', sep=',', header=True, index=False)
-df_SL_stitched_theta.to_csv('/home/austen/Desktop/Recent/stitched_PSL_SL900_theta.txt', sep=',', header=True, index=False)
+df_SL_stitched.to_csv('/home/austen/Desktop/Recent/stitched_PSL_SL600.txt', sep=',', header=True, index=False)
+df_SL_stitched_theta.to_csv('/home/austen/Desktop/Recent/stitched_PSL_SL600_theta.txt', sep=',', header=True, index=False)
 #print(df_SL_stitched)
 
 
@@ -638,12 +754,12 @@ for counter, element in enumerate(pf1_2dlist_SU):
             pf_combos_dropnan = np.delete(pf_combos_SU, drop_nan_idx_SU)
             snr_combos_dropnan = np.delete(snr_combos_SU, drop_nan_idx_SU)
             theta_meas_dropnan = np.delete(theta_meas, drop_nan_idx_SU)
-            SU_norm_dropnan = np.delete(SU900_norm, drop_nan_idx_SU)
+            SU_norm_dropnan = np.delete(SU600_norm, drop_nan_idx_SU)
         else:
             pf_combos_dropnan = pf_combos_SU
             snr_combos_dropnan = snr_combos_SU
             theta_meas_dropnan = theta_meas
-            SU_norm_dropnan = SU900_norm
+            SU_norm_dropnan = SU600_norm
         m = M(pf_combos_dropnan, SU_norm_dropnan)
         corr_coeff_SU = np.corrcoef(pf_combos_dropnan, SU_norm_dropnan)[0][1]
         label_string = str(np.array(df_SU.loc[counter, 'Date':'Time'])) + ' &\n' + str(np.array(df_SU.loc[counter2, 'Date':'Time']))
@@ -661,7 +777,7 @@ m_list_SU = np.array(m_list_SU)
 #print(m_list)
 m_min_val_SU = np.amin(m_list_SU)
 m_min_idx_SU = np.argmin(m_list_SU)
-ax1[0, 0].semilogy(theta_meas, SU900_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm')
+ax1[0, 0].semilogy(theta_meas, SU600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm')
 ax1[0, 0].semilogy(theta_meas, intensity_stitch_array_norm, color='black', ls='-', label='Intensity Threshold')
 ax1[0, 0].set_title('SU Normalized Stitched Measurements', fontsize=BIGGER_SIZE, fontweight='bold')
 ax1[0, 0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -674,7 +790,7 @@ ax1[1, 0].grid(True)
 ax1[0, 1].semilogy(theta_list_SU[m_min_idx_SU], pf_combos_norm_list_SU[m_min_idx_SU], ls='-', color='green', label=str(label_list_SU[m_min_idx_SU]) + '\ncorrelation coefficient: ' + str(corr_coeff_list_SU[m_min_idx_SU])+ '\nminimum residual sum: ' + str(m_list_SU[m_min_idx_SU]))
 #ax1[1].semilogy(theta_meas, T1, ls='-', color='green', label=T1_label)
 #ax1[1].semilogy(theta_meas, T2, ls='-', color='blue', label=T2_label)
-ax1[0, 1].semilogy(theta_meas, SU900_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
+ax1[0, 1].semilogy(theta_meas, SU600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
 ax1[0, 1].set_title('Best SU Normalized Stitched Measurement', fontsize=BIGGER_SIZE, fontweight='bold')
 ax1[0, 1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax1[0, 1].set_ylabel('Intensity', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -700,8 +816,8 @@ df_SU_stitched = pd.concat([df_labels_list_SU, df_pf_combos_norm_list_SU], axis=
 df_SU_stitched_theta = pd.concat([df_labels_list_SU, df_theta_list_SU], axis=1)
 df_SU_stitched['Residuals'] = m_list_SU
 df_SU_stitched['Correlation Coefficicent'] = corr_coeff_list_SU
-df_SU_stitched.to_csv('/home/austen/Desktop/Recent/stitched_PSL_SU900.txt', sep=',', header=True, index=False)
-df_SU_stitched_theta.to_csv('/home/austen/Desktop/Recent/stitched_PSL_SU900_theta.txt', sep=',', header=True, index=False)
+df_SU_stitched.to_csv('/home/austen/Desktop/Recent/stitched_PSL_SU600.txt', sep=',', header=True, index=False)
+df_SU_stitched_theta.to_csv('/home/austen/Desktop/Recent/stitched_PSL_SU600_theta.txt', sep=',', header=True, index=False)
 
 
 #add in other SR and SU polarizations! 09/24/2020
@@ -726,12 +842,12 @@ for counter, element in enumerate(pf1_2dlist_SR):
             pf_combos_dropnan = np.delete(pf_combos_SR, drop_nan_idx_SR)
             snr_combos_dropnan = np.delete(snr_combos_SR, drop_nan_idx_SR)
             theta_meas_dropnan = np.delete(theta_meas, drop_nan_idx_SR)
-            SR_norm_dropnan = np.delete(SR900_norm, drop_nan_idx_SR)
+            SR_norm_dropnan = np.delete(SR600_norm, drop_nan_idx_SR)
         else:
             pf_combos_dropnan = pf_combos_SR
             snr_combos_dropnan = snr_combos_SR
             theta_meas_dropnan = theta_meas
-            SR_norm_dropnan = SR900_norm
+            SR_norm_dropnan = SR600_norm
         m = M(pf_combos_dropnan, SR_norm_dropnan)
         corr_coeff_SR = np.corrcoef(pf_combos_dropnan, SR_norm_dropnan)[0][1]
         label_string = str(np.array(df_SR.loc[counter, 'Date':'Time'])) + ' &\n' + str(np.array(df_SR.loc[counter2, 'Date':'Time']))
@@ -751,7 +867,7 @@ m_list_SR = np.array(m_list_SR)
 #print(m_list)
 m_min_val_SR = np.amin(m_list_SR)
 m_min_idx_SR = np.argmin(m_list_SR)
-ax1[0, 0].semilogy(theta_meas, SR900_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm')
+ax1[0, 0].semilogy(theta_meas, SR600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm')
 ax1[0, 0].semilogy(theta_meas, intensity_stitch_array_norm, color='black', ls='-', label='Intensity Threshold')
 ax1[0, 0].set_title('SR Normalized Stitched Measurements', fontsize=BIGGER_SIZE, fontweight='bold')
 ax1[0, 0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -764,7 +880,7 @@ ax1[1, 0].grid(True)
 ax1[0, 1].semilogy(theta_list_SR[m_min_idx_SR], pf_combos_norm_list_SR[m_min_idx_SR], ls='-', color='blue', label=label_list_SR[m_min_idx_SR] + '\ncorrelation coefficient: ' + str(corr_coeff_list_SR[m_min_idx_SR])+ '\nminimum residual sum: ' + str(m_list_SR[m_min_idx_SR]))
 #ax1[1].semilogy(theta_meas, T1, ls='-', color='green', label=T1_label)
 #ax1[1].semilogy(theta_meas, T2, ls='-', color='blue', label=T2_label)
-ax1[0, 1].semilogy(theta_meas, SR900_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
+ax1[0, 1].semilogy(theta_meas, SR600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
 ax1[0, 1].set_title('Best SR Normalized Stitched Measurement', fontsize=BIGGER_SIZE, fontweight='bold')
 ax1[0, 1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax1[0, 1].set_ylabel('Intensity', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -791,8 +907,8 @@ df_SR_stitched = pd.concat([df_labels_list_SR, df_pf_combos_norm_list_SR], axis=
 df_SR_stitched_theta = pd.concat([df_labels_list_SR, df_theta_list_SR], axis=1)
 df_SR_stitched['Residuals'] = m_list_SR
 df_SR_stitched['Correlation Coefficicent'] = corr_coeff_list_SR
-df_SR_stitched.to_csv('/home/austen/Desktop/Recent/stitched_PSL_SR900.txt', sep=',', header=True, index=False)
-df_SR_stitched_theta.to_csv('/home/austen/Desktop/Recent/stitched_PSL_SR900_theta.txt', sep=',', header=True, index=False)
+df_SR_stitched.to_csv('/home/austen/Desktop/Recent/stitched_PSL_SR600.txt', sep=',', header=True, index=False)
+df_SR_stitched_theta.to_csv('/home/austen/Desktop/Recent/stitched_PSL_SR600_theta.txt', sep=',', header=True, index=False)
 
 '''
 geoff_theory_theta = pd.DataFrame(np.vstack((theta_meas, theta_meas, theta_meas)))
