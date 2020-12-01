@@ -110,8 +110,8 @@ def Add_2_N2_Library(cal_im_directory, add_n2_directory, n2_save_directory, n2_d
         print(file)
         # break down the file name into conditions for the n2 library
         conditions = file.split('_')
-        slope = .2095
-        intercept = -3.1433
+        slope = 'NA'
+        intercept = 'NA'
         sample_str = conditions[0]
         size_str = conditions[1]
         exposure_str = conditions[2]
@@ -302,17 +302,20 @@ def Add_2_N2_Library(cal_im_directory, add_n2_directory, n2_save_directory, n2_d
 
 # Sample images directory --> Good data dataframes
 def Add_Meas_2_MeasLibrary(sample_directory, sample_save_directory, evaluated_sample_directory, create_file):
+    # import backgrounds and set index based upon parameters
     riemann_n2_directory = '/home/austen/Desktop/Recent/n2_riemann_library.txt'
     gfit_n2_directory = '/home/austen/Desktop/Recent/n2_gfit_library.txt'
     n2_library_riemann = pd.read_csv(riemann_n2_directory, sep=',', header=0)
     n2_library_riemann.set_index(['Exposure Time (s)', 'Polarization', 'Laser Power (mW)'], inplace=True)
-    #print(n2_library_riemann.shape)
+    print('Background Library Shape: ', n2_library_riemann.shape)
     n2_library_gfit = pd.read_csv(gfit_n2_directory, sep=',', header=0)
     n2_library_gfit.set_index(['Exposure Time (s)', 'Polarization', 'Laser Power (mW)'], inplace=True)
     N2_PN = np.arange(30, 860, 1)
-    #theta_pchip = np.arange(0.0, 180.2, 0.2)
-    slope = 0.2095
-    intercept = -3.1433
+
+    # calibration?
+    slope = 'NA'
+    intercept = 'NA'
+
     # list of image files
     im_file_list = os.listdir(sample_directory)
     for it_number, file in enumerate(im_file_list):
@@ -338,27 +341,32 @@ def Add_Meas_2_MeasLibrary(sample_directory, sample_save_directory, evaluated_sa
         # print(conditions_df)
 
         # use the conditions to select a N2 background that is appropriate for the subtraction
-        n2_library_riemann_subset = n2_library_riemann.xs((float(exposure_str), polarization_str, float(power_str))).reset_index()
-        print(n2_library_riemann_subset.shape)
-        if n2_library_riemann_subset.shape[0] == 1:
-            SD_N2 = np.array(n2_library_riemann_subset.loc[0, '30':'859'])
+        n2_library_riemann_subset = n2_library_riemann.xs((float(exposure_str), polarization_str, float(power_str)))#.reset_index()
+        print('riemann length returned: ', len(n2_library_riemann_subset.shape))
 
-
-        if n2_library_riemann_subset.shape[0] > 1:
+        if len(n2_library_riemann_subset.shape) > 1:
             SD_N2 = np.array(n2_library_riemann_subset.loc[:, '30':'859'].mean(axis=0))
 
 
+
+        else:
+            SD_N2 = np.array(n2_library_riemann_subset.loc['30':'859'])
+
+
         #print(SD_N2)
-        n2_library_gfit_subset = n2_library_gfit.xs((float(exposure_str), polarization_str, float(power_str))).reset_index()
-        print(n2_library_gfit_subset.shape)
-        if n2_library_gfit_subset.shape[0] == 1:
+        #print(SD_N2.shape)
+        n2_library_gfit_subset = n2_library_gfit.xs((float(exposure_str), polarization_str, float(power_str)))#.reset_index()
+        print('gfit length returned: ', len(n2_library_gfit_subset.shape))
+
+        if len(n2_library_gfit_subset.shape) > 1:
+            SD_N2_gfit = np.array(n2_library_gfit_subset.loc[:, '30':'859'].mean(axis=0))
+
+
+        else:
             SD_N2_gfit = np.array(n2_library_gfit_subset.loc['30':'859'])
 
-
-        if n2_library_gfit_subset.shape[0] > 1:
-            SD_N2_gfit = np.array(n2_library_gfit_subset.loc['30':'859'].mean(axis=0))
-
-
+        # print(SD_N2_gfit)
+        # print(SD_N2_gfit.shape)
         # actually importing in the sample
         Sample = np.loadtxt(sample_directory + '/' + file, delimiter='\t').astype(np.int64)
         # Initial boundaries on the image , cols can be: [250, 1040], [300, 1040], [405, 887]
@@ -503,7 +511,7 @@ def Add_Meas_2_MeasLibrary(sample_directory, sample_save_directory, evaluated_sa
 
         pf_riemann_c = np.array(SD_Samp) - SD_N2
         # don't use SD_N2_gfit, transects do not have gaussian profile as beam often cannot be seen!
-        pf_gfit_c = np.array(SD_Samp_gfit) - SD_N2
+        pf_gfit_c = np.array(SD_Samp_gfit) - SD_N2_gfit
 
         # alright, this shit below needs to be udpated, its making a single file, lets do both, make the file and also just straight up add the files to the measurement library
         # append new measurements to n2 library! NEED TO WRITE CODE HERE!
@@ -559,6 +567,87 @@ def Add_Meas_2_MeasLibrary(sample_directory, sample_save_directory, evaluated_sa
         # use spaces to collect the date and time all in once, then use datetime package to format it in python right
 
 
+def Loop_Plot_Images(sample_directory, sample_save_directory, evaluated_sample_directory):
+    # set up ROI on image
+    rows = [200, 300]
+    cols = [30, 860]
+    cols_array = (np.arange(cols[0], cols[1], 1)).astype(int)
+
+    # loop read files
+    file_list = os.listdir(sample_directory)
+    for file in file_list:
+        print(file)
+        conditions = file.split('_')
+        sample_str = conditions[0]
+        size_str = conditions[1]
+        exposure_str = conditions[2]
+        polarization_str = conditions[3]
+        power_str = conditions[4]
+        averages_str = conditions[5]
+        # use spaces to collect the date and time all in once, then use datetime package to format it in python right
+        date_str = conditions[6]
+        time_str = conditions[7]
+        conc_str = conditions[8]
+        # datetime wrangling...
+        date_list = date_str.split(' ')
+        meas_date = datetime.date(year=int(date_list[0]), month=int(date_list[1]), day=int(date_list[2].split('.')[0]))
+        time_list = time_str.split(' ')
+        meas_time = datetime.time(hour=int(time_list[0]), minute=int(time_list[1]), second=int(time_list[2].split('.')[0]))
+
+        # load the image
+        image = np.loadtxt(sample_directory + '/' + file, delimiter='\t')
+
+        # find the maximum of each transect and append in array
+        row_max_index_array = []
+        for element in cols_array:
+            arr = np.arange(rows[0], rows[1], 1).astype(int)
+            im_transect = image[arr, element]
+            index_nosub = np.argmax(im_transect)
+            row_max_index_array.append(index_nosub + rows[0])
+
+
+
+        # polynomial fit to find the middle of the beam, the top bound, and bot bound, these give us our coordinates!
+        polynomial_fit = np.poly1d(np.polyfit(cols_array, row_max_index_array, deg=2))
+        sigma_pixels = 25
+        mid = polynomial_fit(cols_array)
+        top = polynomial_fit(cols_array) - sigma_pixels
+        bot = polynomial_fit(cols_array) + sigma_pixels
+
+        # grab the bound transects and shove them in a dataframe hopefully we never actually have to use them
+        transect_list = []
+        for counter, element in enumerate(cols_array):
+            arr = np.arange(top[counter], bot[counter], 1).astype(int)
+            im_transect_bound = image[arr, element]
+
+            # creates transect dataframe for every image, literally we can replot everything if need be, hopefully this will just be extra stuff
+            transect_list.append(im_transect_bound)
+        # pandas does better when data is presented as a list of lists
+        transect_df = pd.DataFrame(transect_list)
+        transect_df_filename = sample_str + '_' + size_str + '_' + exposure_str + '_' + polarization_str + '_' + power_str + '_' + averages_str + '_' + date_str + '_' + time_str + '_' + conc_str + '_'
+        transect_df.to_csv(sample_save_directory + '/' + transect_df_filename + 'transectdf.txt', sep=',')
+
+
+        f, ax = plt.subplots(nrows=1, ncols=2, figsize=(12, 7))
+        im_fa = ax[0].pcolormesh(image, cmap='gray')
+        im_fb = ax[1].pcolormesh(image, cmap='gray')
+        ax[1].plot(cols_array, top, ls='-', color='lawngreen')
+        ax[1].plot(cols_array, mid, ls='-', color='red')
+        ax[1].plot(cols_array, row_max_index_array, ls='-', color='purple')
+        ax[1].plot(cols_array, bot, ls='-', color='lawngreen')
+        # create an axes on the right side of ax. The width of cax will be 5%
+        # of ax and the padding between cax and ax will be fixed at 0.05 inch.
+        divider_a = make_axes_locatable(ax[0])
+        divider_b = make_axes_locatable(ax[1])
+        cax_a = divider_a.append_axes("right", size="5%", pad=0.05)
+        cax_b = divider_b.append_axes("right", size="5%", pad=0.05)
+        f.colorbar(im_fa, cax=cax_a)
+        f.colorbar(im_fb, cax=cax_b)
+        ax[0].set_title('Image')
+        ax[1].set_title('Image & Boundaries')
+        plt.savefig(sample_save_directory + '/' + transect_df_filename + 'image.png', format='png')
+        plt.clf()
+        shutil.move(sample_directory + '/' + file, evaluated_sample_directory + '/' + file)
 # KEY POINT, IF CALIBRATION CHANGES NEW DATA HAS TO BE PUT IN NEW FILE!
 '''
 # just remember currently all steps should not be run simultaneously!
@@ -575,10 +664,10 @@ print(n2_riemann_library)
 '''
 # Alright, step 2, rename and add all the new N2 backgrounds to the N2 library, this was successful!
 add_n2_dir = '/home/austen/Desktop/Recent/Background Processing/Unevaluated'
-cal_im_dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-08-08/PSL/900/8s/2darray/PSL900nm_8E_0deg_50mW_15Average_Sat Aug 8 2020 1_18_10 PM.txt'
+cal_im_dir = '/home/austen/media/winshare/Groups/Smith_G/Austen/Projects/Nephelometry/Polar Nephelometer/Data/2020/2020-11-16/PSL/2darray/PSL_1000_18_SL_100_23_2020 11 16_22 19 01_260_2darray_.txt'
 n2_save_dir = '/home/austen/Desktop/Recent'
 eval_n2_dir = '/home/austen/Desktop/Recent/Background Processing/Evaluated'
-Add_2_N2_Library(cal_im_directory=cal_im_dir, add_n2_directory=add_n2_dir, n2_save_directory=n2_save_dir, n2_directory_evaluated=eval_n2_dir, create_file=False)
+Add_2_N2_Library(cal_im_directory=cal_im_dir, add_n2_directory=add_n2_dir, n2_save_directory=n2_save_dir, n2_directory_evaluated=eval_n2_dir, create_file=True)
 n2_riemann_library = pd.read_csv(n2_save_dir + '/n2_riemann_library.txt', sep=',', header=0)
 print(n2_riemann_library)
 '''
@@ -590,7 +679,15 @@ print(n2_riemann_library)
 sample_dir = '/home/austen/Desktop/Recent/Good Data/Unevaluated'
 sample_save_dir = '/home/austen/Desktop/Recent'
 sample_evaluated_dir = '/home/austen/Desktop/Recent/Good Data/Evaluated/2darray'
-Add_Meas_2_MeasLibrary(sample_directory=sample_dir, sample_save_directory=sample_save_dir, evaluated_sample_directory=sample_evaluated_dir, create_file=False)
+Add_Meas_2_MeasLibrary(sample_directory=sample_dir, sample_save_directory=sample_save_dir, evaluated_sample_directory=sample_evaluated_dir, create_file=True)
 meas_df = pd.read_csv('/home/austen/Desktop/Recent/Good_Data_Riemann.txt', sep=',', header=0)
 print(meas_df)
 #'''
+
+'''
+sample_dir = '/home/austen/Desktop/Recent/Good Data/Unevaluated'
+sample_save_dir = '/home/austen/Desktop/Recent'
+sample_evaluated_dir = '/home/austen/Desktop/Recent/Good Data/Evaluated/2darray'
+Loop_Plot_Images(sample_directory=sample_dir, sample_save_directory=sample_save_dir, evaluated_sample_directory=sample_evaluated_dir)
+'''
+

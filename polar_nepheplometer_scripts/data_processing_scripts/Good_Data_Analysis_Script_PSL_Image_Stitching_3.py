@@ -8,7 +8,12 @@ import pandas as pd
 import numpy as np
 import PyMieScatt as PMS
 import matplotlib.pyplot as plt
+import statsmodels.api as sm
 from math import sqrt, pi, log
+from scipy.optimize import curve_fit
+from datetime import date
+from scipy.signal import savgol_filter, argrelmax, argrelmin
+from scipy.stats import pearsonr
 from matplotlib.gridspec import GridSpec
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import pchip_interpolate
@@ -38,6 +43,160 @@ def LogNormal(size, mu, gsd, N):
         # the one directly below doesnt integrate up to the number of particles, it integrates to waaay more than the number of particles
         #return (N / (sqrt(2 * pi) * log(gsd))) * np.exp(-1 * ((log(size) - log(mu)) ** 2) / (2 * log(gsd) ** 2))
         return (N / (sqrt(2 * pi) * size * log(gsd))) * np.exp(-1 * ((log(size) - log(mu)) ** 2) / (2 * log(gsd) ** 2))
+
+
+# defining cauchy equation functions
+def cauchy_2term(wav, A_2term, B_2term):
+    return A_2term + (B_2term / wav ** 2)
+
+def cauchy_4term(wav, A_4term, B_4term, C_4term):
+    return A_4term + (B_4term / wav ** 2) + (C_4term / (wav ** 4))
+
+def cauchy_6term(wav, A_1_6term, A_2_6term, A_3_6term, A_4_6term, A_5_6term, A_6_6term):
+    return np.sqrt(A_1_6term + (A_2_6term * wav ** 2) + (A_3_6term / wav ** 2) + (A_4_6term / (wav ** 4)) + (
+                    A_5_6term / (wav ** 6)) + (A_6_6term / (wav ** 8)))
+
+
+
+def PSL_CRI(nanometers_list, spectra_shortwave_nm, spectra_longwave_nm):
+    today = date.today()
+    today_string = str(today.strftime("%b-%d-%Y"))
+    # refractive index for PSL calculated for each group (literally until line 240 skip!)
+    # wavelength in nanometers
+    #w_n_array = [350, 405, 532, 663]
+    w_n_array = nanometers_list
+    # wavelength in centimeters
+    w_c_array = [i * 10**-7 for i in nanometers_list]
+    # wavelength in microns
+    #w_u_array = [.350, .405, .532, .663]
+    w_u_array = [i/1000.0 for i in nanometers_list]
+    # wavelength in angstroms
+    #w_a_array = [3500, 4050, 5320, 6630]
+    w_a_array = [i*10 for i in nanometers_list]
+    # UV-Visible spectrum in angstroms
+    uv_visible_spectrum_centimeters = np.arange(spectra_shortwave_nm * 10**-7, spectra_longwave_nm * 10**-7, 10E-7)
+    # print(len(uv_visible_spectrum_centimeters))
+    # UV-Visible spectrum in microns
+    uv_visible_spectrum_microns = np.arange(spectra_shortwave_nm/1000.0, spectra_longwave_nm/1000.0, .010)
+    # UV-Visible spectrum in nanometers
+    uv_visible_spectrum_nanometers = np.arange(spectra_shortwave_nm, spectra_longwave_nm, 10)
+    # print(len(uv_visible_spectrum_nanometers))
+    # UV-Visible spectrum in angstroms
+    uv_visible_spectrum_angstroms = np.arange(spectra_shortwave_nm*10, spectra_longwave_nm*10, 100)
+    # complex refractive index, Cauchy parameters for PSL Matheson & Sanderson 1952, wavelength in microns from Greenslade
+    A0 = 1.5663
+    B0 = 0.00785
+    C0 = 0.000334
+
+    # complex refractive index, Cauchy parameters for PSL Bateman 1959 wavelength in centimeters
+    A1 = 1.5683
+    B1 = 10.087E-11
+
+    # fit Nikalov data for cauchy coefficients, wavelength in microns
+    w_Nikalov_microns = np.array([0.436, 0.486, 0.546, 0.588, 0.633, 0.656, 0.703, 0.752, 0.804, 0.833, 0.879, 1.052])
+    w_Nikalov_nanometers = w_Nikalov_microns * 1000
+    n_RI_Nikalov = np.array([1.617, 1.606, 1.596, 1.592, 1.587, 1.586, 1.582, 1.579, 1.578, 1.577, 1.576, 1.572])
+    # print(w_Nikalov_microns)
+    popt_Nikalov, pcov_Nikalov = curve_fit(cauchy_6term, w_Nikalov_microns, n_RI_Nikalov, p0=[2.44675093, -1.011623E-3, 2.840749E-2, -3.761631E-4, 8.193491E-5, 9.055861E-4])
+    # print(popt_Nikalov)
+    # complex refractive index, Cauchy parameters for PSL Nikalov et al 2000, wavelength in microns
+    A2 = popt_Nikalov[0]
+    B2 = popt_Nikalov[1]
+    C2 = popt_Nikalov[2]
+    D2 = popt_Nikalov[3]
+    E2 = popt_Nikalov[4]
+    F2 = popt_Nikalov[5]
+
+    # complex refractive index, Cauchy parameters for PSL Ma et al 2003, wavelength in microns
+    A3 = 1.5725
+    B3 = 0.003108
+    C3 = 0.00034779
+
+    # complex refractive index, Cauchy parameters for PSL Sultanova et al 2003 wavelength in microns
+    A4 = 2.44675093
+    B4 = -1.011623E-3
+    C4 = 2.840749E-2
+    D4 = -3.761631E-4
+    E4 = 8.193491E-5
+    F4 = 2.186304E-5
+
+    # complex refractive index, Cauchy parameters for PSL Kasarova et al 2006 wavelength in microns
+    A5 = 2.610025
+    B5 = -6.143673E-2
+    C5 = -1.312267E-1
+    D5 = 6.865432E-2
+    E5 = -1.295968E-2
+    F5 = 9.055861E-4
+
+    # complex refractive index, Cauchy parameters for PSL Miles et al 2010 wavelength in microns
+    A6 = 1.5663
+    B6 = 0.00785
+    C6 = 0.000334
+
+    # complex refractive index, Cauchy parameters for PSL Jones et al 2013 wavelength in nanometers
+    A7 = 1.5718
+    B7 = 8412
+    C7 = 2.35E8
+
+    # complex refractive index, Cauchy Greenslade 2017, wavelength in microns
+    A8 = 1.53811
+    B8 = 0.004316
+    C8 = 0.000945
+
+    # complex refractive index, Cauchy Gienger 2017, wavelength in microns, uses Sellmeier equation, wavelength in nanometers
+    B9 = 1.4432
+    wav9 = 142.1
+
+    # n of refractive index for PSL as cauchy equation at specific wavelengths
+    PSL_groups = ['Matheson', 'Bateman', 'Nikalov', 'Ma', 'Sultanova', 'Kasarova', 'Miles', 'Jones', 'Greenslade', 'Gienger']
+    n_matheson = np.array([A0 + (B0 / w_u ** 2) + (C0 / (w_u ** 4)) for w_u in w_u_array])
+    n_bateman = np.array([A1 + (B1 / w_c ** 2) for w_c in w_c_array])
+    n_nikalov = np.array([np.sqrt(A2 + (B2 * w_u ** 2) + (C2 / w_u ** 2) + (D2 / (w_u ** 4)) + (E2 / (w_u ** 6)) + (F2 / (w_u ** 8))) for w_u in w_u_array])
+    n_ma = np.array([A3 + (B3 / w_u ** 2) + (C3 / (w_u ** 4)) for w_u in w_u_array])
+    n_sultanova = np.array([np.sqrt(A4 + (B4 * w_u ** 2) + (C4 / w_u ** 2) + (D4 / (w_u ** 4)) + (E4 / (w_u ** 6)) + (F4 / (w_u ** 8))) for w_u in w_u_array])
+    n_kasarova = np.array([np.sqrt(A5 + (B5 * w_u ** 2) + (C5 / w_u ** 2) + (D5 / (w_u ** 4)) + (E5 / (w_u ** 6)) + (F5 / (w_u ** 8))) for w_u in w_u_array])
+    n_miles = np.array([A6 + (B6 / w_u ** 2) + (C6 / (w_u ** 4)) for w_u in w_u_array])
+    n_jones = np.array([A7 + (B7 / w_n ** 2) + (C7 / (w_n ** 4)) for w_n in w_n_array])
+    n_greenslade = np.array([A8 + (B8 / w_u ** 2) + (C8 / (w_u ** 4)) for w_u in w_u_array])
+    # below used sellmeier equation
+    n_gienger = np.array([np.sqrt(1 + ((B9 * w_n ** 2) / (w_n ** 2 - wav9 ** 2))) for w_n in w_n_array])
+    n_at_wavelengths = [n_matheson, n_bateman, n_nikalov, n_ma, n_sultanova, n_kasarova, n_miles, n_jones, n_greenslade, n_gienger]
+
+    # basic statistics
+    n_all_groups = [n_matheson, n_bateman, n_nikalov, n_ma, n_sultanova, n_kasarova, n_miles, n_jones, n_greenslade, n_gienger]
+    n_groups_red = [n_all_groups[x][3] for x in range(3)]
+    n_groups_green = [n_all_groups[x][2] for x in range(3)]
+    n_groups_blue = [n_all_groups[x][1] for x in range(3)]
+    n_groups_uv = [n_all_groups[x][0] for x in range(3)]
+    n_mean_red = np.mean(n_groups_red)
+    n_mean_green = np.mean(n_groups_green)
+    n_mean_blue = np.mean(n_groups_blue)
+    n_mean_uv = np.mean(n_groups_uv)
+    n_percentiles_red = np.percentile(n_groups_red, [0, 25, 50, 75, 100])
+    n_percentiles_green = np.percentile(n_groups_green, [0, 25, 50, 75, 100])
+    n_percentiles_blue = np.percentile(n_groups_blue, [0, 25, 50, 75, 100])
+    n_percentiles_uv = np.percentile(n_groups_uv, [0, 25, 50, 75, 100])
+
+    # n (real refractive index) spectrum
+    n_matheson_spectrum = [A0 + (B0 / element ** 2) + (C0 / (element ** 4)) for element in uv_visible_spectrum_microns]
+    n_bateman_spectrum = [A1 + (B1 / element ** 2) for element in uv_visible_spectrum_centimeters]
+    n_nikalov_spectrum = [np.sqrt(A2 + (B2 * element ** 2) + (C2 / element ** 2) + (D2 / (element ** 4)) + (E2 / (element ** 6)) + (F2 / (element ** 8))) for element in uv_visible_spectrum_microns]
+    n_ma_spectrum = [A3 + (B3 / element ** 2) + (C3 / (element ** 4)) for element in uv_visible_spectrum_microns]
+    n_sultanova_spectrum = [np.sqrt(A4 + (B4 * element ** 2) + (C4 / element ** 2) + (D4 / (element ** 4)) + (E4 / (element ** 6)) + (F4 / (element ** 8))) for element in uv_visible_spectrum_microns]
+    n_kasarova_spectrum = [np.sqrt(A5 + (B5 * element ** 2) + (C5 / element ** 2) + (D5 / (element ** 4)) + (E5 / (element ** 6)) + (F5 / (element ** 8))) for element in uv_visible_spectrum_microns]
+    n_miles_spectrum = [A6 + (B6 / element ** 2) + (C6 / (element ** 4)) for element in uv_visible_spectrum_microns]
+    n_jones_spectrum = [A7 + (B7 / element ** 2) + (C7 / (element ** 4)) for element in uv_visible_spectrum_nanometers]
+    n_greenslade_spectrum = [A8 + (B8 / element ** 2) + (C8 / (element ** 4)) for element in uv_visible_spectrum_microns]
+    n_gienger_spectrum = [np.sqrt(1 + ((B9 * element ** 2) / (element ** 2 - wav9 ** 2))) for element in uv_visible_spectrum_nanometers]
+    n_all_spectra = [n_matheson_spectrum, n_bateman_spectrum, n_nikalov_spectrum, n_ma_spectrum, n_sultanova_spectrum, n_kasarova_spectrum, n_miles_spectrum, n_jones_spectrum, n_greenslade_spectrum, n_gienger_spectrum]
+
+
+    CRI_Spectra = pd.DataFrame(n_all_spectra, columns=np.append(uv_visible_spectrum_nanometers, uv_visible_spectrum_nanometers[-1]+10), index=PSL_groups)
+    CRI_4_Wavelengths = pd.DataFrame(n_at_wavelengths, columns=w_n_array, index=PSL_groups)
+
+
+    return [CRI_Spectra, CRI_4_Wavelengths, n_groups_uv, n_groups_blue, n_groups_green, n_groups_red]
+
 
 def M(meas_pf, mie_pf):
     #a = np.sum((meas_pf - mie_pf)**2)
@@ -137,8 +296,10 @@ def Residuals_SLSRSU(x, w_n, SL_M, SR_M, SU_M, SL_Theta, SR_Theta, SU_Theta, n, 
 
 # import data
 save_directory = '/home/austen/Desktop/Recent/PSL_Temporary'
-#file_directory = '/home/austen/Desktop/Recent/Good_Data_Riemann.txt'
-file_directory = '/home/austen/Desktop/Recent/Good_Data_gfit.txt'
+file_directory = '/home/austen/Desktop/Recent/Good_Data_Riemann.txt'
+#file_directory = '/home/austen/Desktop/Recent/Good_Data_gfit.txt'
+# contains nan values where it is impossible to fit a gaussian
+# develop some code to drop nans at indices of both measurement and theory to use gfit
 bkg_directory = '/home/austen/Desktop/Recent/Good_Data_gfit_bkg.txt'
 signal_directory = '/home/austen/Desktop/Recent/Good_Data_gfit_bc.txt'
 
@@ -159,56 +320,58 @@ df = pd.read_csv(file_directory, sep=',', header=0)
 #print(df)
 
 # multiindex dataframe
-df.set_index(['Sample', 'Size (nm)', 'Polarization', 'Date'], inplace=True)
-bkg_df.set_index(['Sample', 'Size (nm)', 'Polarization', 'Date'], inplace=True)
-sig_df.set_index(['Sample', 'Size (nm)', 'Polarization', 'Date'], inplace=True)
-snr_df.set_index(['Sample', 'Size (nm)', 'Polarization', 'Date'], inplace=True)
+df.set_index(['Sample', 'Size (nm)', 'Polarization', 'Laser Power (mW)','Date'], inplace=True)
+bkg_df.set_index(['Sample', 'Size (nm)', 'Polarization', 'Laser Power (mW)','Date'], inplace=True)
+sig_df.set_index(['Sample', 'Size (nm)', 'Polarization', 'Laser Power (mW)','Date'], inplace=True)
+snr_df.set_index(['Sample', 'Size (nm)', 'Polarization', 'Laser Power (mW)', 'Date'], inplace=True)
 #print(df)
 
 # selecting sample, size, and date of measurement
 sample_string = 'PSL'
-sample_size = 600
-# PSL 900 = 2020-09-14
-sample_date_SL = '2020-09-30'
-#PSL 900 = 2020-09-20
-sample_date_SU = '2020-09-30'
-#PSL 900 = 2020-09-20
-sample_date_SR = '2020-09-29'
+sample_size = 1000
+laser_power = 100
+# PSL 900 = 2020-09-14, PSL 600 =  2020-09-30
+sample_date_SL = '2020-10-21'
+#PSL 900 = 2020-09-20, PSL 600 = 2020-09-30
+sample_date_SU = '2020-10-21'
+#PSL 900 = 2020-09-20, PSL 600 = 2020-09-29
+sample_date_SR = '2020-10-21'
 
 # pandas dataframe.xs returns a cross-section of the data, so basically I am filtering out data that isn't PSL, size 900, and pol = SL
 #xs_tuple = ('PSL', 900, 'SL')
 # this df_900_SL1 and df_900_SL2, are used to merge data, this is from the same measurement period, just ran past 12AM
-df_SL_All = df.xs((sample_string, sample_size, 'SL')).reset_index()
-bkg_SL_All = bkg_df.xs((sample_string, sample_size, 'SL')).reset_index()
-sig_SL_All = sig_df.xs((sample_string, sample_size, 'SL')).reset_index()
-snr_SL_All = snr_df.xs((sample_string, sample_size, 'SL')).reset_index()
+# drop levels = False keeps the original index like i wanted
+df_SL_All = df.xs((sample_string, sample_size, 'SL', laser_power), drop_level=False).reset_index()
+bkg_SL_All = bkg_df.xs((sample_string, sample_size, 'SL', laser_power), drop_level=False).reset_index()
+sig_SL_All = sig_df.xs((sample_string, sample_size, 'SL', laser_power), drop_level=False).reset_index()
+snr_SL_All = snr_df.xs((sample_string, sample_size, 'SL', laser_power), drop_level=False).reset_index()
 # in the future the contents in the brackets [] needs to be filtered into index value to keep (they are True) and index value to discard (False) '2020-09-14'
-df_SL = df_SL_All[df_SL_All.Date == sample_date_SL].reset_index()
-bkg_SL = bkg_SL_All[bkg_SL_All.Date == sample_date_SL].reset_index()
-sig_SL = sig_SL_All[sig_SL_All.Date == sample_date_SL].reset_index()
-snr_SL = snr_SL_All[snr_SL_All.Date == sample_date_SL].reset_index()
+df_SL = df_SL_All[df_SL_All.Date >= sample_date_SL].reset_index()
+bkg_SL = bkg_SL_All[bkg_SL_All.Date >= sample_date_SL].reset_index()
+sig_SL = sig_SL_All[sig_SL_All.Date >= sample_date_SL].reset_index()
+snr_SL = snr_SL_All[snr_SL_All.Date >= sample_date_SL].reset_index()
 ## this is the old way, we used to have to concatenate these with different dates, now we add the dates to keep dates and which can be made for each size, and boom uses only the dates we care about!
 #df_900_SU_All = df.xs(('PSL', 900, 'SU', '2020-08-08')).reset_index()
 #df_900_SL = pd.concat([df_900_SL1, df_900_SL2], ignore_index=True)
+'''
+df_SU_All = df.xs((sample_string, sample_size, 'SU', laser_power)).reset_index()
+bkg_SU_All = bkg_df.xs((sample_string, sample_size, 'SU', laser_power)).reset_index()
+sig_SU_All = sig_df.xs((sample_string, sample_size, 'SU', laser_power)).reset_index()
+snr_SU_All = snr_df.xs((sample_string, sample_size, 'SU', laser_power)).reset_index()
+df_SU = df_SU_All[df_SU_All.Date >= sample_date_SU].reset_index()
+bkg_SU = bkg_SU_All[bkg_SU_All.Date >= sample_date_SU].reset_index()
+sig_SU = sig_SU_All[sig_SU_All.Date >= sample_date_SU].reset_index()
+snr_SU = snr_SU_All[snr_SU_All.Date >= sample_date_SU].reset_index()
 
-df_SU_All = df.xs((sample_string, sample_size, 'SU')).reset_index()
-bkg_SU_All = bkg_df.xs((sample_string, sample_size, 'SU')).reset_index()
-sig_SU_All = sig_df.xs((sample_string, sample_size, 'SU')).reset_index()
-snr_SU_All = snr_df.xs((sample_string, sample_size, 'SU')).reset_index()
-df_SU = df_SU_All[df_SU_All.Date == sample_date_SU].reset_index()
-bkg_SU = bkg_SU_All[bkg_SU_All.Date == sample_date_SU].reset_index()
-sig_SU = sig_SU_All[sig_SU_All.Date == sample_date_SU].reset_index()
-snr_SU = snr_SU_All[snr_SU_All.Date == sample_date_SU].reset_index()
-
-df_SR_All = df.xs((sample_string, sample_size, 'SR')).reset_index()
-bkg_SR_All = bkg_df.xs((sample_string, sample_size, 'SR')).reset_index()
-sig_SR_All = sig_df.xs((sample_string, sample_size, 'SR')).reset_index()
-snr_SR_All = snr_df.xs((sample_string, sample_size, 'SR')).reset_index()
-df_SR = df_SR_All[df_SR_All.Date == sample_date_SR].reset_index()
-bkg_SR = bkg_SR_All[bkg_SR_All.Date == sample_date_SR].reset_index()
-sig_SR = sig_SR_All[sig_SR_All.Date == sample_date_SR].reset_index()
-snr_SR = snr_SR_All[snr_SR_All.Date == sample_date_SR].reset_index()
-
+df_SR_All = df.xs((sample_string, sample_size, 'SR', laser_power)).reset_index()
+bkg_SR_All = bkg_df.xs((sample_string, sample_size, 'SR', laser_power)).reset_index()
+sig_SR_All = sig_df.xs((sample_string, sample_size, 'SR', laser_power)).reset_index()
+snr_SR_All = snr_df.xs((sample_string, sample_size, 'SR', laser_power)).reset_index()
+df_SR = df_SR_All[df_SR_All.Date >= sample_date_SR].reset_index()
+bkg_SR = bkg_SR_All[bkg_SR_All.Date >= sample_date_SR].reset_index()
+sig_SR = sig_SR_All[sig_SR_All.Date >= sample_date_SR].reset_index()
+snr_SR = snr_SR_All[snr_SR_All.Date >= sample_date_SR].reset_index()
+'''
 
 # view some of the data, use .loc if multiindexed, selecting the rows!
 #pf_selected_1 = df_SL_All.loc[(df_SL_All.loc[:, 'Exposure Time (s)']==60) & (df_SL_All.loc[:,'Laser Power (mW)']==25) & (df_SL_All.loc[:,'Date']=='2020-10-01')].loc[:,'30':'826'].values.flatten()
@@ -220,8 +383,8 @@ snr_SR = snr_SR_All[snr_SR_All.Date == sample_date_SR].reset_index()
 # if not just reset the index of the multiindexed data and use as normal
 # printing the subset of data we want from the multiindex
 print(df_SL)
-print(df_SU)
-print(df_SR)
+#print(df_SU)
+#print(df_SR)
 # compute Mie theory for PSL
 
 '''
@@ -231,64 +394,127 @@ Mean    Mean Uncertainty     Size Dist Sigma
 701nm     6nm                     9.0nm
 800nm     14nm                    5.6nm
 903nm     12nm                    4.1nm
+1036nm    ????                    ??????
 '''
-
+# CRI
 n_AS = 1.525
 k_AS = 0.00
-n_PSL = 1.58514608
+n_PSL = np.mean(PSL_CRI([350, 405, 532, 663], 300, 1060)[5])
 k_PSL = 0.0
+
+# Parameters
+mu_sample = 1040
+sigma_sample = 10.0
+N_sample = 260
 wavelength_red = 663
-col_transects = np.arange(30, 827, 1)
-slope = .2095
-intercept = -3.1433
+
+# Mie theory
+dp_gaussian = np.arange(1.0, 1200.0, 2.0)
+ndp_LN_sample = np.array([Gaussian(x=i, mu=mu_sample, sigma=sigma_sample, N=N_sample) for i in dp_gaussian])
+Rad_sample, SL_sample, SR_sample, SU_sample = PMS.SF_SD(m=complex(n_PSL, k_PSL), wavelength=wavelength_red, dp=dp_gaussian, ndp=ndp_LN_sample, nMedium=1.0, space='theta', angularResolution=0.2, normalization=None)
+Theta_sample = np.array([(i * 180.0)/pi for i in Rad_sample])
+
+#start and stop for transects
+start = 30
+stop = 859
+delta = stop - start + 1
+#'''
+# Calibration
+# Mie... selecting features
+mie_local_max = argrelmax(SL_sample, axis=0, order=50)
+mie_local_min = argrelmin(SL_sample, axis=0, order=50)
+mie_local_features = np.sort(np.concatenate((mie_local_max, mie_local_min), axis=None))
+# delete a feature if needed
+#mie_local_features = np.delete(mie_local_features, [0])
+mie_local_features_theta = [Theta_sample[x] for x in mie_local_features]
+print('Number of Mie Features: ', len(mie_local_features_theta))
+print('Mie Features at Theta: ', mie_local_features_theta)
+mie_local_features_intensity = [SL_sample[x] for x in mie_local_features]
+#Measurement... select features
+df_row_number = int(9)
+calibration_conditions = np.array(df_SL.loc[df_row_number, 'Sample':'Time'])
+print(calibration_conditions)
+calibration_measurement = np.array(df_SL.loc[df_row_number, str(start):str(stop)])
+col_transects = np.arange(start, stop + 1, 1)
+#calibration_measurement_savgol = savgol_filter(calibration_measurement, window_length=51, polyorder=2, deriv=0)
+calibration_measurement_local_max = argrelmax(calibration_measurement, axis=0, order=20)
+calibration_measurement_local_min = argrelmin(calibration_measurement, axis=0, order=20)
+calibration_measurement_local_features = np.sort(np.concatenate((calibration_measurement_local_max, calibration_measurement_local_min), axis=None))
+# delete a feature if needed
+calibration_measurement_local_features = np.delete(calibration_measurement_local_features, [0, 10, 11])
+calibration_measurement_local_features_transects = [col_transects[x] for x in calibration_measurement_local_features]
+calibration_measurement_local_features_intensities = [calibration_measurement[x] for x in calibration_measurement_local_features]
+print('Number of Measurement Features: ', len(calibration_measurement_local_features_transects))
+print('Measurement Features at Transects: ', calibration_measurement_local_features_transects)
+# do a linear regression to scattering angles vs profile numbers
+# we did linegress just to check to see if the OLS was right!
+calibration_measurement_local_features_transects_w_constant = sm.add_constant(calibration_measurement_local_features_transects) # adding the Rayleigh profile numbers will need to be removed after the real PNs are saved by the labview code
+model_ols = sm.OLS(mie_local_features_theta, calibration_measurement_local_features_transects_w_constant)
+results_ols = model_ols.fit()
+print(results_ols.summary())
+scaling_factor = np.mean(np.divide(mie_local_features_intensity, calibration_measurement_local_features_intensities))
+slope = results_ols.params[1]
+intercept = results_ols.params[0]
 theta_meas = np.array([(slope * i) + intercept for i in col_transects])
-dp_gaussian = np.arange(1.0, 1000.0, 2.0)
-ndp_LN_900 = np.array([Gaussian(x=i, mu=903.0, sigma=4.1, N=480) for i in dp_gaussian])
-#ndp_LN_700 = np.array([Gaussian(x=i, mu=701.0, sigma=9.0, N=433) for i in dp_gaussian])
-ndp_LN_600 = np.array([Gaussian(x=i, mu=600.0, sigma=10.0, N=630) for i in dp_gaussian])
 
-Rad900, SL900, SR900, SU900 = PMS.SF_SD(m=complex(n_PSL, k_PSL), wavelength=wavelength_red, dp=dp_gaussian, ndp=ndp_LN_900, nMedium=1.0, space='theta', angularResolution=0.2, normalization=None)
-#Rad700, SL700, SR700, SU700 = PMS.SF_SD(m=complex(n_PSL, k_PSL), wavelength=wavelength_red, dp=dp_gaussian, ndp=ndp_LN_700, nMedium=1.0, space='theta', angularResolution=0.2, normalization=None)
-Rad600, SL600, SR600, SU600 = PMS.SF_SD(m=complex(n_PSL, k_PSL), wavelength=wavelength_red, dp=dp_gaussian, ndp=ndp_LN_600, nMedium=1.0, space='theta', angularResolution=0.2, normalization=None)
 
-Theta900 = np.array([(i * 180.0)/pi for i in Rad900])
-#Theta700 = np.array([(i * 180.0)/pi for i in Rad700])
-Theta600 = np.array([(i * 180.0)/pi for i in Rad600])
+f_cal, ax_cal = plt.subplots(nrows=2, ncols=2, figsize=(36, 18))
+ax_cal[0, 0].semilogy(Theta_sample, SL_sample, ls='-', color='red', label='Mie Theory')
+ax_cal[0, 0].semilogy(mie_local_features_theta, mie_local_features_intensity, marker='o', ls=' ', color='black', label='Mie Theory Local Max & Min')
+ax_cal[0, 0].set_xlabel('\u03b8')
+ax_cal[0, 0].set_ylabel('Intensity')
+ax_cal[0, 0].set_title('Mie Theory')
+ax_cal[0, 0].grid(True)
+ax_cal[0, 0].legend(loc=1)
+ax_cal[0, 1].semilogy(col_transects, calibration_measurement, ls='-', color='green', label='Uncalibrated')
+#ax_cal[0, 1].semilogy(col_transects, calibration_measurement_savgol, ls='-', color='blue', label='Uncalibrated Saviztky-Golay')
+ax_cal[0, 1].semilogy(calibration_measurement_local_features_transects, calibration_measurement_local_features_intensities, marker='o', ls=' ', color='black', label='Meas. Local Features\n' + str(calibration_conditions))
+ax_cal[0, 1].set_xlabel('Image Transects')
+ax_cal[0, 1].set_ylabel('Intensity')
+ax_cal[0, 1].set_title('Uncalibrated Measurement')
+ax_cal[0, 1].grid(True)
+ax_cal[0, 1].legend(loc=1)
+ax_cal[1, 0].plot(calibration_measurement_local_features_transects, results_ols.fittedvalues, ls='-', color='fuchsia', label='OLS: y = ' + str('{:.4f}'.format(slope)) + 'x + ' + str('{:.4f}'.format(intercept)))
+ax_cal[1, 0].plot(calibration_measurement_local_features_transects, mie_local_features_theta, marker='o', color='black')
+ax_cal[1, 0].set_xlabel('Image Transects')
+ax_cal[1, 0].set_ylabel('\u03b8')
+ax_cal[1, 0].set_title('OLS')
+ax_cal[1, 0].grid(True)
+ax_cal[1, 0].legend(loc=1)
+ax_cal[1, 1].semilogy(Theta_sample, SL_sample, ls='-', color='red', label='Mie Theory')
+ax_cal[1, 1].semilogy(theta_meas, calibration_measurement * scaling_factor, ls='-', color='green', label='Calibrated & Scaled to Mie Theory\n' + 'scaling factor: ' + str('{:.3f}'.format(scaling_factor)))
+#ax_cal[1, 1].semilogy(theta_meas, calibration_measurement_savgol * scaling_factor, ls='-', color='blue', label='Calibrated Saviztky-Golay & Scaled to Mie Theory')
+ax_cal[1, 1].set_xlabel('\u03b8')
+ax_cal[1, 1].set_ylabel('Intensity')
+ax_cal[1, 1].set_title('Calibrated Measurement')
+ax_cal[1, 1].grid(True)
+ax_cal[1, 1].legend(loc=1)
+plt.savefig(save_directory + '/Calibrated_Measurement.pdf', format='pdf')
+plt.savefig(save_directory + '/Calibrated_Measurement.png', format='png')
+plt.show()
 #'''
-SL900_pchip = pchip_interpolate(xi=Theta900, yi=SL900, x=theta_meas)
-SU900_pchip = pchip_interpolate(xi=Theta900, yi=SU900, x=theta_meas)
-SR900_pchip = pchip_interpolate(xi=Theta900, yi=SR900, x=theta_meas)
-#'''
-'''
-SL700_pchip = pchip_interpolate(xi=Theta700, yi=SL700, x=theta_meas)
-SU700_pchip = pchip_interpolate(xi=Theta700, yi=SU700, x=theta_meas)
-SR700_pchip = pchip_interpolate(xi=Theta700, yi=SR700, x=theta_meas)
-'''
 
-SL600_pchip = pchip_interpolate(xi=Theta600, yi=SL600, x=theta_meas)
-SU600_pchip = pchip_interpolate(xi=Theta600, yi=SU600, x=theta_meas)
-SR600_pchip = pchip_interpolate(xi=Theta600, yi=SR600, x=theta_meas)
+
+# pchip, normalization, and scaling
+# repeat creation of theta via repeating setting slope and intercept as constants
+#slope = 0.2107
+#intercept = -4.5402
+#col_transects = np.arange(start, stop + 1, 1)
+theta_meas = np.array([(slope * i) + intercept for i in col_transects])
+SL_sample_pchip = pchip_interpolate(xi=Theta_sample, yi=SL_sample, x=theta_meas)
+SU_sample_pchip = pchip_interpolate(xi=Theta_sample, yi=SU_sample, x=theta_meas)
+SR_sample_pchip = pchip_interpolate(xi=Theta_sample, yi=SR_sample, x=theta_meas)
 
 #'''
-SL900_norm = SL900_pchip / np.sum(SL900_pchip)
-SU900_norm = SU900_pchip / np.sum(SU900_pchip)
-SR900_norm = SR900_pchip / np.sum(SR900_pchip)
+SL_sample_norm = SL_sample_pchip / np.sum(SL_sample_pchip)
+SU_sample_norm = SU_sample_pchip / np.sum(SU_sample_pchip)
+SR_sample_norm = SR_sample_pchip / np.sum(SR_sample_pchip)
 #'''
-'''
-#SL700_norm = SL700_pchip / np.sum(SL700_pchip)
-#SU700_norm = SU700_pchip / np.sum(SU700_pchip)
-#SR700_norm = SR700_pchip / np.sum(SR700_pchip)
-'''
-
-SL600_norm = SL600_pchip / np.sum(SL600_pchip)
-SU600_norm = SU600_pchip / np.sum(SU600_pchip)
-SR600_norm = SR600_pchip / np.sum(SR600_pchip)
-
 # scaling all the data prior to normalization
 scalar_list_sl = []
 for idx, row in df_SL.iterrows():
-    pf_meas = np.array(row['30':'826']).astype(float)
-    pf_mie = SL600_pchip
+    pf_meas = np.array(row[str(start):str(stop)]).astype(float)
+    pf_mie = SL_sample_pchip
     scalar = pf_mie[500] / pf_meas[500]
     scalar_list_sl.append(scalar)
 
@@ -296,11 +522,11 @@ for idx, row in df_SL.iterrows():
 df_SL['Scalar'] = scalar_list_sl
 print(df_SL['Scalar'])
 
-
+'''
 scalar_list_su = []
 for idx, row in df_SU.iterrows():
-    pf_meas = np.array(row['30':'826']).astype(float)
-    pf_mie = SU600_pchip
+    pf_meas = np.array(row[str(start):str(stop)]).astype(float)
+    pf_mie = SU_sample_pchip
     scalar = pf_mie[500] / pf_meas[500]
     scalar_list_su.append(scalar)
 
@@ -310,13 +536,14 @@ df_SU['Scalar'] = scalar_list_su
 
 scalar_list_sr = []
 for idx, row in df_SR.iterrows():
-    pf_meas = np.array(row['30':'826']).astype(float)
-    pf_mie = SR600_pchip
+    pf_meas = np.array(row[str(start):str(stop)]).astype(float)
+    pf_mie = SR_sample_pchip
     scalar = pf_mie[500] / pf_meas[500]
     scalar_list_sr.append(scalar)
 
 
 df_SR['Scalar'] = scalar_list_sr
+'''
 
 # plot font size
 SMALL_SIZE = 10
@@ -358,12 +585,15 @@ label_nonstitch_list_SL = []
 f_sl, ax_sl = plt.subplots(nrows=1, ncols=2, figsize=(36, 10))
 for idx, row in df_SL.iterrows():
     #print(np.isscalar(row.loc['Scalar']))
-    pf_SL = row.loc['Scalar'] * np.array(row.loc['30':'826']).astype(float)
+    pf_SL = row.loc['Scalar'] * np.array(row.loc[str(start):str(stop)]).astype(float)
     pf_SL_norm = Normalization(pf_SL)
     #m = M(pf_SL_norm, SL600_norm)
-    m = M(pf_SL, SL600_pchip)
+    m = M(pf_SL, SL_sample_pchip)
     #corr_coeff_nonstitch_SL = np.corrcoef(pf_SL_norm, SL600_norm)[0][1]
-    corr_coeff_nonstitch_SL = np.corrcoef(pf_SL, SL600_pchip)[0][1]
+    #print('Nan values?: ', np.isnan(SL_sample_pchip))
+    # we found that for some awful reason the measurement produced nan values!
+    corr_coeff_nonstitch_SL = pearsonr(pf_SL, SL_sample_pchip)[0]
+    print('correlation coefficient: ', corr_coeff_nonstitch_SL, len(pf_SL)==len(SL_sample_pchip), np.isnan(SL_sample_pchip).any(), np.isnan(pf_SL).any())
     label_string_nonstitch_SL = str(np.array(df_SL.loc[idx, 'Date':'Time']))
     #pf_nonstitched_SL_norm_list.append(pf_SL_norm)
     pf_nonstitched_SL_norm_list.append(pf_SL)
@@ -373,7 +603,7 @@ for idx, row in df_SL.iterrows():
     #ax_sl[0].semilogy(theta_meas, pf_SL_norm, ls='-', label=label_string_nonstitch_SL)
     ax_sl[0].semilogy(theta_meas, pf_SL, ls='-', label=label_string_nonstitch_SL)
 #ax_sl[0].semilogy(theta_meas, SL600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
-ax_sl[0].semilogy(theta_meas, SL600_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
+ax_sl[0].semilogy(theta_meas, SL_sample_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
 ax_sl[0].set_title('SL Measurements', fontsize=BIGGER_SIZE, fontweight='bold')
 ax_sl[0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax_sl[0].set_ylabel('Intensity (DN)', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -385,7 +615,7 @@ m_min_val_nonstitch_SL = np.amin(m_nonstitch_list_SL)
 m_min_idx_nonstitch_SL = np.argmin(m_nonstitch_list_SL)
 ax_sl[1].semilogy(theta_meas, pf_nonstitched_SL_norm_list[m_min_idx_nonstitch_SL], ls='-', color='red', label=str(label_nonstitch_list_SL[m_min_idx_nonstitch_SL]) + '\n correlation coefficient: ' + str(corr_coeff_nonstitch_list_SL[m_min_idx_nonstitch_SL]) + '\n minimum residual sum: ' + str(m_nonstitch_list_SL[m_min_idx_nonstitch_SL]))
 #ax_sl[1].semilogy(theta_meas, SL600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
-ax_sl[1].semilogy(theta_meas, SL600_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
+ax_sl[1].semilogy(theta_meas, SL_sample_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
 ax_sl[1].set_title('Best SL Measurement', fontsize=BIGGER_SIZE, fontweight='bold')
 ax_sl[1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax_sl[1].set_ylabel('Intensity (DN)', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -395,19 +625,19 @@ plt.savefig(save_directory + '/SL_nonstitch.pdf', format='pdf')
 plt.savefig(save_directory + '/SL_nonstitch.png', format='png')
 plt.show()
 
-
+'''
 pf_nonstitched_SU_norm_list = []
 m_nonstitch_list_SU = []
 corr_coeff_nonstitch_list_SU = []
 label_nonstitch_list_SU = []
 f_su, ax_su = plt.subplots(nrows=1, ncols=2, figsize=(36, 10))
 for idx, row in df_SU.iterrows():
-    pf_SU = row['Scalar'] * np.array(row.loc['30':'826']).astype(float)
+    pf_SU = row['Scalar'] * np.array(row.loc[str(start):str(stop)]).astype(float)
     pf_SU_norm = Normalization(pf_SU)
     #m = M(pf_SU_norm, SU600_norm)
-    m = M(pf_SU, SU600_pchip)
+    m = M(pf_SU, SU_sample_pchip)
     #corr_coeff_nonstitch_SU = np.corrcoef(pf_SU_norm, SU600_norm)[0][1]
-    corr_coeff_nonstitch_SU = np.corrcoef(pf_SU, SU600_pchip)[0][1]
+    corr_coeff_nonstitch_SU = np.corrcoef(pf_SU, SU_sample_pchip)[0][1]
     label_string_nonstitch_SU = str(np.array(df_SU.loc[idx, 'Date':'Time']))
     #pf_nonstitched_SU_norm_list.append(pf_SU_norm)
     pf_nonstitched_SU_norm_list.append(pf_SU)
@@ -417,7 +647,7 @@ for idx, row in df_SU.iterrows():
     #ax_su[0].semilogy(theta_meas, pf_SU_norm, ls='-', label=label_string_nonstitch_SU)
     ax_su[0].semilogy(theta_meas, pf_SU, ls='-', label=label_string_nonstitch_SU)
 #ax_su[0].semilogy(theta_meas, SU600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
-ax_su[0].semilogy(theta_meas, SU600_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
+ax_su[0].semilogy(theta_meas, SU_sample_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
 ax_su[0].set_title('SU Measurements', fontsize=BIGGER_SIZE, fontweight='bold')
 ax_su[0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax_su[0].set_ylabel('Intensity (DN)', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -429,7 +659,7 @@ m_min_val_nonstitch_SU = np.amin(m_nonstitch_list_SU)
 m_min_idx_nonstitch_SU = np.argmin(m_nonstitch_list_SU)
 ax_su[1].semilogy(theta_meas, pf_nonstitched_SU_norm_list[m_min_idx_nonstitch_SU], ls='-', color='green', label=str(label_nonstitch_list_SU[m_min_idx_nonstitch_SU]) + '\n correlation coefficient: ' + str(corr_coeff_nonstitch_list_SU[m_min_idx_nonstitch_SU]) + '\n minimum residual sum: ' + str(m_nonstitch_list_SU[m_min_idx_nonstitch_SU]))
 #ax_su[1].semilogy(theta_meas, SU600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
-ax_su[1].semilogy(theta_meas, SU600_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
+ax_su[1].semilogy(theta_meas, SU_sample_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
 ax_su[1].set_title('Best SU Measurement', fontsize=BIGGER_SIZE, fontweight='bold')
 ax_su[1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax_su[1].set_ylabel('Intensity (DN)', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -446,12 +676,12 @@ corr_coeff_nonstitch_list_SR = []
 label_nonstitch_list_SR = []
 f_sr, ax_sr = plt.subplots(nrows=1, ncols=2, figsize=(36, 10))
 for idx, row in df_SR.iterrows():
-    pf_SR = row['Scalar'] * np.array(row.loc['30':'826']).astype(float)
+    pf_SR = row['Scalar'] * np.array(row.loc[str(start):str(stop)]).astype(float)
     pf_SR_norm = Normalization(pf_SR)
     #m = M(pf_SR_norm, SR600_norm)
-    m = M(pf_SR, SR600_pchip)
+    m = M(pf_SR, SR_sample_pchip)
     #corr_coeff_nonstitch_SR = np.corrcoef(pf_SR_norm, SR600_norm)[0][1]
-    corr_coeff_nonstitch_SR = np.corrcoef(pf_SR, SR600_pchip)[0][1]
+    corr_coeff_nonstitch_SR = np.corrcoef(pf_SR, SR_sample_pchip)[0][1]
     label_string_nonstitch_SR = str(np.array(df_SR.loc[idx, 'Date':'Time']))
     #pf_nonstitched_SR_norm_list.append(pf_SR_norm)
     pf_nonstitched_SR_norm_list.append(pf_SR)
@@ -461,7 +691,7 @@ for idx, row in df_SR.iterrows():
     #ax_sr[0].semilogy(theta_meas, pf_SR_norm, ls='-', label=label_string_nonstitch_SR)
     ax_sr[0].semilogy(theta_meas, pf_SR, ls='-', label=label_string_nonstitch_SR)
 #ax_sr[0].semilogy(theta_meas, SR600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
-ax_sr[0].semilogy(theta_meas, SR600_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
+ax_sr[0].semilogy(theta_meas, SR_sample_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
 ax_sr[0].set_title('SR Measurements', fontsize=BIGGER_SIZE, fontweight='bold')
 ax_sr[0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax_sr[0].set_ylabel('Intensity (DN)', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -473,7 +703,7 @@ m_min_val_nonstitch_SR = np.amin(m_nonstitch_list_SR)
 m_min_idx_nonstitch_SR = np.argmin(m_nonstitch_list_SR)
 ax_sr[1].semilogy(theta_meas, pf_nonstitched_SR_norm_list[m_min_idx_nonstitch_SR], ls='-', color='blue', label=str(label_nonstitch_list_SR[m_min_idx_nonstitch_SR]) + '\n correlation coefficient: ' + str(corr_coeff_nonstitch_list_SR[m_min_idx_nonstitch_SR]) + '\n minimum residual sum: ' + str(m_nonstitch_list_SR[m_min_idx_nonstitch_SR]))
 #ax_sr[1].semilogy(theta_meas, SR600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
-ax_sr[1].semilogy(theta_meas, SR600_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
+ax_sr[1].semilogy(theta_meas, SR_sample_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
 ax_sr[1].set_title('Best SR Measurement', fontsize=BIGGER_SIZE, fontweight='bold')
 ax_sr[1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax_sr[1].set_ylabel('Intensity (DN)', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -482,7 +712,7 @@ ax_sr[1].legend(loc=1, fontsize=SMALL_SIZE, prop=legend_properties)
 plt.savefig(save_directory + '/SR_nonstitch.pdf', format='pdf')
 plt.savefig(save_directory + '/SR_nonstitch.png', format='png')
 plt.show()
-
+'''
 
 # show image stitching threshold
 intensity_stitch = 8E4
@@ -495,17 +725,17 @@ sep_idx = []
 f, ax = plt.subplots(nrows=1, ncols=2, figsize=(36, 10))
 for index, row in df_SL.iterrows():
     #print(np.array(row))
-    pf_SL = row.loc['Scalar'] * np.array(row.loc['30':'826']).astype(float)
+    pf_SL = row.loc['Scalar'] * np.array(row.loc[str(start):str(stop)]).astype(float)
     ax[0].semilogy(theta_meas, pf_SL, ls='-', label=np.array(row.loc['Date':'Time']))
     ax[1].semilogy(theta_meas, Normalization(pf_SL), ls='-', label=np.array(row.loc['Date':'Time']))
-ax[0].semilogy(theta_meas, SL600_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm')
+ax[0].semilogy(theta_meas, SL_sample_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm')
 ax[0].semilogy(theta_meas, intensity_stitch_array, color='black', ls='-', label='Intensity Threshold')
 ax[0].set_title('Measurements & Theory', fontsize=BIGGER_SIZE, fontweight='bold')
 ax[0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax[0].set_ylabel('Intensity', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax[0].grid(True)
 #ax[0].legend(loc=1)
-ax[1].semilogy(theta_meas, SL600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
+ax[1].semilogy(theta_meas, SL_sample_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
 ax[1].semilogy(theta_meas, intensity_stitch_array_norm, color='black', ls='-', label='Intensity Threshold')
 ax[1].set_title('Normalized Measurements & Theory', fontsize=BIGGER_SIZE, fontweight='bold')
 ax[1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -516,21 +746,21 @@ plt.savefig(save_directory + '/measurements_made_SL.pdf', format='pdf')
 plt.savefig(save_directory + '/measurements_made_SL.png', format='png')
 plt.show()
 
-
+'''
 f, ax = plt.subplots(nrows=1, ncols=2, figsize=(36, 10))
 for index, row in df_SU.iterrows():
     #print(np.array(row))
-    pf_SU = row.loc['Scalar'] * np.array(row.loc['30':'826']).astype(float)
+    pf_SU = row.loc['Scalar'] * np.array(row.loc[str(start):str(stop)]).astype(float)
     ax[0].semilogy(theta_meas, pf_SU, ls='-', label=np.array(row.loc['Date':'Time']))
     ax[1].semilogy(theta_meas, Normalization(pf_SU), ls='-', label=np.array(row.loc['Date':'Time']))
-ax[0].semilogy(theta_meas, SU600_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm')
+ax[0].semilogy(theta_meas, SU_sample_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm')
 ax[0].semilogy(theta_meas, intensity_stitch_array, color='black', ls='-', label='Intensity Threshold')
 ax[0].set_title('Measurements & Theory', fontsize=BIGGER_SIZE, fontweight='bold')
 ax[0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax[0].set_ylabel('Intensity', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax[0].grid(True)
 #ax[0].legend(loc=1)
-ax[1].semilogy(theta_meas, SU600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
+ax[1].semilogy(theta_meas, SU_sample_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
 ax[1].semilogy(theta_meas, intensity_stitch_array_norm, color='black', ls='-', label='Intensity Threshold')
 ax[1].set_title('Normalized Measurements & Theory', fontsize=BIGGER_SIZE, fontweight='bold')
 ax[1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -545,17 +775,17 @@ plt.show()
 f, ax = plt.subplots(nrows=1, ncols=2, figsize=(36, 10))
 for index, row in df_SR.iterrows():
     #print(np.array(row))
-    pf_SR = row.loc['Scalar'] * np.array(row.loc['30':'826']).astype(float)
+    pf_SR = row.loc['Scalar'] * np.array(row.loc[str(start):str(stop)]).astype(float)
     ax[0].semilogy(theta_meas, pf_SR, ls='-', label=np.array(row.loc['Date':'Time']))
     ax[1].semilogy(theta_meas, Normalization(pf_SR), ls='-', label=np.array(row.loc['Date':'Time']))
-ax[0].semilogy(theta_meas, SR600_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm')
+ax[0].semilogy(theta_meas, SR_sample_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm')
 ax[0].semilogy(theta_meas, intensity_stitch_array, color='black', ls='-', label='Intensity Threshold')
 ax[0].set_title('Measurements & Theory', fontsize=BIGGER_SIZE, fontweight='bold')
 ax[0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax[0].set_ylabel('Intensity', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax[0].grid(True)
 #ax[0].legend(loc=1)
-ax[1].semilogy(theta_meas, SR600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
+ax[1].semilogy(theta_meas, SR_sample_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm Norm.')
 ax[1].semilogy(theta_meas, intensity_stitch_array_norm, color='black', ls='-', label='Intensity Threshold')
 ax[1].set_title('Normalized Measurements & Theory', fontsize=BIGGER_SIZE, fontweight='bold')
 ax[1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -565,6 +795,7 @@ ax[1].grid(True)
 plt.savefig(save_directory + '/measurements_made_SR.pdf', format='pdf')
 plt.savefig(save_directory + '/measurements_made_SR.png', format='png')
 plt.show()
+'''
 '''
 pf1_2dlabels = []
 pf2_2dlabels = []
@@ -599,12 +830,12 @@ snr2_2dlist_SL = []
 for index, row in df_SL.iterrows():
     counter = 0
     pf1_details_SL = []
-    pf1_SL = np.zeros(797)
-    snr1_SL = np.zeros(797)
+    pf1_SL = np.zeros(delta)
+    snr1_SL = np.zeros(delta)
     pf2_details_SL = []
-    pf2_SL =np.zeros(797)
-    snr2_SL = np.zeros(797)
-    pf_SL = row['Scalar'] * np.array(row['30':'826']).astype(float)
+    pf2_SL =np.zeros(delta)
+    snr2_SL = np.zeros(delta)
+    pf_SL = row['Scalar'] * np.array(row[str(start):str(stop)]).astype(float)
     #pf_norm_SL = Normalization(pf_SL)
     pf_norm_SL = pf_SL
     for element in pf_norm_SL:
@@ -630,7 +861,7 @@ snr2_2darray_SL = np.array(snr2_2dlist_SL)
 #print(snr1_2darray_SL[0])
 print(snr1_2darray_SL[0].shape)
 print(snr2_2darray_SL[0].shape)
-
+'''
 # starting to split SU measurements at threshhold value
 pf1_2dlabels_SU = []
 pf2_2dlabels_SU = []
@@ -646,7 +877,7 @@ for index, row in df_SU.iterrows():
     pf2_details_SU = []
     pf2_SU =np.zeros(797)
     snr2_SU = np.zeros(797)
-    pf_SU = row['Scalar'] * np.array(row['30':'826']).astype(float)
+    pf_SU = row['Scalar'] * np.array(row[str(start):str(stop)]).astype(float)
     #pf_norm_SU = Normalization(pf_SU)
     pf_norm_SU = pf_SU
     for element in pf_norm_SU:
@@ -686,7 +917,7 @@ for index, row in df_SR.iterrows():
     pf2_details_SR = []
     pf2_SR =np.zeros(797)
     snr2_SR = np.zeros(797)
-    pf_SR = row['Scalar'] * np.array(row['30':'826']).astype(float)
+    pf_SR = row['Scalar'] * np.array(row[str(start):str(stop)]).astype(float)
     #pf_norm_SR = Normalization(pf_SR)
     pf_norm_SR = pf_SR
     for element in pf_norm_SR:
@@ -713,7 +944,7 @@ snr2_2darray_SR = np.array(snr2_2dlist_SR)
 #print(snr2_2darray_SR)
 #print(snr1_2darray_SR[0])
 #print(snr1_2darray_SR.shape)
-
+'''
 
 # selecting for the phase functtions we wanna compare to
 #T1_label = np.array(df_SL.loc[(df_SL['Exposure Time (s)'] == 6) & (df_SL['Laser Power (mW)'] == 10)].loc[:, 'Date':'Time'])
@@ -745,7 +976,7 @@ for counter, element in enumerate(pf1_2dlist_SL):
         scale = fp_lastval/lp_firstval
         fp_size = fp_trim.size
         lp_size = lp_trim.size
-        overlap = (lp_size + fp_size) - 797
+        overlap = (lp_size + fp_size) - delta
         #print(overlap)
         #pf_combos_SL = np.append(fp_trim, scale * np.array(pf2_2dlist_SL[counter2])[overlap:-1])
         #snr_combos_SL = np.add(snr1_2darray_SL[counter], snr2_2darray_SL[counter2][overlap:-1])
@@ -773,13 +1004,13 @@ for counter, element in enumerate(pf1_2dlist_SL):
             snr_combos_dropnan = np.delete(snr_combos_SL, drop_nan_idx_SL)
             theta_meas_dropnan = np.delete(theta_meas, drop_nan_idx_SL)
             #SL_norm_dropnan = np.delete(SL600_norm, drop_nan_idx_SL)
-            SL_norm_dropnan = np.delete(SL600_pchip, drop_nan_idx_SL)
+            SL_norm_dropnan = np.delete(SL_sample_pchip, drop_nan_idx_SL)
         else:
             pf_combos_dropnan = pf_combos_SL
             snr_combos_dropnan = snr_combos_SL
             theta_meas_dropnan = theta_meas
             #SL_norm_dropnan = SL600_norm
-            SL_norm_dropnan = SL600_pchip
+            SL_norm_dropnan = SL_sample_pchip
         m = M(pf_combos_dropnan, SL_norm_dropnan)
         corr_coeff_SL = np.corrcoef(pf_combos_dropnan, SL_norm_dropnan)[0][1]
         label_string = str(np.array(df_SL.loc[counter, 'Date':'Time'])) + ' &\n' + str(np.array(df_SL.loc[counter2, 'Date':'Time']))
@@ -798,7 +1029,7 @@ m_list_SL = np.array(m_list_SL)
 m_min_val_SL = np.amin(m_list_SL)
 m_min_idx_SL = np.argmin(m_list_SL)
 #ax1[0, 0].semilogy(theta_meas, SL600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
-ax1[0, 0].semilogy(theta_meas, SL600_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
+ax1[0, 0].semilogy(theta_meas, SL_sample_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
 ax1[0, 0].semilogy(theta_meas, intensity_stitch_array, color='black', ls='-', label='Intensity Threshold')
 ax1[0, 0].set_title('SL Normalized Stitched Measurements', fontsize=BIGGER_SIZE, fontweight='bold')
 ax1[0, 0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -812,7 +1043,7 @@ ax1[0, 1].semilogy(theta_list_SL[m_min_idx_SL], pf_combos_norm_list_SL[m_min_idx
 variable_sl = 12
 #ax1[0, 1].semilogy(theta_list_SL[variable_sl], pf_combos_norm_list_SL[variable_sl], ls='-', color='magenta', label=str(label_list_SL[variable_sl]) + '\n correlation coefficient: ' + str(corr_coeff_list_SL[variable_sl]) + '\n minimum residual sum: ' + str(m_list_SL[variable_sl]))
 #ax1[0, 1].semilogy(theta_meas, SL600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
-ax1[0, 1].semilogy(theta_meas, SL600_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
+ax1[0, 1].semilogy(theta_meas, SL_sample_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
 ax1[0, 1].set_title('Best SL Normalized Stitched Measurement', fontsize=BIGGER_SIZE, fontweight='bold')
 ax1[0, 1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax1[0, 1].set_ylabel('Intensity', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -842,7 +1073,7 @@ df_SL_stitched.to_csv('/home/austen/Desktop/Recent/stitched_PSL_SL600.txt', sep=
 df_SL_stitched_theta.to_csv('/home/austen/Desktop/Recent/stitched_PSL_SL600_theta.txt', sep=',', header=True, index=False)
 #print(df_SL_stitched)
 
-
+'''
 #add in other SR and SU polarizations! 09/24/2020
 pf_combos_norm_list_SU = []
 snr_combos_list_SU = []
@@ -889,13 +1120,13 @@ for counter, element in enumerate(pf1_2dlist_SU):
             snr_combos_dropnan = np.delete(snr_combos_SU, drop_nan_idx_SU)
             theta_meas_dropnan = np.delete(theta_meas, drop_nan_idx_SU)
             #SU_norm_dropnan = np.delete(SU600_norm, drop_nan_idx_SU)
-            SU_norm_dropnan = np.delete(SU600_pchip, drop_nan_idx_SU)
+            SU_norm_dropnan = np.delete(SU_sample_pchip, drop_nan_idx_SU)
         else:
             pf_combos_dropnan = pf_combos_SU
             snr_combos_dropnan = snr_combos_SU
             theta_meas_dropnan = theta_meas
             #SU_norm_dropnan = SU600_norm
-            SU_norm_dropnan = SU600_pchip
+            SU_norm_dropnan = SU_sample_pchip
         m = M(pf_combos_dropnan, SU_norm_dropnan)
         corr_coeff_SU = np.corrcoef(pf_combos_dropnan, SU_norm_dropnan)[0][1]
         label_string = str(np.array(df_SU.loc[counter, 'Date':'Time'])) + ' &\n' + str(np.array(df_SU.loc[counter2, 'Date':'Time']))
@@ -914,7 +1145,7 @@ m_list_SU = np.array(m_list_SU)
 m_min_val_SU = np.amin(m_list_SU)
 m_min_idx_SU = np.argmin(m_list_SU)
 #ax1[0, 0].semilogy(theta_meas, SU600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL 903nm')
-ax1[0, 0].semilogy(theta_meas, SU600_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
+ax1[0, 0].semilogy(theta_meas, SU_sample_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
 ax1[0, 0].semilogy(theta_meas, intensity_stitch_array, color='black', ls='-', label='Intensity Threshold')
 ax1[0, 0].set_title('SU Normalized Stitched Measurements', fontsize=BIGGER_SIZE, fontweight='bold')
 ax1[0, 0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -928,7 +1159,7 @@ ax1[0, 1].semilogy(theta_list_SU[m_min_idx_SU], pf_combos_norm_list_SU[m_min_idx
 variable_su = 15
 #ax1[0, 1].semilogy(theta_list_SU[variable_su], pf_combos_norm_list_SU[variable_su], ls='-', color='magenta', label=str(label_list_SU[variable_su]) + '\ncorrelation coefficient: ' + str(corr_coeff_list_SU[variable_su])+ '\nminimum residual sum: ' + str(m_list_SU[variable_su]))
 #ax1[0, 1].semilogy(theta_meas, SU600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
-ax1[0, 1].semilogy(theta_meas, SU600_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
+ax1[0, 1].semilogy(theta_meas, SU_sample_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
 ax1[0, 1].set_title('Best SU Normalized Stitched Measurement', fontsize=BIGGER_SIZE, fontweight='bold')
 ax1[0, 1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax1[0, 1].set_ylabel('Intensity', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -956,8 +1187,8 @@ df_SU_stitched['Residuals'] = m_list_SU
 df_SU_stitched['Correlation Coefficicent'] = corr_coeff_list_SU
 df_SU_stitched.to_csv('/home/austen/Desktop/Recent/stitched_PSL_SU600.txt', sep=',', header=True, index=False)
 df_SU_stitched_theta.to_csv('/home/austen/Desktop/Recent/stitched_PSL_SU600_theta.txt', sep=',', header=True, index=False)
-
-
+'''
+'''
 #add in other SR and SU polarizations! 09/24/2020
 pf_combos_norm_list_SR = []
 snr_combos_list_SR = []
@@ -1004,13 +1235,13 @@ for counter, element in enumerate(pf1_2dlist_SR):
             snr_combos_dropnan = np.delete(snr_combos_SR, drop_nan_idx_SR)
             theta_meas_dropnan = np.delete(theta_meas, drop_nan_idx_SR)
             #SR_norm_dropnan = np.delete(SR600_norm, drop_nan_idx_SR)
-            SR_norm_dropnan = np.delete(SR600_pchip, drop_nan_idx_SR)
+            SR_norm_dropnan = np.delete(SR_sample_pchip, drop_nan_idx_SR)
         else:
             pf_combos_dropnan = pf_combos_SR
             snr_combos_dropnan = snr_combos_SR
             theta_meas_dropnan = theta_meas
             #SR_norm_dropnan = SR600_norm
-            SR_norm_dropnan = SR600_pchip
+            SR_norm_dropnan = SR_sample_pchip
         m = M(pf_combos_dropnan, SR_norm_dropnan)
         corr_coeff_SR = np.corrcoef(pf_combos_dropnan, SR_norm_dropnan)[0][1]
         label_string = str(np.array(df_SR.loc[counter, 'Date':'Time'])) + ' &\n' + str(np.array(df_SR.loc[counter2, 'Date':'Time']))
@@ -1020,10 +1251,10 @@ for counter, element in enumerate(pf1_2dlist_SR):
         corr_coeff_list_SR.append(corr_coeff_SR)
         theta_list_SR.append(theta_meas_dropnan)
         label_list_SR.append(label_string)
-        '''
+        #3apostraphes
         #col_combos = np.add(np.array(pf1_2dlabels[counter]), np.array(pf2_2dlabels[counter2]))
         #theta_combos = np.array([(slope * i) + intercept for i in col_combos])
-        '''
+        #3apostraphes
         ax1[0, 0].semilogy(theta_meas_dropnan, pf_combos_dropnan, ls='-', label=label_string)
         ax1[1, 0].plot(theta_meas_dropnan, snr_combos_dropnan, label=label_string)
 m_list_SR = np.array(m_list_SR)
@@ -1031,7 +1262,7 @@ m_list_SR = np.array(m_list_SR)
 m_min_val_SR = np.amin(m_list_SR)
 m_min_idx_SR = np.argmin(m_list_SR)
 #ax1[0, 0].semilogy(theta_meas, SR600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
-ax1[0, 0].semilogy(theta_meas, SR600_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
+ax1[0, 0].semilogy(theta_meas, SR_sample_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
 ax1[0, 0].semilogy(theta_meas, intensity_stitch_array, color='black', ls='-', label='Intensity Threshold')
 ax1[0, 0].set_title('SR Normalized Stitched Measurements', fontsize=BIGGER_SIZE, fontweight='bold')
 ax1[0, 0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -1045,7 +1276,7 @@ ax1[0, 1].semilogy(theta_list_SR[m_min_idx_SR], pf_combos_norm_list_SR[m_min_idx
 variable_sr = 23
 #ax1[0, 1].semilogy(theta_list_SR[variable_sr], pf_combos_norm_list_SR[variable_sr], ls='-', color='magenta', label=label_list_SR[variable_sr] + '\ncorrelation coefficient: ' + str(corr_coeff_list_SR[variable_sr])+ '\nminimum residual sum: ' + str(m_list_SR[variable_sr]))
 #ax1[0, 1].semilogy(theta_meas, SR600_norm, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
-ax1[0, 1].semilogy(theta_meas, SR600_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
+ax1[0, 1].semilogy(theta_meas, SR_sample_pchip, color='black', ls='-', linewidth=4, label='Mie Theory PSL')
 ax1[0, 1].set_title('Best SR Normalized Stitched Measurement', fontsize=BIGGER_SIZE, fontweight='bold')
 ax1[0, 1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
 ax1[0, 1].set_ylabel('Intensity', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -1074,7 +1305,7 @@ df_SR_stitched['Residuals'] = m_list_SR
 df_SR_stitched['Correlation Coefficicent'] = corr_coeff_list_SR
 df_SR_stitched.to_csv('/home/austen/Desktop/Recent/stitched_PSL_SR600.txt', sep=',', header=True, index=False)
 df_SR_stitched_theta.to_csv('/home/austen/Desktop/Recent/stitched_PSL_SR600_theta.txt', sep=',', header=True, index=False)
-
+'''
 '''
 geoff_theory_theta = pd.DataFrame(np.vstack((theta_meas, theta_meas, theta_meas)))
 geoff_theory = pd.DataFrame(np.vstack((SL900_norm,  SU900_norm, SR900_norm)))
@@ -1109,7 +1340,7 @@ print('\u03c3: ', result_SL_stitch.x[1])
 #print('k: ', result_SL900_stitch.x[3])
 print('iterations: ', result_SL_stitch.nfev)
 print('status: ', result_SL_stitch.status)
-
+'''
 # NLLS result
 result_SU_stitch = least_squares(Residuals_SU, x0=[903, 4.1], method='trf', args=(wavelength_red, pf_combos_norm_list_SU[m_min_idx_SU], theta_list_SU[m_min_idx_SU], n_PSL, k_PSL), bounds=([850, 1.0],[950, 100.0]))
 
@@ -1133,7 +1364,7 @@ print('\u03c3: ', result_SR_stitch.x[1])
 #print('k: ', result_SL900_stitch.x[3])
 print('iterations: ', result_SR_stitch.nfev)
 print('status: ', result_SR_stitch.status)
-
+'''
 # get distributions
 sizes = np.arange(1.0, 1000.0, 2.0)
 distribution_theory = np.array([Gaussian(x=i, mu=903.0, sigma=4.1, N=400) for i in sizes])
@@ -1161,7 +1392,7 @@ SR_TS_pchip_norm = Normalization(SR_TS_pchip)
 # plot it all up
 f2, ax2 = plt.subplots(nrows=1, ncols=4, figsize=(40, 14))
 ax2[0].semilogy(theta_list_SL[m_min_idx_SL], pf_combos_norm_list_SL[m_min_idx_SL], ls='-', color='red', label=label_list_SL[m_min_idx_SL])
-ax2[0].semilogy(theta_meas, SL900_norm, color='black', ls='-', linewidth=4, label='Specified Thermo Fisher Scientific PSL Dist.')
+ax2[0].semilogy(theta_meas, SL_sample_norm, color='black', ls='-', linewidth=4, label='Specified Thermo Fisher Scientific PSL Dist.')
 ax2[0].semilogy(theta_meas, SL_TS_pchip_norm, color='coral', ls='-', linewidth=4, label='Theoretical Match: ' + str(label_list_SL[m_min_idx_SL]))
 ax2[0].set_title('SL Normalized Stitched Measurement,\n Theory, and Retrieved Phase Function', fontsize=BIGGER_SIZE, fontweight='bold')
 ax2[0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -1170,7 +1401,7 @@ ax2[0].grid(True)
 ax2[0].legend(loc=1, fontsize=SMALL_SIZE, prop=legend_properties)
 
 ax2[1].semilogy(theta_list_SU[m_min_idx_SU], pf_combos_norm_list_SU[m_min_idx_SU], ls='-', color='green', label=label_list_SU[m_min_idx_SU])
-ax2[1].semilogy(theta_meas, SU900_norm, color='black', ls='-', linewidth=4, label='Specified Thermo Fisher Scientific PSL Dist.')
+ax2[1].semilogy(theta_meas, SU_sample_norm, color='black', ls='-', linewidth=4, label='Specified Thermo Fisher Scientific PSL Dist.')
 ax2[1].semilogy(theta_meas, SU_TS_pchip_norm, color='lawngreen', ls='-', linewidth=4, label='Theoretical Match: ' + str(label_list_SU[m_min_idx_SU]))
 ax2[1].set_title('SU Normalized Stitched Measurement,\n Theory, and Retrieved Phase Function', fontsize=BIGGER_SIZE, fontweight='bold')
 ax2[1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -1179,7 +1410,7 @@ ax2[1].grid(True)
 ax2[1].legend(loc=1, fontsize=SMALL_SIZE, prop=legend_properties)
 
 ax2[2].semilogy(theta_list_SR[m_min_idx_SR], pf_combos_norm_list_SR[m_min_idx_SR], ls='-', color='blue', label=label_list_SR[m_min_idx_SR])
-ax2[2].semilogy(theta_meas, SR900_norm, color='black', ls='-', linewidth=4, label='Specified Thermo Fisher Scientific PSL Dist.')
+ax2[2].semilogy(theta_meas, SR_sample_norm, color='black', ls='-', linewidth=4, label='Specified Thermo Fisher Scientific PSL Dist.')
 ax2[2].semilogy(theta_meas, SR_TS_pchip_norm, color='cyan', ls='-', linewidth=4, label='Theoretical Match: ' + str(label_list_SR[m_min_idx_SR]))
 ax2[2].set_title('SR Normalized Stitched Measurements,\n Theory, and Retrieved Phase Function', fontsize=BIGGER_SIZE, fontweight='bold')
 ax2[2].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -1235,7 +1466,7 @@ SR_combo_pchip_norm = Normalization(SR_combo_pchip)
 # plot it all up
 f3, ax3 = plt.subplots(nrows=1, ncols=4, figsize=(40, 14))
 ax3[0].semilogy(theta_list_SL[m_min_idx_SL], pf_combos_norm_list_SL[m_min_idx_SL], ls='-', color='red', label=label_list_SL[m_min_idx_SL])
-ax3[0].semilogy(theta_meas, SL900_norm, color='black', ls='-', linewidth=4, label='Specified Thermo Fisher Scientific PSL Dist.')
+ax3[0].semilogy(theta_meas, SL_sample_norm, color='black', ls='-', linewidth=4, label='Specified Thermo Fisher Scientific PSL Dist.')
 ax3[0].semilogy(theta_meas, SL_combo_pchip_norm, color='purple', ls='-', linewidth=4, label='Retrieved Match: \u03bc' + str('{:.3f}'.format(result_SLSRSU_stitch.x[0])) + '\u03c3: ' + str('{:.3f}'.format(result_SLSRSU_stitch.x[1])))
 ax3[0].set_title('SL Normalized Stitched Measurements,\n Theory, and Retrieved', fontsize=BIGGER_SIZE, fontweight='bold')
 ax3[0].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -1244,7 +1475,7 @@ ax3[0].grid(True)
 ax3[0].legend(loc=1, fontsize=SMALL_SIZE, prop=legend_properties)
 
 ax3[1].semilogy(theta_list_SU[m_min_idx_SU], pf_combos_norm_list_SU[m_min_idx_SU], ls='-', color='green', label=label_list_SU[m_min_idx_SU])
-ax3[1].semilogy(theta_meas, SU900_norm, color='black', ls='-', linewidth=4, label='Specified Thermo Fisher Scientific PSL Dist.')
+ax3[1].semilogy(theta_meas, SU_sample_norm, color='black', ls='-', linewidth=4, label='Specified Thermo Fisher Scientific PSL Dist.')
 ax3[1].semilogy(theta_meas, SU_combo_pchip_norm, color='purple', ls='-', linewidth=4, label='Retrieved Match: \u03bc' + str('{:.3f}'.format(result_SLSRSU_stitch.x[0])) + '\u03c3: ' + str('{:.3f}'.format(result_SLSRSU_stitch.x[1])))
 ax3[1].set_title('SU Normalized Stitched Measurements,\n Theory, and Retrieved Phase Function', fontsize=BIGGER_SIZE, fontweight='bold')
 ax3[1].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
@@ -1253,7 +1484,7 @@ ax3[1].grid(True)
 ax3[1].legend(loc=1, fontsize=SMALL_SIZE, prop=legend_properties)
 
 ax3[2].semilogy(theta_list_SR[m_min_idx_SR], pf_combos_norm_list_SR[m_min_idx_SR], ls='-', color='blue', label=label_list_SR[m_min_idx_SR])
-ax3[2].semilogy(theta_meas, SR900_norm, color='black', ls='-', linewidth=4, label='Specified Thermo Fisher Scientific PSL Dist.')
+ax3[2].semilogy(theta_meas, SR_sample_norm, color='black', ls='-', linewidth=4, label='Specified Thermo Fisher Scientific PSL Dist.')
 ax3[2].semilogy(theta_meas, SR_combo_pchip_norm, color='purple', ls='-', linewidth=4, label='Retrieved Match: \u03bc' + str('{:.3f}'.format(result_SLSRSU_stitch.x[0])) + '\u03c3: ' + str('{:.3f}'.format(result_SLSRSU_stitch.x[1])))
 ax3[2].set_title('SR Normalized Stitched Measurements,\n Theory, and Retrieved Phase Function', fontsize=BIGGER_SIZE, fontweight='bold')
 ax3[2].set_xlabel('Degrees', fontsize=MEDIUM_SIZE, fontweight='bold')
